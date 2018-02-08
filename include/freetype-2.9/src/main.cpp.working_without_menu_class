@@ -1,0 +1,242 @@
+#include <cstdio>
+#include <cmath>
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#include <chrono>
+#include <cstdlib> // malloc
+#include <cstring> // memcpy
+#include <string>
+#include <vector>
+
+#include "Tile.h"
+
+static GLuint programObject;
+static std::chrono::time_point<std::chrono::high_resolution_clock> t_start;
+static std::vector<Tile> tiles;
+static std::vector<Tile> bgTiles;
+static bool backgroundEnabled;
+static bool renderMenu;
+static int selectedTile;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void Create();
+void SetTriangleColor(float r, float g, float b);
+int AddBackground(char *pixels, int width, int height);
+void EnableBackground(int enable);
+int AddTile(char *pixels, int width, int height);
+void SelectTile(int tileNo);
+void Draw(void *cDisplay, void *cSurface);
+
+#ifdef __cplusplus
+}
+#endif
+
+void Create()
+{
+  const GLchar* vShaderTexStr =  
+    "attribute vec4 a_position;     \n"
+    "attribute vec2 a_texCoord;     \n"
+    "varying vec2 v_texCoord;       \n"
+    "void main()                    \n"
+    "{                              \n"
+    "   v_texCoord = a_texCoord;    \n"
+    "   gl_Position = a_position;   \n"
+    "}                              \n";
+ 
+  const GLchar* fShaderTexStr =  
+    "precision mediump float;       \n"
+//    "uniform vec4 u_color;          \n"
+    "varying vec2 v_texCoord;       \n"
+    "uniform sampler2D s_texture;   \n"
+    "void main()                    \n"
+    "{                              \n"
+    "   gl_FragColor                \n"
+    "    = texture2D(s_texture,     \n"
+    "                v_texCoord);   \n"
+    "}                              \n";
+
+  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
+  glCompileShader(vertexShader);
+
+  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentShader, 1, &fShaderTexStr, NULL);
+  glCompileShader(fragmentShader);
+
+  programObject = glCreateProgram();
+  glAttachShader(programObject, vertexShader);
+  glAttachShader(programObject, fragmentShader);
+  glLinkProgram(programObject);
+
+  glBindAttribLocation(programObject, 0, "a_position");
+  
+  glViewport(0, 0, 1920, 1080);
+
+  t_start = std::chrono::high_resolution_clock::now();
+
+  backgroundEnabled = 1;
+  renderMenu = 1;
+  selectedTile = 0;
+
+  return;
+}
+
+void DrawRectangle(float x, float y, float w, float h, GLubyte *pixels, int texw, int texh, float vW = 1920, float vH = 1080) {
+  float left = x / vW * 2 - 1;
+  float down = y / vH * 2 - 1;
+  float right = (x + w) / vW * 2 - 1;
+  float top = (y + h) / vH * 2 - 1;
+
+  auto t_now = std::chrono::high_resolution_clock::now();
+  float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+  /*
+  float color = (sin(time * 2.0f) + 1.0f) / 2.0f;
+  color = color / 10.0f + 0.15f;
+  GLint colLoc = glGetUniformLocation(programObject, "u_color");
+  glUniform4f(colLoc, color, color, color, 1.0f);*/
+
+  float timef = 1.0f;
+  float rangef = 16.0f;
+  float f1 = sin(time * timef)  / rangef;
+  left += f1;
+  right += f1;
+  float f2 = cos(time * timef)  / rangef;
+  top += f2;
+  down += f2;
+
+  GLfloat vVertices[] = { left,   top,  0.0f, 
+                          left,   down, 0.0f,
+                          right,  down, 0.0f,
+                          right,  top,  0.0f
+  };
+  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+
+      
+  GLint posLoc = glGetAttribLocation(programObject, "a_position");
+  glEnableVertexAttribArray(posLoc);
+  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
+
+  float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
+                       1.0f, 1.0f,    1.0f, 0.0f };
+                       
+  GLint texLoc = glGetAttribLocation(programObject, "a_texCoord");
+  glEnableVertexAttribArray(texLoc);
+  glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
+
+  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+}
+
+void SetBitmap(char *bmppixels, int w, int h) {
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, bmppixels);
+}
+
+void SetTriangleColor(float r, float g, float b)
+{
+  //glUseProgram(programObject);
+  //GLint colLoc = glGetUniformLocation(programObject, "uColor");
+  //glUniform4f(colLoc, r, g, b, 1.0f);
+  //glUseProgram(0);
+
+  return;
+}
+
+int AddBackground(char *pixels, int width, int height)
+{
+  if(bgTiles.empty())
+  {
+    Tile tile(tiles.size(), programObject);
+    tile.setPosition({0, 0});
+    tile.setSize({1920, 1080});
+    tile.setViewportSize({1920, 1080});
+    tile.setTexture(pixels, width, height, GL_RGB);
+    bgTiles.push_back(std::move(tile));
+  }
+  else {
+    bgTiles[0].setTexture(pixels, width, height, GL_RGB);
+  }
+  return bgTiles.size() - 1;
+}
+
+void EnableBackground(int enable) {
+  backgroundEnabled = enable ? 1 : 0;
+  renderMenu = enable ? 1 : 0;
+}
+
+std::pair<int, int> getTilePosition(int tileNo, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, int placementStyle = 1, int viewportWidth = 1920, int viewportHeight = 1080) {
+  placementStyle = 1; // hardcode it for now
+  int horizontalMargin = std::max((viewportWidth - (tileWidth * tilesHorizontal)) / (tilesHorizontal + 1), 0);
+  int verticalMargin = std::max((viewportHeight - (tileHeight * tilesVertical)) / (tilesVertical + 1), 0);
+  int horizontalPosition = 0;
+  int verticalPosition = 0;
+  switch(placementStyle) {
+    case 0:
+      horizontalPosition = horizontalMargin + (horizontalMargin + tileWidth) * (tileNo % tilesHorizontal);
+      verticalPosition = (viewportHeight - tileHeight) - (verticalMargin + (verticalMargin + tileHeight) * (tileNo / tilesVertical));
+      break;
+    case 1:
+      horizontalPosition = horizontalMargin + (horizontalMargin + tileWidth) * tileNo;
+      verticalPosition = tileHeight + verticalMargin;
+      break;
+  }
+  return std::make_pair(horizontalPosition, verticalPosition);
+}
+
+int AddTile(char *pixels, int width, int height)
+{
+  int tileWidth = 192;
+  int tileHeight = 108;
+  int viewportWidth = 1920;
+  int viewportHeight = 1080;
+  int tilesHorizontal = 8;
+  int tilesVertical = 8;
+
+  int tileNo = tiles.size();
+  Tile tile(tiles.size(), programObject);
+  tile.setPosition(getTilePosition(tileNo, tileWidth, tileHeight, tilesHorizontal, tilesVertical, 1, viewportWidth, viewportHeight));
+  tile.setSize({tileWidth, tileHeight});
+  tile.setViewportSize({viewportWidth, viewportHeight});
+  tile.setTexture(pixels, width, height, GL_RGB);
+  tiles.push_back(std::move(tile));
+  return tiles.size() - 1;
+}
+
+void SelectTile(int tileNo)
+{
+  selectedTile = tileNo;
+}
+
+void Draw(void *cDisplay, void *cSurface)
+{
+  EGLDisplay *display = reinterpret_cast<void**>(cDisplay);
+  EGLSurface *surface = reinterpret_cast<void**>(cSurface);
+
+  glClearColor(0.2f, 0.2f, 0.2f, backgroundEnabled ? 1.0f : 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glUseProgram(programObject);
+
+  if(!bgTiles.empty() && backgroundEnabled)
+    bgTiles[0].render();
+  if(renderMenu)
+    for(int i = 0; i < tiles.size(); ++i) {
+      std::pair<int, int> position = getTilePosition(i - selectedTile, 192, 108, 8, 8, 1, 1920, 1080);
+      tiles[i].render(position.first, position.second, true);
+    }
+
+  glUseProgram(0);
+
+  eglSwapBuffers(*display, *surface);
+
+  return;
+}
