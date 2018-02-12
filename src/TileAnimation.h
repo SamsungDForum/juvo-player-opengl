@@ -141,6 +141,15 @@ class TileAnimation {
     }
 
     ~TileAnimation() = default;
+
+    std::pair<int, int> getSourcePosition() { return sourcePosition; }
+    std::pair<int, int> getTargetPosition() { return targetPosition; }
+    float getSourceZoom() { return sourceZoom; }
+    float getTargetZoom() { return targetZoom; }
+    std::pair<int, int> getSourceSize() { return sourceSize; }
+    std::pair<int, int> getTargetSize() { return targetSize; }
+    float getSourceOpacity() { return sourceOpacity; }
+    float getTargetOpacity() { return targetOpacity; }
 };
 
 

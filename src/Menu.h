@@ -59,9 +59,12 @@ public:
   void EnableBackground(int enable);
   std::pair<int, int> getTilePosition(int tileNo, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, int viewportWidth = 1920, int viewportHeight = 1080, bool initialMargin = 1);
   int AddTile(char *pixels, int width, int height);
+  int AddTile();
+  void SetTileTexture(int tileNo, char *pixels, int width, int height);
   void SelectTile(int tileNo);
   void FullscreenTile(bool fullscreen);
   int AddFont(char *data, int size);
+  void Loader(bool enabled, int percent);
 };
 
 Menu::Menu(int viewportWidth, int viewportHeight, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, float zoom, int animationsDurationMilliseconds)
@@ -122,10 +125,9 @@ void Menu::initialize() {
   
   glViewport(0, 0, viewportWidth, viewportHeight);
 
-  // underlay testing
-  underlayEnabled = 0;
-  renderMenu = !underlayEnabled;
-  backgroundEnabled = !underlayEnabled;
+  underlayEnabled = true;
+  renderMenu = false;
+  backgroundEnabled = false;
 
   backgroundOpacity = 1.0;
   renderMenu = 1;
@@ -191,8 +193,8 @@ int Menu::AddBackground(char *pixels, int width, int height)
 }
 
 void Menu::EnableBackground(int enable) {
-  //backgroundEnabled = enable ? 1 : 0;
-  //renderMenu = enable ? 1 : 0;
+  backgroundEnabled = enable;
+  renderMenu = enable;
   if(bgTiles.size() > 0)
     bgTiles[0].moveTo(bgTiles[0].getPosition(), bgTiles[0].getZoom(), bgTiles[0].getSize(), enable ? backgroundOpacity : 0.0, std::chrono::milliseconds(fadingDurationMilliseconds));
   for(size_t i = 0; i < tiles.size(); ++i)
@@ -228,6 +230,29 @@ int Menu::AddTile(char *pixels, int width, int height)
   return tiles.size() - 1;
 }
 
+int Menu::AddTile()
+{
+  int tileNo = tiles.size();
+  Tile tile(tiles.size(),
+            programObject,
+            getTilePosition(tileNo, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight),
+            {tileWidth, tileHeight},
+            {viewportWidth, viewportHeight},
+            1.0,
+            0.0, //1.0,
+            "Tile" + tiles.size(),
+            "Description");
+  tiles.push_back(std::move(tile));
+  return tiles.size() - 1;
+}
+
+void Menu::SetTileTexture(int tileNo, char *pixels, int width, int height)
+{
+  if(tileNo >= static_cast<int>(tiles.size()))
+    return;
+  tiles[tileNo].setTexture(pixels, width, height, GL_RGB);
+}
+
 void Menu::SelectTile(int tileNo)
 {
   int bounce = (bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? -1 : 1) : 0;
@@ -242,12 +267,24 @@ void Menu::SelectTile(int tileNo)
       firstTile += shiftRight;
   }
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getSize(), tiles[i].getOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
+    tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getTargetSize(), tiles[i].getTargetOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
 }
 
 int Menu::AddFont(char *data, int size) {
   text.AddFont(data, size, 48);
   return 0;
+}
+
+void Menu::Loader(bool enabled, int percent) {
+  if(enabled == false) {
+    underlayEnabled = false;
+    EnableBackground(true);
+  }
+  else if(backgroundEnabled == true) {
+      EnableBackground(false);
+      underlayEnabled = true;
+  }
+  underlay.setValue(percent);
 }
 
 void Menu::FullscreenTile(bool fullscreen) {

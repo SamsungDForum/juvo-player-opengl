@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <vector>
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
@@ -10,19 +11,26 @@
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
 
+#include "log.h"
+
 class Underlay {
 private:
   GLuint programObject;
   std::chrono::time_point<std::chrono::high_resolution_clock> time;
   bool initialize();
+  int param;
+  TileAnimation animation;
 
 public:
   Underlay();
   ~Underlay();
   void render();
+  void setValue(int value);
+  void checkShaderCompileError(GLuint shader);
 };
 
 Underlay::Underlay()
+  : param(0)
 {
   initialize();
 }
@@ -99,13 +107,78 @@ bool Underlay::initialize() {
     "   gl_FragColor = vec4(col, 1.0); \n"
     "}                              \n";
 
+  const GLchar* fShaderTexStr2 =  
+    "precision highp float;       \n"
+    "uniform float u_time;          \n"
+    "uniform float u_param;         \n"
+    "uniform float u_opacity;       \n"
+    "void main()                    \n"
+    "{                              \n"
+    "   vec2 res = vec2(1920.0, 1080.0);  \n"
+    "   vec2 uv = gl_FragCoord.xy / res; \n"
+    "   vec3 col1 = 0.5 + 0.5 * cos(vec3(u_time) + uv.xyx + vec3(0,2,4)); \n"
+    "   float pc = 100.0 * gl_FragCoord.x / res.x; \n"
+    "   vec3 col = pc <= u_param ? col1 : vec3((col1.x + col1.y + col1.z) / 3.0); \n"
+    "   gl_FragColor = vec4(col, u_opacity);   \n"
+    "}                              \n";
+
+  const GLchar* fShaderTexStr3 =  
+    "precision highp float;                                                      \n"
+    "uniform float u_time;                                                       \n"
+    "uniform float u_param;                                                      \n"
+    "uniform float u_opacity;                                                    \n"
+    "                                                                            \n"
+    "#define LIM 0.001                                                           \n"
+    "#define THICK 0.1                                                           \n"
+    "#define BORDER 0.01                                                         \n"
+    "                                                                            \n"
+    "const vec4 barColor = vec4(1.0, 1.0, 1.0, 1.0);                             \n"
+    "const vec4 borderColor = vec4(1.0, 1.0, 1.0, 1.0);                          \n"
+    "                                                                            \n"
+    "float udBox(vec2 p, vec2 b) {                                               \n"
+    "  return length(max(abs(p) - b, 0.0));                                      \n"
+    "}                                                                           \n"
+    "                                                                            \n"
+    "vec2 sincos(float x) {                                                      \n"
+    "  return vec2(sin(x), cos(x));                                              \n"
+    "}                                                                           \n"
+    "                                                                            \n"
+    "vec2 rotate2d(vec2 uv, float phi) {                                         \n"
+    "  vec2 t = sincos(phi);                                                     \n"
+    "  return vec2(uv.x * t.y - uv.y * t.x, uv.x * t.x + uv.y * t.y);            \n"
+    "}                                                                           \n"
+    "                                                                            \n"
+    "                                                                            \n"
+    "vec4 loader(vec2 uv, float t) {                                             \n"
+    "  if(udBox(uv, vec2(1.0, THICK + BORDER)) < LIM                             \n"
+    "     && udBox(uv, vec2(1.0 - BORDER, THICK - BORDER)) > LIM)                \n"
+    "    return borderColor;                                                     \n"
+    "  if(udBox(uv + vec2(1.0 - t, 0.0),                                         \n"
+    "     vec2(t - BORDER * 2.0, THICK - BORDER * 3.0)) < LIM)                   \n"
+    "    return barColor;                                                        \n"
+    "  return vec4(0.0);                                                         \n"
+    "}                                                                           \n"
+    "                                                                            \n"
+    "void main()                                                                 \n"
+    "{                                                                           \n"
+    "  vec2 res = vec2(1920.0, 1080.0);                                          \n"
+    "  float rat = res.x / res.y;                                                \n"
+    "  vec2 uv = 2.0 * (gl_FragCoord.xy / res.y) - vec2(rat, 1.0);               \n"
+    "  vec4 col = loader(uv * (1.8 / vec2(rat, 1.0)), u_param / 100.0);          \n"
+//    "  vec4 col = loader(rotate2d((uv - vec2(-0.403, 0.637)) * 2.32, -0.4347), u_param / 100.0);  \n"
+    "  gl_FragColor = vec4(col.rgb, u_opacity);                                  \n"
+//    "  gl_FragColor = vec4(mix(gl_FragColor.rgb, col.rgb, col.a), u_opacity);    \n"
+    "}                                                                           \n";
+
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
   glCompileShader(vertexShader);
+  checkShaderCompileError(vertexShader);
 
   GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fShaderTexStr1, NULL);
+  glShaderSource(fragmentShader, 1, &fShaderTexStr3, NULL);
   glCompileShader(fragmentShader);
+  checkShaderCompileError(fragmentShader);
 
   programObject = glCreateProgram();
   glAttachShader(programObject, vertexShader);
@@ -118,6 +191,43 @@ bool Underlay::initialize() {
   time = std::chrono::high_resolution_clock::now();
 
   return true;
+}
+
+void Underlay::checkShaderCompileError(GLuint shader) {
+  GLint isCompiled = 0;
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
+  if(isCompiled == GL_FALSE) {
+    GLint maxLength = 0;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+    std::vector<GLchar> errorLog(maxLength);
+    glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
+    _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
+    //_DBG("test dbg");
+    //i_INFO("test info");
+
+    glDeleteShader(shader); // Don't leak the shader.
+  }
+}
+
+void Underlay::setValue(int value) {
+  TileAnimation::Easing easing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
+  animation = TileAnimation(std::chrono::high_resolution_clock::now(),
+                            std::chrono::milliseconds(500),
+                            {0, 0},
+                            {0, 0},
+                            TileAnimation::Easing::Linear,
+                            0,
+                            0,
+                            TileAnimation::Easing::Linear,
+                            {0, 0},
+                            {0, 0},
+                            TileAnimation::Easing::Linear,
+                            param,
+                            value,
+                            easing);
+
+  param = value;
 }
 
 void Underlay::render() {
@@ -148,6 +258,15 @@ void Underlay::render() {
   GLfloat t = static_cast<float>(timespan.count()) / 1000.0f;
   GLuint timeLoc = glGetUniformLocation(programObject, "u_time"); // TODO: Store the location somewhere.
   glUniform1f(timeLoc, t);
+
+  float paramArg = param;
+  if(animation.isActive()) {
+    std::pair<int, int> fakePosition, fakeSize;
+    float fakeZoom;
+    animation.update(fakePosition, fakeZoom, fakeSize, paramArg);
+  }
+  GLuint paramLoc = glGetUniformLocation(programObject, "u_param"); // TODO: Store the location somewhere.
+  glUniform1f(paramLoc, paramArg);
 
   GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity"); // TODO: Store the location somewhere.
   glUniform1f(opacityLoc, 1.0f);

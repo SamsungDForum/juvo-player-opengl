@@ -35,10 +35,11 @@ class Tile {
     GLint texLoc;
     GLuint opacityLoc;*/
 
-    void initialize();
+    void initTexture();
 
   public:
     Tile(int tileId, GLuint programObject, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat);
+    Tile(int tileId, GLuint programObject, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description);
     Tile(int tileId, GLuint programObject);
     ~Tile();
     Tile(Tile &) = delete; // no copy constructor
@@ -72,6 +73,17 @@ class Tile {
     void setOpacity(float opacity) { this->opacity = opacity; }
     float getZoom() { return zoom; }
     float getOpacity() { return opacity; }
+
+    std::pair<int, int> getSourcePosition() { return animation.isActive() ? animation.getSourcePosition() : getPosition(); }
+    std::pair<int, int> getTargetPosition() { return animation.isActive() ? animation.getTargetPosition() : getPosition(); }
+    float getSourceZoom() { return animation.isActive() ? animation.getSourceZoom() : getZoom(); }
+    float getTargetZoom() { return animation.isActive() ? animation.getTargetZoom() : getZoom(); }
+    std::pair<int, int> getSourceSize() { return animation.isActive() ? animation.getSourceSize() : getSize(); }
+    std::pair<int, int> getTargetSize() { return animation.isActive() ? animation.getTargetSize() : getSize(); }
+    float getSourceOpacity() { return animation.isActive() ? animation.getSourceOpacity() : getOpacity(); }
+    float getTargetOpacity() { return animation.isActive() ? animation.getTargetOpacity() : getOpacity(); }
+    bool isAnimationActive() { return animation.isActive(); }
+
 };
 
 Tile::Tile(int tileId, GLuint programObject, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat)
@@ -86,19 +98,36 @@ Tile::Tile(int tileId, GLuint programObject, std::pair<int, int> position, std::
             zoom(zoom),
             opacity(opacity),
             name(name),
-            description(description) {
-  initialize();
+            description(description),
+            textureId(GL_INVALID_VALUE) {
+  initTexture();
   setTexture(texturePixels, textureSize.first, textureSize.second, textureFormat);
+}
+
+Tile::Tile(int tileId, GLuint programObject, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description)
+          : id(tileId),
+            programObject(programObject),
+            x(position.first),
+            y(position.second),
+            width(size.first),
+            height(size.second),
+            viewportWidth(viewport.first),
+            viewportHeight(viewport.second),
+            zoom(zoom),
+            opacity(opacity),
+            name(name),
+            description(description),
+            textureId(GL_INVALID_VALUE) {
 }
 
 Tile::Tile(int tileId, GLuint programObject)
           : id(tileId),
           programObject(programObject),
           textureId(GL_INVALID_VALUE) {
-  initialize();
+  initTexture();
 }
 
-void Tile::initialize() {
+void Tile::initTexture() {
   glActiveTexture(GL_TEXTURE0);
   glGenTextures(1, &textureId);
 /*  glUseProgram(programObject);
@@ -166,6 +195,10 @@ void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> 
 }
 
 void Tile::render() {
+
+  if(textureId == GL_INVALID_VALUE)
+    return;
+
   std::pair<int, int> position {x, y};
   std::pair<int, int> size {width, height};
   animation.update(position, zoom, size, opacity);
@@ -227,6 +260,8 @@ void Tile::render() {
 }
 
 void Tile::setTexture(char *pixels, int width, int height, GLuint format) {
+  if(textureId == GL_INVALID_VALUE)
+    initTexture();
   textureFormat = format;
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glBindTexture(GL_TEXTURE_2D, textureId);

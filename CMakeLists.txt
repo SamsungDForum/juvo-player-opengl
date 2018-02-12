@@ -30,7 +30,8 @@ SET(SRCS src/main.cpp)
 INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED
 	gles20
-	egl)
+	egl
+  dlog)
 
 FOREACH(flag ${PKGS_CFLAGS})
         SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag} ")
