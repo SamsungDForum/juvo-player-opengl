@@ -12,14 +12,14 @@ extern "C" {
 
 void Create();
 int AddBackground(char *pixels, int width, int height);
-void EnableBackground(int enable);
+void ShowMenu(int enable);
 int AddTile(char *pixels, int width, int height);
 int AddEmptyTile();
 void SetTileTexture(int tileNo, char *pixels, int width, int height);
 void SelectTile(int tileNo);
 void Draw(void *cDisplay, void *cSurface);
 int AddFont(char *data, int size);
-void Loader(int enabled, int percent);
+void ShowLoader(int enabled, int percent);
 
 #ifdef __cplusplus
 }
@@ -35,9 +35,9 @@ int AddBackground(char *pixels, int width, int height)
   return menu.AddBackground(pixels, width, height);
 }
 
-void EnableBackground(int enable)
+void ShowMenu(int enable)
 {
-  menu.EnableBackground(enable);
+  menu.ShowMenu(enable);
 }
 
 int AddTile(char *pixels, int width, int height)
@@ -65,9 +65,9 @@ void SelectTile(int tileNo)
   menu.SelectTile(tileNo);
 }
 
-void Loader(int enabled, int percent)
+void ShowLoader(int enabled, int percent)
 {
-  menu.Loader(enabled, percent);
+  menu.ShowLoader(enabled, percent);
 }
 
 void Draw(void *cDisplay, void *cSurface)

@@ -56,7 +56,7 @@ public:
 
   void render();
   int AddBackground(char *pixels, int width, int height);
-  void EnableBackground(int enable);
+  void ShowMenu(int enable);
   std::pair<int, int> getTilePosition(int tileNo, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, int viewportWidth = 1920, int viewportHeight = 1080, bool initialMargin = 1);
   int AddTile(char *pixels, int width, int height);
   int AddTile();
@@ -64,7 +64,7 @@ public:
   void SelectTile(int tileNo);
   void FullscreenTile(bool fullscreen);
   int AddFont(char *data, int size);
-  void Loader(bool enabled, int percent);
+  void ShowLoader(bool enabled, int percent);
 };
 
 Menu::Menu(int viewportWidth, int viewportHeight, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, float zoom, int animationsDurationMilliseconds)
@@ -125,12 +125,10 @@ void Menu::initialize() {
   
   glViewport(0, 0, viewportWidth, viewportHeight);
 
-  underlayEnabled = true;
-  renderMenu = false;
-  backgroundEnabled = false;
-
   backgroundOpacity = 1.0;
-  renderMenu = 1;
+  renderMenu = true;
+  backgroundEnabled = true;
+  underlayEnabled = true;
   selectedTile = 0;
   firstTile = 0;
 
@@ -150,9 +148,9 @@ void Menu::render() {
 
   if(underlayEnabled)
     underlay.render();
-  if(!bgTiles.empty() && backgroundEnabled)
-    bgTiles[0].render();
   if(renderMenu) {
+    if(!bgTiles.empty() && backgroundEnabled)
+      bgTiles[0].render();
     for(size_t i = 0; i < tiles.size(); ++i)
       if(static_cast<int>(i) != selectedTile)
         tiles[i].render();
@@ -164,7 +162,11 @@ void Menu::render() {
   std::chrono::duration<double, std::milli> timespan = now - fpsT;
   fpsT = now;
   float fps = 1000.0f / timespan.count();
-  text.render(std::to_string(fps));
+  //text.render(std::to_string(fps));
+  std::pair<int, int> viewport = {1920, 1080};
+  int fontHeight = 48;
+  int margin = 12;
+  text.render(std::to_string(static_cast<int>(fps)), {margin, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
   glUseProgram(0);
 
 }
@@ -192,9 +194,9 @@ int Menu::AddBackground(char *pixels, int width, int height)
   return bgTiles.size() - 1;
 }
 
-void Menu::EnableBackground(int enable) {
-  backgroundEnabled = enable;
-  renderMenu = enable;
+void Menu::ShowMenu(int enable) {
+  //backgroundEnabled = enable;
+  //renderMenu = enable;
   if(bgTiles.size() > 0)
     bgTiles[0].moveTo(bgTiles[0].getPosition(), bgTiles[0].getZoom(), bgTiles[0].getSize(), enable ? backgroundOpacity : 0.0, std::chrono::milliseconds(fadingDurationMilliseconds));
   for(size_t i = 0; i < tiles.size(); ++i)
@@ -275,13 +277,13 @@ int Menu::AddFont(char *data, int size) {
   return 0;
 }
 
-void Menu::Loader(bool enabled, int percent) {
+void Menu::ShowLoader(bool enabled, int percent) {
   if(enabled == false) {
     underlayEnabled = false;
-    EnableBackground(true);
+    ShowMenu(true);
   }
   else if(backgroundEnabled == true) {
-      EnableBackground(false);
+      ShowMenu(false);
       underlayEnabled = true;
   }
   underlay.setValue(percent);

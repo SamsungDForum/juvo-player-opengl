@@ -163,9 +163,11 @@ bool Underlay::initialize() {
     "{                                                                           \n"
     "  vec2 res = vec2(1920.0, 1080.0);                                          \n"
     "  float rat = res.x / res.y;                                                \n"
+    "                                                                            \n"
     "  vec2 uv = 2.0 * (gl_FragCoord.xy / res.y) - vec2(rat, 1.0);               \n"
     "  vec4 col = loader(uv * (1.8 / vec2(rat, 1.0)), u_param / 100.0);          \n"
 //    "  vec4 col = loader(rotate2d((uv - vec2(-0.403, 0.637)) * 2.32, -0.4347), u_param / 100.0);  \n"
+//    "  vec4 col = loader(rotate2d((uv - vec2(0.0, 0.0)), sin(u_time) / 5.0), u_param / 100.0);  \n"
     "  gl_FragColor = vec4(col.rgb, u_opacity);                                  \n"
 //    "  gl_FragColor = vec4(mix(gl_FragColor.rgb, col.rgb, col.a), u_opacity);    \n"
     "}                                                                           \n";
