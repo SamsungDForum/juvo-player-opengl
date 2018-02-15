@@ -60,7 +60,7 @@ public:
 };
 
 Text::Text() {
-  FT_Error error = FT_Init_FreeType(&ftLibrary);
+  /*FT_Error error = */FT_Init_FreeType(&ftLibrary);
   prepareShaders();
 }
 

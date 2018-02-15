@@ -69,6 +69,8 @@ class Tile {
     int getY() { return y; }
     std::pair<int, int> getPosition() { return std::make_pair(x, y); }
     void setName(const std::string &name) { this->name = name; }
+    std::string getName() { return name; }
+    std::string getDescription() { return description; }
     void setDescription(const std::string &description) { this->description = description; }
     void setViewportSize(const std::pair<int, int> &viewportSize) { viewportWidth = viewportSize.first; viewportHeight = viewportSize.second; }
     void setViewportSize(int viewportWidth, int viewportHeight) { this->viewportWidth = viewportWidth; this->viewportHeight = viewportHeight; }
@@ -303,7 +305,7 @@ void Tile::render(Text &text) {
                           right,  down, 0.0f,
                           right,  top,  0.0f
   };
-  GLushort indices[] = { 0, 1, 2, 0, 2, 3 }; // TODO: Move it to VBO... Or somewhene in GPU's memory.
+  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
   glUseProgram(programObject);
 
@@ -314,7 +316,8 @@ void Tile::render(Text &text) {
   GLuint frameColorLoc = glGetUniformLocation(programObject, "u_frameColor");
   glUniform4f(frameColorLoc, 1.0, 1.0, 1.0, opacity);
   GLuint frameWidthLoc = glGetUniformLocation(programObject, "u_frameWidth");
-  glUniform1f(frameWidthLoc, (zoom - 1.0) * 50.0);
+  float frameWidth = std::max(0.0, (zoom - 1.0) > 0.01 ? (zoom - 1.0) * 50.0 : 0.0);
+  glUniform1f(frameWidthLoc, frameWidth);
 
   glBindTexture(GL_TEXTURE_2D, textureId);
   GLuint samplerLoc = glGetUniformLocation(programObject, "s_texture"); // TODO: Store the location somewhere.
@@ -341,12 +344,12 @@ void Tile::render(Text &text) {
   if(!name.empty()) {
     std::pair<int, int> viewport = {vW, vH};
     int fontHeight = 24;
-    fontHeight *= zoom;
+    fontHeight *= (zoom - 1.0) > 0.01 ? zoom : 1.0;
     int margin = 12;
     //int leftText = ((left + 1.0) * vW / 2.0) + margin;
     //int topText = ((top + 1.0) * vH / 2.0) - fontHeight - margin;
-    int leftText = (xPos + margin) - (w / 2.0) * (zoom - 1.0);
-    int topText = ((yPos + h) - fontHeight - margin) + (h / 2.0) * (zoom - 1.0);
+    int leftText = (xPos + margin) - (w / 2.0) * ((zoom - 1.0) > 0.01 ? (zoom - 1.0) : 0.0);
+    int topText = ((yPos + h) - fontHeight - margin) + (h / 2.0) * ((zoom - 1.0) > 0.01 ? (zoom - 1.0) : 0.0);
 
     text.render(name, {leftText, topText}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, opacity}, true);
   }
@@ -382,4 +385,5 @@ void Tile::checkShaderCompileError(GLuint shader) {
     glDeleteShader(shader); // Don't leak the shader.
   }
 }
+
 #endif // _TILE_H_

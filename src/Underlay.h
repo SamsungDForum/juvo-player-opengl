@@ -24,7 +24,7 @@ private:
 public:
   Underlay();
   ~Underlay();
-  void render();
+  void render(Text &text);
   void setValue(int value);
   void checkShaderCompileError(GLuint shader);
 };
@@ -45,7 +45,7 @@ bool Underlay::initialize() {
     "{                              \n"
     "   gl_Position = a_position;   \n"
     "}                              \n";
- 
+ /*
   const GLchar* fShaderTexStr =  
     "precision highp float;       \n"
     "uniform float u_time;          \n"
@@ -121,7 +121,7 @@ bool Underlay::initialize() {
     "   vec3 col = pc <= u_param ? col1 : vec3((col1.x + col1.y + col1.z) / 3.0); \n"
     "   gl_FragColor = vec4(col, u_opacity);   \n"
     "}                              \n";
-
+*/
   const GLchar* fShaderTexStr3 =  
     "precision highp float;                                                      \n"
     "uniform float u_time;                                                       \n"
@@ -232,7 +232,7 @@ void Underlay::setValue(int value) {
   param = value;
 }
 
-void Underlay::render() {
+void Underlay::render(Text &text) {
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float, std::milli> timespan = now - time;
 
@@ -281,6 +281,12 @@ void Underlay::render() {
   //glViewport(0, 0, 1920, 1080);
 
   glUseProgram(0);
+
+  std::pair<int, int> viewport = {1920, 1080};
+  int fontHeight = 48;
+  int textLeft = viewport.first / 2 - 200;
+  int textDown = viewport.second / 2 - 100;
+  text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
 }
 
 #endif // _UNDERLAY_H_

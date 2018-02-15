@@ -18,6 +18,7 @@
 #include "Tile.h"
 #include "Text.h"
 #include "Underlay.h"
+#include "Background.h"
 
 class Menu {
 private:
@@ -50,6 +51,7 @@ private:
 
   Text text;
   Underlay underlay;
+  Background background;
 
   void initialize();
 
@@ -141,6 +143,8 @@ void Menu::initialize() {
   fpsN = 30;
   fpsT = std::chrono::high_resolution_clock::now();
 
+  background.setViewport(viewportWidth, viewportHeight);
+  background.setOpacity(1.0);
 }
 
 Menu::~Menu() {
@@ -153,10 +157,12 @@ void Menu::render() {
 //  glUseProgram(programObject);
 
   if(underlayEnabled)
-    underlay.render();
-  if(renderMenu) {
-    if(!bgTiles.empty() && backgroundEnabled)
-      bgTiles[0].render(text);
+    underlay.render(text);
+  else if(renderMenu) {
+    if(!bgTiles.empty() && backgroundEnabled) {
+      background.render(text);
+      //bgTiles[0].render(text);
+    }
     for(size_t i = 0; i < tiles.size(); ++i)
       if(static_cast<int>(i) != selectedTile)
         tiles[i].render(text);
@@ -171,7 +177,7 @@ void Menu::render() {
 
   fpsS += fps;
   fpsV.push(fps);
-  while(fpsV.size() > fpsN) {
+  while(static_cast<int>(fpsV.size()) > fpsN) {
     fpsS -= fpsV.front();
     fpsV.pop();
   }
@@ -225,6 +231,10 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, int tileWidth, int tileHei
   int verticalPosition = 0;
   horizontalPosition = (initialMargin ? horizontalMargin : 0) + (horizontalMargin + tileWidth) * tileNo;
   verticalPosition = tilesVertical > 1 ? tileHeight + verticalMargin : marginFromBottom;
+
+  if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
+    background.setSourceTile(&tiles[selectedTile]);
+
   return std::make_pair(horizontalPosition, verticalPosition);
 }
 
@@ -238,7 +248,7 @@ int Menu::AddTile(char *pixels, int width, int height)
             1.0,
             0.0, //1.0,
             std::string("Tile") + std::to_string(tiles.size()),
-            "Description",
+            std::string("Lorem ipsum dolor sit amet."),
             pixels,
             {width, height},
             GL_RGB);
@@ -256,7 +266,7 @@ int Menu::AddTile()
             1.0,
             0.0, //1.0,
             std::string("Tile") + std::to_string(tiles.size()),
-            "Description");
+            std::string("Lorem ipsum dolor sit amet."));
   tiles.push_back(std::move(tile));
   return tiles.size() - 1;
 }
@@ -283,6 +293,8 @@ void Menu::SelectTile(int tileNo)
   }
   for(size_t i = 0; i < tiles.size(); ++i)
     tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getTargetSize(), tiles[i].getTargetOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
+  if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
+    background.setSourceTile(&tiles[selectedTile]);
 }
 
 int Menu::AddFont(char *data, int size) {

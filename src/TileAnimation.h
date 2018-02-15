@@ -117,10 +117,6 @@ class TileAnimation {
       std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart);
       std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
       float fraction = time_span.count() / target.count();
-      if(fraction >= 1.0) {
-        active = false;
-        return;
-      }
       switch(positionEasingType) {
         case Easing::BounceLeft:
         case Easing::BounceRight:
@@ -135,6 +131,10 @@ class TileAnimation {
       size.first = sourceSize.first + (targetSize.first - sourceSize.first) * doEasing(fraction, sizeEasingType);
       size.second = sourceSize.second + (targetSize.second - sourceSize.second) * doEasing(fraction, sizeEasingType);
       opacity = sourceOpacity + (targetOpacity - sourceOpacity) * doEasing(fraction, opacityEasingType);
+      if(fraction > 0.999) {
+        active = false;
+        return;
+      }
     }
 
     bool isActive() {
