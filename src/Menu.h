@@ -6,6 +6,7 @@
 #include <cstdlib> // malloc
 #include <cstring> // memcpy
 #include <vector>
+#include <queue>
 #include <chrono>
 
 #ifndef _INCLUDE_GLES_
@@ -32,17 +33,20 @@ private:
 
   const int viewportWidth = 1920;
   const int viewportHeight = 1080;
-  const int tileWidth = 350;
-  const int tileHeight = 197;
-  const int tilesHorizontal = 5;
+  const int tileWidth = 450;
+  const int tileHeight = 253;
+  const int tilesHorizontal = 4;
   const int tilesVertical = 1;
-  const float zoom = 1.15;
+  const int marginFromBottom = 50;
+  const float zoom = 1.1;
   const int animationsDurationMilliseconds = 320;
   const int fadingDurationMilliseconds = 1000;
   const bool bouncing = true;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> fpsT;
-  int fpsC;
+  float fpsS;
+  int fpsN;
+  std::queue<float> fpsV;
 
   Text text;
   Underlay underlay;
@@ -84,6 +88,7 @@ Menu::Menu() {
 }
 
 void Menu::initialize() {
+  /*
   const GLchar* vShaderTexStr =  
     "attribute vec4 a_position;     \n"
     "attribute vec2 a_texCoord;     \n"
@@ -122,7 +127,7 @@ void Menu::initialize() {
   glLinkProgram(programObject);
 
   glBindAttribLocation(programObject, 0, "a_position");
-  
+  */
   glViewport(0, 0, viewportWidth, viewportHeight);
 
   backgroundOpacity = 1.0;
@@ -132,7 +137,8 @@ void Menu::initialize() {
   selectedTile = 0;
   firstTile = 0;
 
-  fpsC = 0;
+  fpsS = 0;
+  fpsN = 30;
   fpsT = std::chrono::high_resolution_clock::now();
 
 }
@@ -144,30 +150,39 @@ void Menu::render() {
   glClearColor(0.2f, 0.2f, 0.2f, /*backgroundEnabled ? 1.0f : 0.0f*/ 0.0f);
   glClear(GL_COLOR_BUFFER_BIT/* | GL_DEPTH_BUFFER_BIT*/);
 
-  glUseProgram(programObject);
+//  glUseProgram(programObject);
 
   if(underlayEnabled)
     underlay.render();
   if(renderMenu) {
     if(!bgTiles.empty() && backgroundEnabled)
-      bgTiles[0].render();
+      bgTiles[0].render(text);
     for(size_t i = 0; i < tiles.size(); ++i)
       if(static_cast<int>(i) != selectedTile)
-        tiles[i].render();
+        tiles[i].render(text);
     if(selectedTile < static_cast<int>(tiles.size()))
-      tiles[selectedTile].render();
+      tiles[selectedTile].render(text);
   }
 
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> timespan = now - fpsT;
   fpsT = now;
   float fps = 1000.0f / timespan.count();
+
+  fpsS += fps;
+  fpsV.push(fps);
+  while(fpsV.size() > fpsN) {
+    fpsS -= fpsV.front();
+    fpsV.pop();
+  }
+  fps = fpsS / (fpsV.size() ? : 1);
+
   //text.render(std::to_string(fps));
   std::pair<int, int> viewport = {1920, 1080};
   int fontHeight = 48;
   int margin = 12;
   text.render(std::to_string(static_cast<int>(fps)), {margin, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
-  glUseProgram(0);
+//  glUseProgram(0);
 
 }
 
@@ -175,14 +190,14 @@ int Menu::AddBackground(char *pixels, int width, int height)
 {
   if(bgTiles.empty())
   {
-    Tile tile(tiles.size(), programObject,
+    Tile tile(tiles.size(),
               {0, 0},
               {viewportWidth, viewportHeight},
               {viewportWidth, viewportHeight},
               1.0,
               0.0, //backgroundOpacity,
-              "Background",
-              "Description",
+              "",
+              "",
               pixels,
               {width, height},
               GL_RGB);
@@ -209,7 +224,7 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, int tileWidth, int tileHei
   int horizontalPosition = 0;
   int verticalPosition = 0;
   horizontalPosition = (initialMargin ? horizontalMargin : 0) + (horizontalMargin + tileWidth) * tileNo;
-  verticalPosition = tilesVertical > 1 ? tileHeight + verticalMargin : horizontalMargin;
+  verticalPosition = tilesVertical > 1 ? tileHeight + verticalMargin : marginFromBottom;
   return std::make_pair(horizontalPosition, verticalPosition);
 }
 
@@ -217,13 +232,12 @@ int Menu::AddTile(char *pixels, int width, int height)
 {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
-            programObject,
             getTilePosition(tileNo, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight),
             {tileWidth, tileHeight},
             {viewportWidth, viewportHeight},
             1.0,
             0.0, //1.0,
-            "Tile" + tiles.size(),
+            std::string("Tile") + std::to_string(tiles.size()),
             "Description",
             pixels,
             {width, height},
@@ -236,13 +250,12 @@ int Menu::AddTile()
 {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
-            programObject,
             getTilePosition(tileNo, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight),
             {tileWidth, tileHeight},
             {viewportWidth, viewportHeight},
             1.0,
             0.0, //1.0,
-            "Tile" + tiles.size(),
+            std::string("Tile") + std::to_string(tiles.size()),
             "Description");
   tiles.push_back(std::move(tile));
   return tiles.size() - 1;

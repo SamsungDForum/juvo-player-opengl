@@ -106,8 +106,13 @@ class TileAnimation {
     }
 
     void update(std::pair<int, int> &position, float &zoom, std::pair<int, int> &size, float &opacity) {
-      if(!active)
+      if(!active) {
+        position = targetPosition;
+        zoom = targetZoom;
+        size = targetSize;
+        opacity = targetOpacity;
         return;
+      }
       std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart);
       std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);

@@ -251,7 +251,7 @@ void Underlay::render() {
 
   //int factor = 16;
 
-  //glViewport(0, 0, 1920 / factor, 1080 / factor);
+  //glViewport(0, 0, 1920, 1080);
 
   GLint posLoc = glGetAttribLocation(programObject, "a_position");
   glEnableVertexAttribArray(posLoc);
