@@ -1,5 +1,5 @@
-#ifndef _UNDERLAY_H_
-#define _UNDERLAY_H_
+#ifndef _LOADER_H_
+#define _LOADER_H_
 
 #include <chrono>
 #include <cmath>
@@ -13,7 +13,7 @@
 
 #include "log.h"
 
-class Underlay {
+class Loader {
 private:
   GLuint programObject;
   std::chrono::time_point<std::chrono::high_resolution_clock> time;
@@ -22,23 +22,23 @@ private:
   TileAnimation animation;
 
 public:
-  Underlay();
-  ~Underlay();
+  Loader();
+  ~Loader();
   void render(Text &text);
   void setValue(int value);
   void checkShaderCompileError(GLuint shader);
 };
 
-Underlay::Underlay()
+Loader::Loader()
   : param(0)
 {
   initialize();
 }
 
-Underlay::~Underlay() {
+Loader::~Loader() {
 }
 
-bool Underlay::initialize() {
+bool Loader::initialize() {
   const GLchar* vShaderTexStr =  
     "attribute vec4 a_position;     \n"
     "void main()                    \n"
@@ -195,7 +195,7 @@ bool Underlay::initialize() {
   return true;
 }
 
-void Underlay::checkShaderCompileError(GLuint shader) {
+void Loader::checkShaderCompileError(GLuint shader) {
   GLint isCompiled = 0;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
   if(isCompiled == GL_FALSE) {
@@ -212,7 +212,7 @@ void Underlay::checkShaderCompileError(GLuint shader) {
   }
 }
 
-void Underlay::setValue(int value) {
+void Loader::setValue(int value) {
   TileAnimation::Easing easing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
   animation = TileAnimation(std::chrono::high_resolution_clock::now(),
                             std::chrono::milliseconds(500),
@@ -232,7 +232,7 @@ void Underlay::setValue(int value) {
   param = value;
 }
 
-void Underlay::render(Text &text) {
+void Loader::render(Text &text) {
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float, std::milli> timespan = now - time;
 
@@ -281,12 +281,21 @@ void Underlay::render(Text &text) {
   //glViewport(0, 0, 1920, 1080);
 
   glUseProgram(0);
+  {
+    std::pair<int, int> viewport = {1920, 1080};
+    int fontHeight = 48;
+    int textLeft = (viewport.first - text.getTextSize("Loading... 00%", {0, fontHeight}, 0).first) / 2;
+    int textDown = viewport.second / 2 - 100;
+    text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
 
-  std::pair<int, int> viewport = {1920, 1080};
-  int fontHeight = 48;
-  int textLeft = viewport.first / 2 - 200;
-  int textDown = viewport.second / 2 - 100;
-  text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+    fontHeight *= 1.5;
+    textLeft = (viewport.first - text.getTextSize("JuvoPlayer", {0, fontHeight}, 0).first) / 2;
+    textDown = viewport.second / 2 + 100;
+
+    float d = (int)t > 0 && ((int)t + 1) % 2 == 0 ? t - (int)t : 0;
+    float a = (cos(d * 20 / M_PI) + 1.0) / 2.0;
+    text.render("JuvoPlayer", {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, a}, true);
+  }
 }
 
-#endif // _UNDERLAY_H_
+#endif // _LOADER_H_

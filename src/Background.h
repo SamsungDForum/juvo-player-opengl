@@ -112,7 +112,7 @@ void Background::render(Text &text) {
 
   glClearColor(0.0f, 0.0f, 0.0f, opacity);
   glClear(GL_COLOR_BUFFER_BIT);
-  opacity *= 0.8;
+  opacity *= 1.0;
 
   if(textureId == GL_INVALID_VALUE)
     return;

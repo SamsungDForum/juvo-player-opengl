@@ -17,15 +17,17 @@
 
 #include "Tile.h"
 #include "Text.h"
-#include "Underlay.h"
+#include "Loader.h"
 #include "Background.h"
+
+#define WIDE_MARGIN
 
 class Menu {
 private:
   std::vector<Tile> tiles;
   std::vector<Tile> bgTiles;
   GLuint programObject;
-  bool underlayEnabled;
+  bool loaderEnabled;
   bool backgroundEnabled;
   bool renderMenu;
   int selectedTile;
@@ -34,12 +36,20 @@ private:
 
   const int viewportWidth = 1920;
   const int viewportHeight = 1080;
+#ifdef WIDE_MARGIN
+  const int tileWidth = 432;// 450;
+#else
   const int tileWidth = 450;
-  const int tileHeight = 253;
+#endif
+  const int tileHeight = tileWidth * viewportHeight / viewportWidth; // 253;
   const int tilesHorizontal = 4;
   const int tilesVertical = 1;
   const int marginFromBottom = 50;
+#ifdef WIDE_MARGIN
+  const float zoom = 1.05;
+#else
   const float zoom = 1.1;
+#endif
   const int animationsDurationMilliseconds = 320;
   const int fadingDurationMilliseconds = 1000;
   const bool bouncing = true;
@@ -50,7 +60,7 @@ private:
   std::queue<float> fpsV;
 
   Text text;
-  Underlay underlay;
+  Loader loader;
   Background background;
 
   void initialize();
@@ -71,6 +81,7 @@ public:
   void FullscreenTile(bool fullscreen);
   int AddFont(char *data, int size);
   void ShowLoader(bool enabled, int percent);
+  void SetTileData(int tileId, char* pixels, int w, int h, std::string name, std::string desc);
 };
 
 Menu::Menu(int viewportWidth, int viewportHeight, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, float zoom, int animationsDurationMilliseconds)
@@ -135,7 +146,7 @@ void Menu::initialize() {
   backgroundOpacity = 1.0;
   renderMenu = true;
   backgroundEnabled = true;
-  underlayEnabled = true;
+  loaderEnabled = true;
   selectedTile = 0;
   firstTile = 0;
 
@@ -156,12 +167,28 @@ void Menu::render() {
 
 //  glUseProgram(programObject);
 
-  if(underlayEnabled)
-    underlay.render(text);
+  if(loaderEnabled)
+    loader.render(text);
   else if(renderMenu) {
-    if(!bgTiles.empty() && backgroundEnabled) {
+    if(/*!bgTiles.empty() && */backgroundEnabled) {
       background.render(text);
       //bgTiles[0].render(text);
+#ifdef WIDE_MARGIN
+      std::pair<int, int> viewport = {1920, 1080};
+      int fontHeight = 24;
+      int marginBottom = 20;
+      int marginLeft = 100;
+      text.render("Popular in VD", {marginLeft, marginFromBottom + tileHeight + marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+#endif
+      {
+        std::pair<int, int> viewport = {1920, 1080};
+        std::string footer = "JuvoPlayer, Samsung R&D Poland, 2018";
+        int fontHeight = 10;
+        int margin = 10;
+        int marginBottom = margin;
+        int marginLeft = 1920 - text.getTextSize(footer, {0, fontHeight}, 0).first - margin;
+        text.render(footer, {marginLeft, marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+      }
     }
     for(size_t i = 0; i < tiles.size(); ++i)
       if(static_cast<int>(i) != selectedTile)
@@ -183,11 +210,12 @@ void Menu::render() {
   }
   fps = fpsS / (fpsV.size() ? : 1);
 
-  //text.render(std::to_string(fps));
-  std::pair<int, int> viewport = {1920, 1080};
-  int fontHeight = 48;
-  int margin = 12;
-  text.render(std::to_string(static_cast<int>(fps)), {margin, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+  {
+    std::pair<int, int> viewport = {1920, 1080};
+    int fontHeight = 48;
+    int margin = 12;
+    text.render(std::to_string(static_cast<int>(fps)), {viewport.first - margin - 100, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+  }
 //  glUseProgram(0);
 
 }
@@ -232,6 +260,12 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, int tileWidth, int tileHei
   horizontalPosition = (initialMargin ? horizontalMargin : 0) + (horizontalMargin + tileWidth) * tileNo;
   verticalPosition = tilesVertical > 1 ? tileHeight + verticalMargin : marginFromBottom;
 
+#ifdef WIDE_MARGIN
+  int sideMargin = 100;
+  int innerMargin = (viewportWidth - 1.5 * sideMargin - tileWidth * tilesHorizontal) / (tilesHorizontal - 1);
+  horizontalPosition = sideMargin + tileNo * (tileWidth + innerMargin);
+#endif
+
   if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
     background.setSourceTile(&tiles[selectedTile]);
 
@@ -271,6 +305,15 @@ int Menu::AddTile()
   return tiles.size() - 1;
 }
 
+void Menu::SetTileData(int tileId, char* pixels, int w, int h, std::string name, std::string desc)
+{
+  if(tileId >= static_cast<int>(tiles.size()))
+    return;
+  tiles[tileId].setName(name);
+  tiles[tileId].setDescription(desc);
+  tiles[tileId].setTexture(pixels, w, h, GL_RGB);
+}
+
 void Menu::SetTileTexture(int tileNo, char *pixels, int width, int height)
 {
   if(tileNo >= static_cast<int>(tiles.size()))
@@ -304,14 +347,14 @@ int Menu::AddFont(char *data, int size) {
 
 void Menu::ShowLoader(bool enabled, int percent) {
   if(enabled == false) {
-    underlayEnabled = false;
+    loaderEnabled = false;
     ShowMenu(true);
   }
   else if(backgroundEnabled == true) {
       ShowMenu(false);
-      underlayEnabled = true;
+      loaderEnabled = true;
   }
-  underlay.setValue(percent);
+  loader.setValue(percent);
 }
 
 void Menu::FullscreenTile(bool fullscreen) {

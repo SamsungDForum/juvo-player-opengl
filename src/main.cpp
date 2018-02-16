@@ -3,6 +3,7 @@
 #include <GLES2/gl2.h>
 
 #include "Menu.h"
+#include "log.h"
 
 static Menu menu;
 
@@ -13,8 +14,9 @@ extern "C" {
 void Create();
 int AddBackground(char *pixels, int width, int height);
 void ShowMenu(int enable);
-int AddTile(char *pixels, int width, int height);
-int AddEmptyTile();
+//int AddTile(char *pixels, int width, int height);
+int AddTile();
+void SetTileData(int tileId, char* pixels, int w, int h, char *name, int nameLen, char *desc, int descLen);
 void SetTileTexture(int tileNo, char *pixels, int width, int height);
 void SelectTile(int tileNo);
 void Draw(void *cDisplay, void *cSurface);
@@ -40,14 +42,19 @@ void ShowMenu(int enable)
   menu.ShowMenu(enable);
 }
 
-int AddTile(char *pixels, int width, int height)
+/*int AddTile(char *pixels, int width, int height)
 {
   return menu.AddTile(pixels, width, height);
-}
+}*/
 
-int AddEmptyTile()
+int AddTile()
 {
   return menu.AddTile();
+}
+
+void SetTileData(int tileId, char* pixels, int w, int h, char *name, int nameLen, char *desc, int descLen)
+{
+  menu.SetTileData(tileId, pixels, w, h, std::string(name, nameLen), std::string(desc, descLen));
 }
 
 void SetTileTexture(int tileNo, char *pixels, int width, int height)

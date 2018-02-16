@@ -123,6 +123,8 @@ Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, s
             name(name),
             description(description),
             textureId(GL_INVALID_VALUE) {
+  initGL();
+  initTexture();
 }
 
 Tile::Tile(int tileId)
@@ -356,6 +358,7 @@ void Tile::render(Text &text) {
 }
 
 void Tile::setTexture(char *pixels, int width, int height, GLuint format) {
+  _ERR("texture %dx%d", width, height);
   if(textureId == GL_INVALID_VALUE)
     initTexture();
   textureFormat = format;

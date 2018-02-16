@@ -57,6 +57,7 @@ public:
   int AddFont(char *data, int size, int fontSize);
   void render(std::string text);
   void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  std::pair<int, int> getTextSize(std::string text, std::pair<int, int> size, int fondId);
 };
 
 Text::Text() {
@@ -153,6 +154,19 @@ int Text::AddFont(char *data, int size, int fontSize) {
   }
   FT_Done_Face(ftFace);
   return 0;
+}
+
+std::pair<int, int> Text::getTextSize(std::string text, std::pair<int, int> size, int fondId) {
+  int width = 0;
+  GLfloat fontH = 1;
+  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c)
+    fontH = std::max(static_cast<float>(fontH), static_cast<float>(Characters[*c].Size.y));
+  GLfloat scale = size.second / fontH;
+  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
+    Character ch = Characters[*c];
+    width += /*ch.Bearing.x + ch.Size.x + */(ch.Advance >> 6);
+  }
+  return {width * scale, size.second};
 }
 
 void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {

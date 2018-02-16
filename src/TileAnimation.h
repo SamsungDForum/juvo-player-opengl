@@ -61,9 +61,9 @@ class TileAnimation {
         case Easing::QuadIn:
           return t * t;
         case Easing::BounceLeft:
-          return std::sin(t * M_PI * 3) * (1.0 - t) * (192.0 / 5) * -1;
+          return std::sin(t * M_PI * 3) * (1.0 - t) * 30.0 * -1;
         case Easing::BounceRight:
-          return std::sin(t * M_PI * 3) * (1.0 - t) * (192.0 / 5);
+          return std::sin(t * M_PI * 3) * (1.0 - t) * 30.0;
         case Easing::Linear:
         default:
           return t;
