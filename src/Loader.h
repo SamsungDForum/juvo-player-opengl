@@ -123,7 +123,7 @@ bool Loader::initialize() {
     "}                              \n";
 */
   const GLchar* fShaderTexStr3 =  
-    "precision highp float;                                                      \n"
+    "precision mediump float;                                                    \n"
     "uniform float u_time;                                                       \n"
     "uniform float u_param;                                                      \n"
     "uniform float u_opacity;                                                    \n"
@@ -170,6 +170,12 @@ bool Loader::initialize() {
 //    "  vec4 col = loader(rotate2d((uv - vec2(0.0, 0.0)), sin(u_time) / 5.0), u_param / 100.0);  \n"
     "  gl_FragColor = vec4(col.rgb, u_opacity);                                  \n"
 //    "  gl_FragColor = vec4(mix(gl_FragColor.rgb, col.rgb, col.a), u_opacity);    \n"
+    "                                                                            \n"
+//    "  // pulse bar                                                              \n"
+//    "  float dist = length(gl_FragCoord.y / res.y - 0.3); // y coord - position  \n"
+//    "  float power = 80.0 + 30.0 * sin(u_time * 3.0);                            \n"
+//    "  float pulseCol = pow(1.0 - dist, power);                                  \n"
+//    "  gl_FragColor = vec4(max(gl_FragColor.xyz, vec3(pulseCol)), 1.0);          \n"
     "}                                                                           \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -284,7 +290,7 @@ void Loader::render(Text &text) {
   {
     std::pair<int, int> viewport = {1920, 1080};
     int fontHeight = 48;
-    int textLeft = (viewport.first - text.getTextSize("Loading... 00%", {0, fontHeight}, 0).first) / 2;
+    int textLeft = (viewport.first - text.getTextSize("Loading... 0%", {0, fontHeight}, 0).first) / 2;
     int textDown = viewport.second / 2 - 100;
     text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
 
