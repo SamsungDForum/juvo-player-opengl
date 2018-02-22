@@ -22,6 +22,9 @@ void SelectTile(int tileNo);
 void Draw(void *cDisplay, void *cSurface);
 int AddFont(char *data, int size);
 void ShowLoader(int enabled, int percent);
+void SetIcon(int id, char* pixels, int w, int h);
+void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen);
+void SetVersion(char* ver, int verLen);
 
 #ifdef __cplusplus
 }
@@ -75,6 +78,21 @@ void SelectTile(int tileNo)
 void ShowLoader(int enabled, int percent)
 {
   menu.ShowLoader(enabled, percent);
+}
+
+void SetIcon(int id, char* pixels, int w, int h)
+{
+  menu.SetIcon(id, pixels, w, h);
+}
+
+void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen)
+{
+  menu.UpdatePlaybackControls(show, state, currentTime, totalTime, std::string(text, textLen));
+}
+
+void SetVersion(char* ver, int verLen)
+{
+  menu.SetVersion(std::string(ver, verLen));
 }
 
 void Draw(void *cDisplay, void *cSurface)

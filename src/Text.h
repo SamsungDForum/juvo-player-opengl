@@ -235,9 +235,13 @@ std::pair<int, int> Text::getTextSize(std::string text, std::pair<int, int> size
   GLfloat scale = size.second / fontH;
   for(std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
     Character ch = fonts[fontId].ch[*c];
-    width += /*ch.bearing.x + ch.size.x + */(ch.advance.x >> 6);
+    width += (ch.advance.x >> 6);
   }
   return {width * scale, size.second};
+
+ /* std::pair<int, int> _size = getTextSize(text, fontId);
+  GLfloat scale = size.second / fonts[fontId].height;
+  return {_size.first * scale, _size.second};*/
 }
 
 std::pair<int, int> Text::getTextSize(std::string text, int fontId) {

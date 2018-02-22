@@ -12,7 +12,6 @@
 #endif // _INCLUDE_GLES_
 
 #include "Tile.h"
-#include "TileAnimation.h"
 #include "Text.h"
 #include "log.h"
 
@@ -37,6 +36,7 @@ class Background {
     void setOpacity(float opacity);
     void setViewport(int viewportWidth, int viewportHeight);
     void setSourceTile(Tile *sourceTile);
+    float getOpacity();
 };
 
 Background::Background()
@@ -178,6 +178,10 @@ void Background::render(Text &text) {
 
 void Background::setOpacity(float opacity) {
   this->opacity = opacity;
+}
+
+float Background::getOpacity() {
+  return opacity;
 }
 
 void Background::checkShaderCompileError(GLuint shader) {

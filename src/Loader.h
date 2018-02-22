@@ -11,6 +11,7 @@
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
 
+#include "Text.h"
 #include "log.h"
 
 class Loader {
@@ -30,7 +31,8 @@ public:
 };
 
 Loader::Loader()
-  : param(0)
+  : programObject(GL_INVALID_VALUE),
+  param(0)
 {
   initialize();
 }
@@ -222,6 +224,7 @@ void Loader::setValue(int value) {
   TileAnimation::Easing easing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
   animation = TileAnimation(std::chrono::high_resolution_clock::now(),
                             std::chrono::milliseconds(500),
+                            std::chrono::milliseconds(0),
                             {0, 0},
                             {0, 0},
                             TileAnimation::Easing::Linear,

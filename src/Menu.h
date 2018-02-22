@@ -19,6 +19,7 @@
 #include "Text.h"
 #include "Loader.h"
 #include "Background.h"
+#include "Playback.h"
 
 #define WIDE_MARGIN
 
@@ -62,6 +63,9 @@ private:
   Text text;
   Loader loader;
   Background background;
+  Playback playback;
+
+  std::string version = "0.0.1 prealpha";
 
   void initialize();
 
@@ -82,6 +86,9 @@ public:
   int AddFont(char *data, int size);
   void ShowLoader(bool enabled, int percent);
   void SetTileData(int tileId, char* pixels, int w, int h, std::string name, std::string desc);
+  void SetIcon(int id, char* pixels, int w, int h);
+  void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text);
+  void SetVersion(std::string version);
 };
 
 Menu::Menu(int viewportWidth, int viewportHeight, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, float zoom, int animationsDurationMilliseconds)
@@ -143,6 +150,9 @@ void Menu::initialize() {
   */
   glViewport(0, 0, viewportWidth, viewportHeight);
 
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+
   backgroundOpacity = 1.0;
   renderMenu = true;
   backgroundEnabled = true;
@@ -170,51 +180,60 @@ void Menu::render() {
   if(loaderEnabled)
     loader.render(text);
   else if(renderMenu) {
-    if(/*!bgTiles.empty() && */backgroundEnabled) {
+    float bgOpacity = background.getOpacity();
+    if(backgroundEnabled) {
       background.render(text);
-      //bgTiles[0].render(text);
 #ifdef WIDE_MARGIN
-      std::pair<int, int> viewport = {1920, 1080};
-      int fontHeight = 24;
-      int marginBottom = 20;
-      int marginLeft = 100;
-      text.render("Popular in VD", {marginLeft, marginFromBottom + tileHeight + marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
-#endif
-      {
+      if(bgOpacity > 0.0) {
         std::pair<int, int> viewport = {1920, 1080};
-        std::string footer = "JuvoPlayer, Samsung R&D Poland, 2018";
-        int fontHeight = 10;
-        int margin = 10;
-        int marginBottom = margin;
-        int marginLeft = 1920 - text.getTextSize(footer, {0, fontHeight}, 0).first - margin;
-        text.render(footer, {marginLeft, marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+        int fontHeight = 24;
+        int marginBottom = 20;
+        int marginLeft = 100;
+        text.render("Popular in VD", {marginLeft, marginFromBottom + tileHeight + marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, bgOpacity}, true);
       }
+#endif
     }
+    
     for(size_t i = 0; i < tiles.size(); ++i)
       if(static_cast<int>(i) != selectedTile)
         tiles[i].render(text);
     if(selectedTile < static_cast<int>(tiles.size()))
       tiles[selectedTile].render(text);
   }
-
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> timespan = now - fpsT;
-  fpsT = now;
-  float fps = 1000.0f / timespan.count();
-
-  fpsS += fps;
-  fpsV.push(fps);
-  while(static_cast<int>(fpsV.size()) > fpsN) {
-    fpsS -= fpsV.front();
-    fpsV.pop();
-  }
-  fps = fpsS / (fpsV.size() ? : 1);
-
-  {
+  { // footer
     std::pair<int, int> viewport = {1920, 1080};
-    int fontHeight = 48;
-    int margin = 12;
-    text.render(std::to_string(static_cast<int>(fps)), {viewport.first - margin - 100, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+    std::string footer = std::string("JuvoPlayer v") + version + std::string(", Samsung R&D Poland, 2018");
+    int fontHeight = 10;
+    int margin = 10;
+    int marginBottom = margin;
+    int marginLeft = 1920 - text.getTextSize(footer, {0, fontHeight}, 0).first - margin;
+    text.render(footer, {marginLeft, marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+  }
+  { // controls/playback
+    playback.render(text);
+  }
+
+  // FPS rendering
+  {
+    std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> timespan = now - fpsT;
+    fpsT = now;
+    float fps = 1000.0f / timespan.count();
+
+    fpsS += fps;
+    fpsV.push(fps);
+    while(static_cast<int>(fpsV.size()) > fpsN) {
+      fpsS -= fpsV.front();
+      fpsV.pop();
+    }
+    fps = fpsS / (fpsV.size() ? : 1);
+
+    {
+      std::pair<int, int> viewport = {1920, 1080};
+      int fontHeight = 48;
+      int margin = 12;
+      text.render(std::to_string(static_cast<int>(fps)), {viewport.first - margin - 100, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+    }
   }
 //  glUseProgram(0);
 
@@ -246,10 +265,11 @@ int Menu::AddBackground(char *pixels, int width, int height)
 void Menu::ShowMenu(int enable) {
   //backgroundEnabled = enable;
   //renderMenu = enable;
+  int animationDelay = playback.getOpacity() > 0.0 ? fadingDurationMilliseconds * 3 / 4 : 0;
   if(bgTiles.size() > 0)
-    bgTiles[0].moveTo(bgTiles[0].getPosition(), bgTiles[0].getZoom(), bgTiles[0].getSize(), enable ? backgroundOpacity : 0.0, std::chrono::milliseconds(fadingDurationMilliseconds));
+    bgTiles[0].moveTo(bgTiles[0].getPosition(), bgTiles[0].getZoom(), bgTiles[0].getSize(), enable ? backgroundOpacity : 0.0, std::chrono::milliseconds(fadingDurationMilliseconds), std::chrono::milliseconds(animationDelay));
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getSize(), enable ? 1 : 0, std::chrono::milliseconds(fadingDurationMilliseconds));
+    tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getSize(), enable ? 1 : 0, std::chrono::milliseconds(fadingDurationMilliseconds), std::chrono::milliseconds(animationDelay));
 }
 
 std::pair<int, int> Menu::getTilePosition(int tileNo, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, int viewportWidth, int viewportHeight, bool initialMargin) {
@@ -323,7 +343,7 @@ void Menu::SetTileTexture(int tileNo, char *pixels, int width, int height)
 
 void Menu::SelectTile(int tileNo)
 {
-  int bounce = (bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? -1 : 1) : 0;
+  int bounce = (bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? 1 : -1) : 0;
   selectedTile = tileNo;
   bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + tilesHorizontal - 1 >= selectedTile);
   if(!selectedTileVisible) {
@@ -335,7 +355,7 @@ void Menu::SelectTile(int tileNo)
       firstTile += shiftRight;
   }
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getTargetSize(), tiles[i].getTargetOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
+    tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getTargetSize(), tiles[i].getTargetOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), std::chrono::milliseconds(0), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
   if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
     background.setSourceTile(&tiles[selectedTile]);
 }
@@ -358,6 +378,18 @@ void Menu::ShowLoader(bool enabled, int percent) {
 }
 
 void Menu::FullscreenTile(bool fullscreen) {
+}
+
+void Menu::SetIcon(int id, char* pixels, int w, int h) {
+  playback.setIcon(id, pixels, w, h, GL_RGBA);
+}
+
+void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text) {
+  playback.update(show, state, currentTime, totalTime, text, std::chrono::milliseconds(fadingDurationMilliseconds), std::chrono::milliseconds(show && renderMenu ? fadingDurationMilliseconds * 3 / 4 : 0));
+}
+
+void Menu::SetVersion(std::string version) {
+  this->version = version;
 }
 
 #endif // _MENU_H_

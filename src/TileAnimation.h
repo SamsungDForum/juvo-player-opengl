@@ -17,6 +17,7 @@ class TileAnimation {
   private:
     std::chrono::time_point<std::chrono::high_resolution_clock> animationStart;
     std::chrono::milliseconds animationDuration;
+    std::chrono::milliseconds animationDelay;
     std::pair<int, int> sourcePosition;
     std::pair<int, int> targetPosition;
     Easing positionEasingType;
@@ -75,6 +76,7 @@ class TileAnimation {
     TileAnimation() : active(false) {}
     TileAnimation(std::chrono::time_point<std::chrono::high_resolution_clock> animationStart,
               std::chrono::milliseconds animationDuration,
+              std::chrono::milliseconds animationDelay,
               std::pair<int, int> sourcePosition,
               std::pair<int, int> targetPosition,
               Easing positionEasingType,
@@ -90,6 +92,7 @@ class TileAnimation {
       :
               animationStart(animationStart),
               animationDuration(animationDuration),
+              animationDelay(animationDelay),
               sourcePosition(sourcePosition),
               targetPosition(targetPosition),
               positionEasingType(positionEasingType),
@@ -113,8 +116,19 @@ class TileAnimation {
         opacity = targetOpacity;
         return;
       }
+
       std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart);
+
+      //if(time_span.count() <= 0) {
+      if(now - animationStart < animationDelay) {
+        position = sourcePosition;
+        zoom = sourceZoom;
+        size = sourceSize;
+        opacity = sourceOpacity;
+        return;
+      }
+      std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart - animationDelay);
+
       std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
       float fraction = time_span.count() / target.count();
       switch(positionEasingType) {

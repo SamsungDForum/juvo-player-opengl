@@ -54,7 +54,7 @@ class Tile {
 
     void render(Text &text);
     void setTexture(char *pixels, int width, int heigth, GLuint format);
-    void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, int bounce = 0);
+    void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce = 0);
 
     void setId(int id) { this->id = id; }
     int  getId() { return id; }
@@ -146,42 +146,42 @@ void Tile::initTexture() {
 
 void Tile::initGL() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "attribute vec2 a_texCoord;     \n"
-    "varying vec2 v_texCoord;       \n"
-    "void main()                    \n"
-    "{                              \n"
-    "  v_texCoord = a_texCoord;     \n"
-    "  gl_Position = a_position;    \n"
-    "}                              \n";
+    "attribute vec4 a_position;                       \n"
+    "attribute vec2 a_texCoord;                       \n"
+    "varying vec2 v_texCoord;                         \n"
+    "void main()                                      \n"
+    "{                                                \n"
+    "  v_texCoord = a_texCoord;                       \n"
+    "  gl_Position = a_position;                      \n"
+    "}                                                \n";
  
   const GLchar* fShaderTexStr =  
-    "precision mediump float;       \n"
-    "uniform vec2 u_tileSize;       \n"
-    "uniform vec2 u_tilePosition;   \n"
-    "uniform vec4 u_frameColor;     \n"
-    "uniform float u_frameWidth;    \n"
-    "varying vec2 v_texCoord;       \n"
-    "uniform sampler2D s_texture;   \n"
-    "uniform float u_opacity;       \n"
-    "void main()                    \n"
-    "{                              \n"
-    "  gl_FragColor                 \n"
-    "   = texture2D(s_texture,      \n"
-    "               v_texCoord);    \n"
-    "  gl_FragColor.a = u_opacity;  \n"
-    "                               \n"
-    "  if(u_frameWidth > 0.0) {                  \n"
-    "    vec2 res = u_tileSize;                  \n"
-    "    vec2 pos = gl_FragCoord.xy - u_tilePosition;              \n"
-    "    if(pos.x <= u_frameWidth ||             \n"
-    "       pos.x >= res.x - u_frameWidth ||     \n"
-    "       pos.y <= u_frameWidth ||             \n"
-    "       pos.y >= res.y - u_frameWidth) {     \n"
-    "       gl_FragColor.rgb = u_frameColor.rgb; \n"
-    "    }                                       \n"
-    "  }                                         \n"
-    "}                              \n";
+    "precision mediump float;                         \n"
+    "uniform vec2 u_tileSize;                         \n"
+    "uniform vec2 u_tilePosition;                     \n"
+    "uniform vec4 u_frameColor;                       \n"
+    "uniform float u_frameWidth;                      \n"
+    "varying vec2 v_texCoord;                         \n"
+    "uniform sampler2D s_texture;                     \n"
+    "uniform float u_opacity;                         \n"
+    "void main()                                      \n"
+    "{                                                \n"
+    "  gl_FragColor                                   \n"
+    "   = texture2D(s_texture,                        \n"
+    "               v_texCoord);                      \n"
+    "  gl_FragColor.a = u_opacity;                    \n"
+    "                                                 \n"
+    "  if(u_frameWidth > 0.0) {                       \n"
+    "    vec2 res = u_tileSize;                       \n"
+    "    vec2 pos = gl_FragCoord.xy - u_tilePosition; \n"
+    "    if(pos.x <= u_frameWidth ||                  \n"
+    "       pos.x >= res.x - u_frameWidth ||          \n"
+    "       pos.y <= u_frameWidth ||                  \n"
+    "       pos.y >= res.y - u_frameWidth) {          \n"
+    "       gl_FragColor.rgb = u_frameColor.rgb;      \n"
+    "    }                                            \n"
+    "  }                                              \n"
+    "}                                                \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
@@ -228,20 +228,17 @@ Tile::~Tile() {
     glDeleteTextures(1, &textureId);
 }
 
-void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, int bounce) {
+void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce) {
   TileAnimation::Easing positionEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
-
-  if(bounce) {
-    if(animation.isActive() && animation.isBounce())
-      return;
+  if(bounce && !animation.isActive())
     positionEasing = bounce < 0 ? TileAnimation::Easing::BounceLeft : TileAnimation::Easing::BounceRight;
-  }
 
   TileAnimation::Easing zoomEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
   TileAnimation::Easing sizeEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
   TileAnimation::Easing opacityEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
   animation = TileAnimation(std::chrono::high_resolution_clock::now(),
                             std::chrono::milliseconds(duration),
+                            std::chrono::milliseconds(delay),
                             {x, y},
                             position,
                             positionEasing,
@@ -338,8 +335,8 @@ void Tile::render(Text &text) {
 
   GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity"); // TODO: Store the location somewhere.
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_BLEND);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
