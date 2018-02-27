@@ -88,7 +88,7 @@ void Background::initGL() {
     "  gl_FragColor                 \n"
     "   = texture2D(s_texture,      \n"
     "               v_texCoord);    \n"
-    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), 1.0 - pow(gl_FragCoord.y / 1920.0, 0.9) * pow(gl_FragCoord.x / 1080.0, 0.5));  \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), clamp(0.95 - pow(gl_FragCoord.y / 1920.0, 0.9) * pow(gl_FragCoord.x / 1080.0, 0.5), 0.0, 1.0));  \n"
     "  gl_FragColor.a *= u_opacity; \n"
     "}                              \n";
 
