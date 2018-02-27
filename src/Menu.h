@@ -52,7 +52,7 @@ private:
   const float zoom = 1.1;
 #endif
   const int animationsDurationMilliseconds = 320;
-  const int fadingDurationMilliseconds = 1000;
+  const int fadingDurationMilliseconds = 500;
   const bool bouncing = true;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> fpsT;
@@ -165,7 +165,7 @@ void Menu::initialize() {
   fpsT = std::chrono::high_resolution_clock::now();
 
   background.setViewport(viewportWidth, viewportHeight);
-  background.setOpacity(1.0);
+  background.setOpacity(0.0);
 }
 
 Menu::~Menu() {
@@ -181,6 +181,8 @@ void Menu::render() {
     loader.render(text);
   else if(renderMenu) {
     float bgOpacity = background.getOpacity();
+    if(bgOpacity == 1.0)
+      background.setClearColor({}); // opaque
     if(backgroundEnabled) {
       background.render(text);
 #ifdef WIDE_MARGIN
@@ -368,6 +370,7 @@ int Menu::AddFont(char *data, int size) {
 void Menu::ShowLoader(bool enabled, int percent) {
   if(enabled == false) {
     loaderEnabled = false;
+    background.setClearColor({0.0, 0.0, 0.0});
     ShowMenu(true);
   }
   else if(backgroundEnabled == true) {

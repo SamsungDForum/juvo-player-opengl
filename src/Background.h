@@ -23,6 +23,7 @@ class Background {
     int viewportHeight;
     float opacity;
     Tile *sourceTile;
+    std::vector<float> clearColor;
 
   private:
     void initGL();
@@ -36,6 +37,7 @@ class Background {
     void setOpacity(float opacity);
     void setViewport(int viewportWidth, int viewportHeight);
     void setSourceTile(Tile *sourceTile);
+    void setClearColor(std::vector<float> color);
     float getOpacity();
 };
 
@@ -45,7 +47,8 @@ Background::Background()
     viewportWidth(0),
     viewportHeight(0),
     opacity(0),
-    sourceTile(nullptr) {
+    sourceTile(nullptr),
+    clearColor({}) {
   initGL();
 
 }
@@ -56,7 +59,8 @@ Background::Background(int viewportWidth, int viewportHeight, float opacity)
     viewportWidth(viewportWidth),
     viewportHeight(viewportHeight),
     opacity(opacity),
-    sourceTile(nullptr) {
+    sourceTile(nullptr),
+    clearColor({}) {
   initGL();
 }
 
@@ -84,7 +88,8 @@ void Background::initGL() {
     "  gl_FragColor                 \n"
     "   = texture2D(s_texture,      \n"
     "               v_texCoord);    \n"
-    "  gl_FragColor.a = u_opacity * pow(gl_FragCoord.y / 1920.0, 2.0) * pow(gl_FragCoord.x / 1080.0, 0.5);  \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), 1.0 - pow(gl_FragCoord.y / 1920.0, 0.9) * pow(gl_FragCoord.x / 1080.0, 0.5));  \n"
+    "  gl_FragColor.a *= u_opacity; \n"
     "}                              \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -110,7 +115,10 @@ void Background::render(Text &text) {
   GLuint textureId = sourceTile != nullptr ? sourceTile->getTextureId() : GL_INVALID_VALUE;
   opacity = sourceTile != nullptr ? sourceTile->getOpacity() : 1.0;
 
-  glClearColor(0.0f, 0.0f, 0.0f, opacity);
+  if(clearColor.size() < 3)
+    glClearColor(0.0f, 0.0f, 0.0f, opacity);
+  else
+    glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
   glClear(GL_COLOR_BUFFER_BIT);
   opacity *= 1.0;
 
@@ -207,5 +215,9 @@ void Background::setViewport(int viewportWidth, int viewportHeight) {
 
 void Background::setSourceTile(Tile *sourceTile) {
   this->sourceTile = sourceTile;
+}
+
+void Background::setClearColor(std::vector<float> color) {
+  clearColor = color;
 }
 #endif // _BACKGRODUN_H_
