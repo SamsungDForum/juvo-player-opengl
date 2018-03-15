@@ -18,10 +18,13 @@
 class Playback {
 private:
   enum class State {
-    Play,
-    Pause,
-    Stop,
-    Loading
+    Idle = 0,
+    Preparing = 1,
+    Prepared = 2,
+    Stopped = 3,
+    Paused = 4,
+    Playing = 5,
+    Error = 6,
   };
 
   enum class Icon {
@@ -52,8 +55,21 @@ private:
   const int viewportWidth = 1920;
   const int viewportHeight = 1080;
   const int progressBarWidth = 1500;
-  const int progressBarHeight = 2;
+  const int progressBarHeight = 8;
   const int progressBarMarginBottom = 100;
+
+  GLint posBarLoc =       GL_INVALID_VALUE; 
+  GLuint paramBarLoc =    GL_INVALID_VALUE; 
+  GLuint opacityBarLoc =  GL_INVALID_VALUE; 
+  GLuint viewportBarLoc = GL_INVALID_VALUE;
+  GLuint sizeBarLoc =     GL_INVALID_VALUE; 
+  GLuint marginBarLoc =   GL_INVALID_VALUE;  
+
+  GLuint samplerLoc = GL_INVALID_VALUE;
+  GLuint colLoc =     GL_INVALID_VALUE;
+  GLuint opacityLoc = GL_INVALID_VALUE;
+  GLuint posLoc =     GL_INVALID_VALUE;
+  GLuint texLoc =     GL_INVALID_VALUE;
 
 private:
   bool initialize();
@@ -80,7 +96,7 @@ Playback::Playback()
   iconProgramObject(GL_INVALID_VALUE),
   icons(std::vector<GLuint>(static_cast<int>(Icon::LENGTH), GL_INVALID_VALUE)),
   enabled(false),
-  state(State::Loading),
+  state(State::Idle),
   currentTime(0),
   totalTime(0),
   displayText("Loading..."),
@@ -110,7 +126,9 @@ bool Playback::initialize() {
     "uniform float u_margin;                                                     \n"
     "                                                                            \n"
     "#define PROG_A vec4(1.0, 1.0, 1.0, 1.0)                                     \n"
-    "#define PROG_B vec4(0.5, 0.5, 0.5, 0.2)                                     \n"
+    "#define FRAM_A vec4(0.0, 0.0, 0.0, 1.0)                                     \n"
+    "#define PROG_B vec4(0.5, 0.5, 0.5, 0.5)                                     \n"
+    "#define FRAM_B vec4(0.0, 0.0, 0.0, 0.5)                                     \n"
     "#define TRANSP vec4(0.0, 0.0, 0.0, 0.0)                                     \n"
     "                                                                            \n"
     "vec4 progressBar(vec2 pos, vec2 size, vec2 res, float dot, float prog) {    \n"
@@ -121,14 +139,25 @@ bool Playback::initialize() {
     "    p.x <= pos.x + size.x &&                                                \n"
     "    p.y >= pos.y &&                                                         \n"
     "    p.y <= pos.y + size.y) {                                                \n"
-    "    if(p.x <= progPoint.x)                                                  \n"
+    "    if(abs(p.x - pos.x) < 1.0                                               \n"
+    "    || abs(p.y - pos.y) < 1.0                                               \n"
+    "    || abs(p.x - (pos.x + size.x)) < 1.0                                    \n"
+    "    || abs(p.y - (pos.y + size.y)) < 1.0) {                                 \n"
+    "      if(p.x < progPoint.x)                                                 \n"
+    "        c = FRAM_A;                                                         \n"
+    "      else                                                                  \n"
+    "        c = FRAM_B;                                                         \n"
+    "    }                                                                       \n"
+    "    else if(p.x < progPoint.x)                                              \n"
     "      c = PROG_A;                                                           \n"
     "    else                                                                    \n"
     "      c = PROG_B;                                                           \n"
     "  }                                                                         \n"
     "  if(length(p - progPoint) < dot) {                                         \n"
-    "    c = PROG_A;                                                             \n"
-    "    c.a = 1.0 - pow(1.0 - (dot - length(p - progPoint)) / dot, 3.0);        \n"
+    "    float a = 1.0 - pow(1.0 - (dot - length(p - progPoint)) / dot, 3.0);    \n"
+    "    vec4 d = mix(PROG_A, FRAM_A, 1.0 - a);                                  \n"
+    "    d.a = a;                                                                \n"
+    "    c = mix(c, d, 0.95);                                                     \n"
     "  }                                                                         \n"
     "  return c;                                                                 \n"
     "}                                                                           \n"
@@ -138,7 +167,7 @@ bool Playback::initialize() {
     "  vec2 res = u_viewport;                                                    \n"
     "  vec2 size = u_size;                                                       \n"
     "  vec2 pos = vec2((res.x - size.x) / 2.0, u_margin);                        \n"
-    "  vec4 col = progressBar(pos, size, res, 5.0 * size.y, u_param);            \n"
+    "  vec4 col = progressBar(pos, size, res, 2.0 * size.y, u_param);            \n"
     "  gl_FragColor = vec4(col.rgb, col.a * u_opacity);                          \n"
     "                                                                            \n"
     "}                                                                           \n";
@@ -157,6 +186,13 @@ bool Playback::initialize() {
   glAttachShader(barProgramObject, vertexShader);
   glAttachShader(barProgramObject, fragmentShader);
   glLinkProgram(barProgramObject);
+
+  posBarLoc = glGetAttribLocation(barProgramObject, "a_position");
+  paramBarLoc = glGetUniformLocation(barProgramObject, "u_param");
+  opacityBarLoc = glGetUniformLocation(barProgramObject, "u_opacity");
+  viewportBarLoc = glGetUniformLocation(barProgramObject, "u_viewport");
+  sizeBarLoc = glGetUniformLocation(barProgramObject, "u_size");
+  marginBarLoc = glGetUniformLocation(barProgramObject, "u_margin");
 
   const GLchar* iconVShaderTexStr =
     "attribute vec4 a_position;                                            \n"
@@ -197,6 +233,12 @@ bool Playback::initialize() {
   glAttachShader(iconProgramObject, fragmentShader);
   glLinkProgram(iconProgramObject);
 
+  samplerLoc = glGetUniformLocation(iconProgramObject, "s_texture");
+  colLoc = glGetUniformLocation(iconProgramObject, "u_color");
+  opacityLoc = glGetUniformLocation(iconProgramObject, "u_opacity");
+  posLoc = glGetAttribLocation(iconProgramObject, "a_position");
+  texLoc = glGetAttribLocation(iconProgramObject, "a_texCoord");
+
   return true;
 }
 
@@ -219,19 +261,16 @@ void Playback::renderIcons(float opacity) {
   std::pair<int, int> position = {150, 100};
   position = {position.first - size.first / 2, position.second - size.second / 2};
   switch(state) {
-    case State::Play:
-      icon = Icon::Play;
-      color = {1.0, 1.0, 1.0, 1.0};
-      break;
-    case State::Pause:
+    case State::Playing:
       icon = Icon::Pause;
       color = {1.0, 1.0, 1.0, 1.0};
       break;
-    case State::Stop:
-      icon = Icon::Stop;
+    case State::Paused:
+    case State::Prepared:
+    case State::Stopped:
+      icon = Icon::Play;
       color = {1.0, 1.0, 1.0, 1.0};
       break;
-    case State::Loading:
     default:
       icon = Icon::Play;
       color = {0.5, 0.5, 0.5, 1.0};
@@ -265,40 +304,83 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
   float down = (downPx / vH) * 2.0 - 1.0;
   float top = (topPx / vH) * 2.0 - 1.0;
 
-  GLfloat vVertices[] = { left,   top,  0.0f,
-                          left,   down, 0.0f,
-                          right,  down, 0.0f,
-                          right,  top,  0.0f
+  GLfloat vertices[] = { left,   top,  0.0f,
+                         left,   down, 0.0f,
+                         right,  down, 0.0f,
+                         right,  top,  0.0f
   };
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
   glUseProgram(iconProgramObject);
 
-  GLuint colorLoc = glGetUniformLocation(iconProgramObject, "u_color");
-  if(color.size() >= 3)
-    glUniform3f(colorLoc, color[0], color[1], color[2]);
-  else
-    glUniform3f(colorLoc, 1.0, 1.0, 1.0);
-
   glBindTexture(GL_TEXTURE_2D, icons[static_cast<int>(icon)]);
-  GLuint samplerLoc = glGetUniformLocation(iconProgramObject, "s_texture");
   glUniform1i(samplerLoc, 0);
 
-  GLint posLoc = glGetAttribLocation(iconProgramObject, "a_position");
-  glEnableVertexAttribArray(posLoc);
-  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
-
-  float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
-                       1.0f, 1.0f,    1.0f, 0.0f };
+  float tex[] = { 0.0f, 0.0f,    0.0f, 1.0f,
+                  1.0f, 1.0f,    1.0f, 0.0f };
                        
-  GLint texLoc = glGetAttribLocation(iconProgramObject, "a_texCoord");
   glEnableVertexAttribArray(texLoc);
-  glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
+  glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
 
-  GLuint opacityLoc = glGetUniformLocation(iconProgramObject, "u_opacity");
+  bool outline = true;
+  if(outline) {
+    GLfloat scale = 1.0;
+    GLfloat outlineOffset = 2.0 / vW * scale * 1.0;
+
+    if(color.size() < 3)
+      glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+    else if(color[0] + color[1] + color[2] < 1.5f)
+      glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+    else
+      glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
+
+    glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
+
+    int dir[] = {
+       0,  1,
+      -1,  1,
+      -1,  0,
+      -1, -1,
+       0, -1,
+       1, -1,
+       1,  0,
+       1,  1
+    };
+
+    for(int i = 0; i < 8; ++i) {
+      GLfloat outlineV[4 * 3];
+      for(int j = 0; j < 4 * 3; ++j) {
+        switch(j % 3) {
+          case 0:
+            outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset;
+            break;
+          case 1:
+            outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset;
+            break;
+          case 2:
+            outlineV[j] = vertices[j];
+            break;
+        }
+      }
+
+      glEnableVertexAttribArray(posLoc);
+      glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, outlineV);
+
+      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+    }
+  }
+
+  if(color.size() >= 3)
+    glUniform3f(colLoc, color[0], color[1], color[2]);
+  else
+    glUniform3f(colLoc, 1.0, 1.0, 1.0);
+
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   //glEnable(GL_BLEND);
+
+  glEnableVertexAttribArray(posLoc);
+  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
@@ -331,7 +413,7 @@ void Playback::renderProgressBar(float opacity) {
   float top = 1.0f;
   float left = -1.0f;
   float right = 1.0f;
-  GLfloat vVertices[] = { left,   top,  0.0f,
+  GLfloat vertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
                           right,  top,  0.0f
@@ -340,27 +422,21 @@ void Playback::renderProgressBar(float opacity) {
 
   glUseProgram(barProgramObject);
 
-  GLint posLoc = glGetAttribLocation(barProgramObject, "a_position");
-  glEnableVertexAttribArray(posLoc);
-  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
+  glEnableVertexAttribArray(posBarLoc);
+  glVertexAttribPointer(posBarLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
-  GLuint paramLoc = glGetUniformLocation(barProgramObject, "u_param");
-  glUniform1f(paramLoc, totalTime ? static_cast<float>(currentTime) / static_cast<float>(totalTime) : 0.0f);
+  glUniform1f(paramBarLoc, totalTime ? static_cast<float>(currentTime) / static_cast<float>(totalTime) : 0.0f);
 
-  GLuint opacityLoc = glGetUniformLocation(barProgramObject, "u_opacity");
-  glUniform1f(opacityLoc, opacity);
+  glUniform1f(opacityBarLoc, opacity);
 
-  GLuint viewportLoc = glGetUniformLocation(barProgramObject, "u_viewport");
-  glUniform2f(viewportLoc, viewportWidth, viewportHeight);
+  glUniform2f(viewportBarLoc, viewportWidth, viewportHeight);
 
-  GLuint sizeLoc = glGetUniformLocation(barProgramObject, "u_size");
-  glUniform2f(sizeLoc, progressBarWidth, progressBarHeight);
+  glUniform2f(sizeBarLoc, progressBarWidth, progressBarHeight);
 
-  GLuint marginLoc = glGetUniformLocation(barProgramObject, "u_margin");
-  glUniform1f(marginLoc, progressBarMarginBottom);
+  glUniform1f(marginBarLoc, progressBarMarginBottom);
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_BLEND);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
@@ -428,9 +504,18 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
 }
 
 std::string Playback::timeToString(int time) {
+  time /= 1000;
   int h = time / 3600;
   int m = (time % 3600) / 60;
   int s = time % 60;
+  return (h ? std::to_string(h) : "") // hours
+       + (h ? ":" : "") // h:m colon
+       + (m < 10 ? "0" : "") // m leading 0
+       + (std::to_string(m)) // minutes
+       + (":") // m:s colon
+       + (s < 10 ? "0" : "") // s leading 0
+       + std::to_string(s); // seconds
+  /*
   return (h ? std::to_string(h) : "") // hours
        + (h ? ":" : "") // h:m colon
        + (h && m < 10 ? "0" : "") // m leading 0
@@ -438,6 +523,7 @@ std::string Playback::timeToString(int time) {
        + (h || m ? ":" : "") // m:s colon
        + ((h|| m) && s < 10 ? "0" : "") // s leading 0
        + std::to_string(s); // seconds
+       */
 }
 
 #endif // _PLAYBACK_H_

@@ -105,7 +105,7 @@ class TileAnimation {
               sourceOpacity(sourceOpacity),
               targetOpacity(targetOpacity),
               opacityEasingType(opacityEasingType),
-              active(true) {
+              active(animationDuration > std::chrono::milliseconds(0) ? true : false) {
     }
 
     void update(std::pair<int, int> &position, float &zoom, std::pair<int, int> &size, float &opacity) {

@@ -14,6 +14,7 @@
 #include "Tile.h"
 #include "Text.h"
 #include "log.h"
+#include "TileAnimation.h"
 
 class Background {
   private:
@@ -22,12 +23,20 @@ class Background {
     int viewportWidth;
     int viewportHeight;
     float opacity;
+    float black;
     Tile *sourceTile;
     std::vector<float> clearColor;
+    TileAnimation animation;
 
   private:
     void initGL();
     void checkShaderCompileError(GLuint shader);
+
+    GLuint samplerLoc = GL_INVALID_VALUE;
+    GLint posLoc =      GL_INVALID_VALUE;
+    GLint texLoc =      GL_INVALID_VALUE;
+    GLuint opacityLoc = GL_INVALID_VALUE;
+    GLuint blackLoc = GL_INVALID_VALUE;
 
   public:
     Background();
@@ -35,10 +44,12 @@ class Background {
     ~Background();
     void render(Text &text);
     void setOpacity(float opacity);
+    void setBlack(float black);
     void setViewport(int viewportWidth, int viewportHeight);
-    void setSourceTile(Tile *sourceTile);
+    void setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay);
     void setClearColor(std::vector<float> color);
     float getOpacity();
+    float getBlack();
 };
 
 Background::Background()
@@ -47,6 +58,7 @@ Background::Background()
     viewportWidth(0),
     viewportHeight(0),
     opacity(0),
+    black(1.0),
     sourceTile(nullptr),
     clearColor({}) {
   initGL();
@@ -59,6 +71,7 @@ Background::Background(int viewportWidth, int viewportHeight, float opacity)
     viewportWidth(viewportWidth),
     viewportHeight(viewportHeight),
     opacity(opacity),
+    black(1.0),
     sourceTile(nullptr),
     clearColor({}) {
   initGL();
@@ -83,12 +96,16 @@ void Background::initGL() {
     "varying vec2 v_texCoord;       \n"
     "uniform sampler2D s_texture;   \n"
     "uniform float u_opacity;       \n"
+    "uniform float u_black;         \n"
     "void main()                    \n"
     "{                              \n"
-    "  gl_FragColor                 \n"
-    "   = texture2D(s_texture,      \n"
-    "               v_texCoord);    \n"
-    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), clamp(0.95 - pow(gl_FragCoord.y / 1920.0, 0.9) * pow(gl_FragCoord.x / 1080.0, 0.5), 0.0, 1.0));  \n"
+    "  gl_FragColor = texture2D(s_texture, v_texCoord);    \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), \n"
+//    "                         clamp(0.95 - pow(gl_FragCoord.y / 1920.0, 0.9) * pow(gl_FragCoord.x / 1080.0, 0.5), 0.0, 1.0)  \n"
+    "                         clamp((-atan(gl_FragCoord.x / 1920.0 - 0.5) / (1.57079632679) + 0.6) \n"
+    " + pow(1.0 - gl_FragCoord.y / 1080.0, 6.0) \n"
+    "                    , 0.0, 1.0));        \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), u_black); \n"
     "  gl_FragColor.a *= u_opacity; \n"
     "}                              \n";
 
@@ -108,6 +125,12 @@ void Background::initGL() {
   glLinkProgram(programObject);
 
   glBindAttribLocation(programObject, 0, "a_position");
+
+  samplerLoc = glGetUniformLocation(programObject, "s_texture");
+  posLoc = glGetAttribLocation(programObject, "a_position");
+  texLoc = glGetAttribLocation(programObject, "a_texCoord");
+  opacityLoc = glGetUniformLocation(programObject, "u_opacity");
+  blackLoc = glGetUniformLocation(programObject, "u_black");
 }
 
 void Background::render(Text &text) {
@@ -147,24 +170,26 @@ void Background::render(Text &text) {
   glUseProgram(programObject);
 
   glBindTexture(GL_TEXTURE_2D, textureId);
-  GLuint samplerLoc = glGetUniformLocation(programObject, "s_texture");
   glUniform1i(samplerLoc, 0);
 
-  GLint posLoc = glGetAttribLocation(programObject, "a_position");
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
   float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
                        1.0f, 1.0f,    1.0f, 0.0f };
                        
-  GLint texLoc = glGetAttribLocation(programObject, "a_texCoord");
   glEnableVertexAttribArray(texLoc);
   glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
-  GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
+  std::pair<int, int> position {0, 0};
+  float zoom = 0;
+  std::pair<int, int> size {0, 0};
+  animation.update(position, zoom, size, black);
+  glUniform1f(blackLoc, static_cast<GLfloat>(black));
+
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_BLEND);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
@@ -180,7 +205,7 @@ void Background::render(Text &text) {
     int fontHeight = 24;
     int leftText = 100;
     int topText = viewportHeight - fontHeight - 300;
-    text.render(description, {leftText, topText}, {0, fontHeight}, {viewportWidth, viewportHeight}, 0, {1.0, 1.0, 1.0, opacity}, true);
+    text.render(description, {leftText, topText}, {viewportWidth - 2 * leftText, fontHeight}, {viewportWidth, viewportHeight}, 0, {1.0, 1.0, 1.0, opacity}, true);
   }
 }
 
@@ -190,6 +215,14 @@ void Background::setOpacity(float opacity) {
 
 float Background::getOpacity() {
   return opacity;
+}
+
+void Background::setBlack(float black) {
+  this->black = black;
+}
+
+float Background::getBlack() {
+  return black;
 }
 
 void Background::checkShaderCompileError(GLuint shader) {
@@ -213,7 +246,25 @@ void Background::setViewport(int viewportWidth, int viewportHeight) {
 }
 
 
-void Background::setSourceTile(Tile *sourceTile) {
+void Background::setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay) {
+  if(!animation.isActive() || duration != std::chrono::milliseconds(0)) {
+    animation = TileAnimation(std::chrono::high_resolution_clock::now(),
+                              duration,
+                              delay,
+                              {0, 0},
+                              {0, 0},
+                              TileAnimation::Easing::Linear,
+                              0,
+                              0,
+                              TileAnimation::Easing::Linear,
+                              {0, 0},
+                              {0, 0},
+                              TileAnimation::Easing::Linear,
+                              1.0,
+                              0.0,
+                              TileAnimation::Easing::CubicInOut);
+    black = 1.0;
+  }
   this->sourceTile = sourceTile;
 }
 

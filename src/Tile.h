@@ -340,6 +340,7 @@ void Tile::render(Text &text) {
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
+  /*
   if(!name.empty()) {
     std::pair<int, int> viewport = {vW, vH};
     int fontHeight = 24;
@@ -352,6 +353,7 @@ void Tile::render(Text &text) {
 
     text.render(name, {leftText, topText}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, opacity}, true);
   }
+  */
 }
 
 void Tile::setTexture(char *pixels, int width, int height, GLuint format) {

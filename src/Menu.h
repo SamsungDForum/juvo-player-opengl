@@ -150,8 +150,13 @@ void Menu::initialize() {
   */
   glViewport(0, 0, viewportWidth, viewportHeight);
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
   glEnable(GL_BLEND);
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glDisable(GL_STENCIL_TEST);
 
   backgroundOpacity = 1.0;
   renderMenu = true;
@@ -288,9 +293,9 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, int tileWidth, int tileHei
   horizontalPosition = sideMargin + tileNo * (tileWidth + innerMargin);
 #endif
 
-  if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
-    background.setSourceTile(&tiles[selectedTile]);
-
+/*  if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
+    background.setSourceTile(&tiles[selectedTile], std::chrono::milliseconds(fadingDurationMilliseconds), std::chrono::milliseconds(0));
+*/
   return std::make_pair(horizontalPosition, verticalPosition);
 }
 
@@ -359,7 +364,7 @@ void Menu::SelectTile(int tileNo)
   for(size_t i = 0; i < tiles.size(); ++i)
     tiles[i].moveTo(getTilePosition(i - firstTile, tileWidth, tileHeight, tilesHorizontal, tilesVertical, viewportWidth, viewportHeight), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getTargetSize(), tiles[i].getTargetOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), std::chrono::milliseconds(0), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
   if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
-    background.setSourceTile(&tiles[selectedTile]);
+    background.setSourceTile(&tiles[selectedTile], !bounce ? std::chrono::milliseconds(fadingDurationMilliseconds) : std::chrono::milliseconds(0), std::chrono::milliseconds(0));
 }
 
 int Menu::AddFont(char *data, int size) {

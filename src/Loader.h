@@ -282,8 +282,8 @@ void Loader::render(Text &text) {
   GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity"); // TODO: Store the location somewhere.
   glUniform1f(opacityLoc, 1.0f);
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_BLEND);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
