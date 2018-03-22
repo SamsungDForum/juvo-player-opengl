@@ -107,6 +107,18 @@ void Background::initGL() {
     "                    , 0.0, 1.0));        \n"
     "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), u_black); \n"
     "  gl_FragColor.a *= u_opacity; \n"
+/*    "  if(abs(gl_FragCoord.y - 1080.0 / 2.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 - 1.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 + 1.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 + 2.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 + 3.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 + 4.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 + 5.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 + 6.0 * 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.y - 1080.0 / 2.0 - 96.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.x - 100.0) < 1.0 \n"
+    "  || abs(gl_FragCoord.x - 1820.0) < 1.0) \n"
+    "    gl_FragColor.rgb = vec3(0.0, 1.0, 0.0); \n"*/
     "}                              \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -195,14 +207,14 @@ void Background::render(Text &text) {
 
   std::string name = sourceTile != nullptr ? sourceTile->getName() : "";
   if(!name.empty()) {
-    int fontHeight = 48;
+    int fontHeight = 52;
     int leftText = 100;
     int topText = viewportHeight - fontHeight - 200;
     text.render(name, {leftText, topText}, {0, fontHeight}, {viewportWidth, viewportHeight}, 0, {1.0, 1.0, 1.0, opacity}, true);
   }
   std::string description = sourceTile != nullptr ? sourceTile->getDescription() : "";
   if(!description.empty()) {
-    int fontHeight = 24;
+    int fontHeight = 26;
     int leftText = 100;
     int topText = viewportHeight - fontHeight - 300;
     text.render(description, {leftText, topText}, {viewportWidth - 2 * leftText, fontHeight}, {viewportWidth, viewportHeight}, 0, {1.0, 1.0, 1.0, opacity}, true);

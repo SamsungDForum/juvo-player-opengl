@@ -62,6 +62,8 @@ private:
     glm::ivec2 bboxMax;
     int ascender;
     int descender;
+    int max_descend; // manually computed
+    int max_bearingx; // manually computed
     int height;
     glm::ivec2 max_advance;
     int underline_position;
@@ -71,7 +73,6 @@ private:
 private:
   GLuint programObject;
   FT_Library ftLibrary;
-  FT_Face ftFace;
   std::vector<Font> fonts;
 
   std::unordered_map<TextKey, GLuint, TextKey> generatedTextures;
@@ -79,18 +80,21 @@ private:
 private:
   void prepareShaders();
   void checkShaderCompileError(GLuint shader);
+  void renderToTexture(const std::string &text, const std::pair<int, int> &size, const std::pair<int, int> &viewport, int fontId);
 
 public:
   Text();
   ~Text();
   int AddFont(char *data, int size, int fontsize);
   void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
-  std::pair<int, int> getTextSize(std::string text, std::pair<int, int> size, int fondId);
-  GLuint getCachedTexture(std::string text, int fontId);
-  std::pair<int, int> getTextSize(std::string text, int fontId);
-  void draw(std::string text, int fontId, std::vector<float> color);
-  void advance(std::pair<float, float> &position, char character, int fontId);
-  void breakLines(std::string &text, int fontId, float w);
+  GLuint getCachedTexture(const std::string &text, int fontId);
+  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
+  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, float scale);
+  std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
+  void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f);
+  void breakLines(std::string &text, int fontId, float w, float scale = 1.0f);
+  float getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport);
+
 };
 
 Text::Text() {
@@ -124,8 +128,6 @@ void Text::prepareShaders() {
     "  gl_FragColor = vec4(1.0, 1.0, 1.0, texture2D(s_texture, v_texCoord).r * u_opacity) * vec4(u_color, 1.0); \n"
     "}                             \n";
 
-  // TODO: when alpha is not 0.0 and not 1.0, instead of blending with background image, font blends with video...
-
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
   glCompileShader(vertexShader);
@@ -150,15 +152,18 @@ void Text::prepareShaders() {
 }
 
 int Text::AddFont(char *data, int size, int fontsize) {
+  FT_Face ftFace;
   FT_Error error = FT_New_Memory_Face(ftLibrary, reinterpret_cast<FT_Byte*>(data), size, 0, &ftFace); // FT_Byte* is an alias for unsigned char*
   if(error)
     return -1;
 
   Font font;
+  font.max_descend = 0;
 
   FT_Set_Pixel_Sizes(ftFace, 0, fontsize);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
   for(GLubyte c = 0; c < 128; ++c) {
     if(FT_Load_Char(ftFace, c, FT_LOAD_RENDER)) {
       continue;
@@ -187,9 +192,13 @@ int Text::AddFont(char *data, int size, int fontsize) {
       glm::ivec2(ftFace->glyph->bitmap_left, ftFace->glyph->bitmap_top),
       glm::ivec2(static_cast<GLuint>(ftFace->glyph->advance.x), static_cast<GLuint>(ftFace->glyph->advance.y))
     };
+    _INFO("font[%d].ch[%d (%c)]: size={%d, %d}, bearing={%d, %d}, advance={%d, %d}", fonts.size(), c, isprint(c) ? c : '?', character.size.x, character.size.y, character.bearing.x, character.bearing.y, character.advance.x, character.advance.y);
     font.max_advance.x = std::max(font.max_advance.x, character.advance.x);
     font.max_advance.y = std::max(font.max_advance.y, character.advance.y);
     font.ch.insert(std::pair<GLchar, Character>(c, character));
+    font.max_descend = std::max(font.max_descend, character.size.y - character.bearing.y);
+    font.max_bearingx = std::max(font.max_bearingx, character.bearing.x);
+
   }
 
   font.id = fonts.size();
@@ -203,12 +212,27 @@ int Text::AddFont(char *data, int size, int fontsize) {
   font.underline_position = ftFace->underline_position;
   font.underline_thickness = ftFace->underline_thickness;
 
+  _INFO("font[%d].size=%d", fonts.size(), font.size);
+  _INFO("font[%d].height=%d", fonts.size(), font.height);
+  _INFO("font[%d].units_per_EM=%d", fonts.size(), font.units_per_EM);
+  _INFO("font[%d].bboxMin=%d", fonts.size(), font.bboxMin);
+  _INFO("font[%d].bboxMax=%d", fonts.size(), font.bboxMax);
+  _INFO("font[%d].ascender=%d", fonts.size(), font.ascender);
+  _INFO("font[%d].descender=%d", fonts.size(), font.descender);
+  _INFO("font[%d].underline_position=%d", fonts.size(), font.underline_position);
+  _INFO("font[%d].underline_thickness=%d", fonts.size(), font.underline_thickness);
+  _INFO("font[%d].max_advance.x=%d", fonts.size(), font.max_advance.x);
+  _INFO("font[%d].max_advance.y=%d", fonts.size(), font.max_advance.y);
+  _INFO("font[%d].max_descend=%d", fonts.size(), font.max_descend);
+  _INFO("font[%d].max_bearingx=%d", fonts.size(), font.max_bearingx);
+
   fonts.push_back(font);
   FT_Done_Face(ftFace);
   return fonts.size() - 1;
 }
 
-GLuint Text::getCachedTexture(std::string text, int fontId) {
+GLuint Text::getCachedTexture(const std::string &text, int fontId) {
+  /*
   if(generatedTextures.count(TextKey{text, 0}))
     return generatedTextures.at(TextKey{text, 0});
 
@@ -222,7 +246,7 @@ GLuint Text::getCachedTexture(std::string text, int fontId) {
 
   glBindTexture(GL_TEXTURE_2D, texture);
   std::pair<int, int> size = getTextSize(text, fontId);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.first, size.second, 0, GL_RGB, GL_UNSIGNED_BYTE/*GL_UNSIGNED_SHORT_5_6_5*/, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.first, size.second, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -239,7 +263,7 @@ GLuint Text::getCachedTexture(std::string text, int fontId) {
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if(status == GL_FRAMEBUFFER_COMPLETE) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT/* | GL_DEPTH_BUFFER_BIT*/);
+    glClear(GL_COLOR_BUFFER_BIT);
     draw(text, fontId, {1.0f, 1.0f, 1.0f, 1.0f}); // set shaders and uniforms and draw to framebuffer
   }
 
@@ -250,273 +274,251 @@ GLuint Text::getCachedTexture(std::string text, int fontId) {
 
   generatedTextures.insert({TextKey{text, 0}, texture});
   return texture;
+  */
+  return -1;
 }
 
-std::pair<int, int> Text::getTextSize(std::string text, std::pair<int, int> size, int fontId) {
-  int width = 0;
-  GLfloat fontH = 1;
-  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c)
-    fontH = std::max(static_cast<float>(fontH), static_cast<float>(fonts[fontId].ch[*c].size.y));
-  GLfloat scale = size.second / fontH;
-  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
-    Character ch = fonts[fontId].ch[*c];
-    width += (ch.advance.x >> 6);
-  }
-  return {width * scale, size.second};
-
- /* std::pair<int, int> _size = getTextSize(text, fontId);
-  GLfloat scale = size.second / fonts[fontId].height;
-  return {_size.first * scale, _size.second};*/
+float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) {
+  if(viewport.second == 0 || fonts[fontId].height == 0)
+    return 1.0;
+  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(viewport.second);
 }
 
-std::pair<int, int> Text::getTextSize(std::string text, int fontId) {
+std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns text size in range [0.0, 2.0]
+  float scale = getScale(size, fontId, viewport);
+  return getTextSize(text, size, fontId, scale);
+}
+
+std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, float scale) { // returns text size in range [0.0, 2.0]
+  std::string t = text;
+  breakLines(t, fontId, size.first, scale);
+  return getTextSize(t, fontId, scale);
+}
+
+std::pair<float, float> Text::getTextSize(const std::string &text, int fontId, float scale) {
   std::pair<float, float> position;
-  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c)
-    advance(position, *c, fontId);
-  advance(position, '\n', fontId);
-  return static_cast<std::pair<int, int>>(position);
+  float maxWidth = 0;
+  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
+    advance(position, *c, fontId, scale);
+    maxWidth = std::max(maxWidth, position.first); // new lines reset position.first value
+  }
+  advance(position, '\n', fontId, scale);
+  position.first = maxWidth;
+  return position;
 }
 
-void Text::advance(std::pair<float, float> &position, char character, int fontId) {
+void Text::renderToTexture(const std::string &text, const std::pair<int, int> &size, const std::pair<int, int> &viewport, int fontId) {
+  /*
+  if(size.first > 0)
+    breakLines(text, fontId, size.first);*/
+}
+
+void Text::advance(std::pair<float, float> &position, char character, int fontId, float scale) {
   if(character < 0 || character >= 128)
     return;
   if(character == '\n') {
-    position.second += fonts[fontId].height;
+    position.second -= fonts[fontId].height * scale;
     position.first = 0;
     return;
   }
-  Character ch = fonts[fontId].ch[character];
-  position.first += static_cast<float>(ch.advance.x >> 6); // advance is in 1/64px
+  position.first += static_cast<float>(fonts[fontId].ch[character].advance.x >> 6) * scale; // advance is in 1/64px
 }
 
-void Text::breakLines(std::string &text, int fontId, float w) {
+void Text::breakLines(std::string &text, int fontId, float w, float scale) {
+  if(w == 0)
+    return;
+
   std::pair<float, float> position = {0, 0};
   std::pair<float, float> lastSpaceP = {0, 0};
   int lastSpaceI = -1;
-  for(int i = 0; i != static_cast<int>(text.size()); ++i) {
-    if(position.first >= w && lastSpaceI != -1) {
-      text[lastSpaceI] = '\n';
-      i = lastSpaceI;
+
+  for(int i = 0, n = static_cast<int>(text.size()); i < n; ++i) {
+    std::pair<float, float> newPosition = position;
+    advance(newPosition, text[i], fontId, scale);
+    if(newPosition.first >= w && (i > 0 && !isspace(text[i - 1]))) {
+      if(lastSpaceI != -1) {
+        text[lastSpaceI] = '\n';
+        i = lastSpaceI;
+      }
+      else {
+        text.insert(static_cast<size_t>(i), 1, '\n');
+        ++n;
+      }
       lastSpaceI = -1;
       position = lastSpaceP;
     }
-    else if(text[i] == ' ') {
+    else if(isspace(text[i])) {
       lastSpaceI = i;
       lastSpaceP = position;
     }
-    advance(position, text[i], fontId);
+    advance(position, text[i], fontId, scale);
   }
 }
 
-void Text::draw(std::string text, int fontId, std::vector<float> color) {
-  // TODO: Implement
-}
-
 void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+  bool alignedToOrigin = false; // TODO: add as a function parameter
 
-  if(color.size() >= 4 && color[3] == 0.0f)
+  if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
-  float _vW = viewport.first;
-  float _vH = viewport.second;
-  float _h = size.second;
-  float _xPos = position.first;
-  float _yPos = position.second;
-  float _left = _xPos / _vW * 2 - 1;
-  float _down = _yPos / _vH * 2 - 1;
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f, static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f};
 
+  float scale = getScale(size, fontId, viewport);
+
+  startingPos.first += fonts[fontId].max_bearingx * scale;
+  startingPos.second += (alignedToOrigin ? 0 : fonts[fontId].max_descend) * scale;
+
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
   if(size.first > 0)
-    breakLines(text, fontId, size.first * 2.0);
-
-  GLfloat x = _left;
-  GLfloat y = _down;
-  GLfloat fontH = 1;
-  for(std::string::const_iterator c = text.begin(); c != text.end(); ++c)
-    fontH = std::max(static_cast<float>(fontH), static_cast<float>(fonts[fontId].ch[*c].size.y));
-  GLfloat scale = _h / fontH;
+    breakLines(text, fontId, textMaxWidth, scale);
 
   glUseProgram(programObject);
-  //glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-  //glEnable(GL_BLEND);
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  /*
+  if(0) {
+  glActiveTexture(GL_TEXTURE0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  GLuint texId;
+  glGenTextures(1, &texId);
+  glBindTexture(GL_TEXTURE_2D, texId);
+  glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      GL_LUMINANCE,
+      ftFace->glyph->bitmap.width,
+      ftFace->glyph->bitmap.rows,
+      0,
+      GL_LUMINANCE,
+      GL_UNSIGNED_BYTE,
+      ftFace->glyph->bitmap.buffer
+  );
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
+  */
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  std::pair<float, float> pos = {0.0f, 0.0f};
   std::string::const_iterator c;
   for(c = text.begin(); c != text.end(); ++c) {
     if(*c < 0 || *c >= 128)
       continue;
-    if(*c == '\n') {
-      y -= fonts[fontId].height / _vH * scale * 2.0;
-      x = _left;
-      continue;
-    }
 
-    Character ch = fonts[fontId].ch[*c];
+    if(isprint(*c)) {
+      Character ch = fonts[fontId].ch[*c];
 
-    GLfloat xpos = x + static_cast<float>(ch.bearing.x) / _vW * scale * 2.0;
-    GLfloat ypos = y - static_cast<float>(ch.size.y - ch.bearing.y) / _vH * scale * 2.0;
-    GLfloat w = static_cast<float>(ch.size.x) / _vW * scale * 2.0;
-    GLfloat h = static_cast<float>(ch.size.y) / _vH * scale * 2.0;
+      float xpos = (pos.first + startingPos.first) + static_cast<float>(ch.bearing.x) * scale;
+      float ypos = (pos.second + startingPos.second) - static_cast<float>(ch.size.y - ch.bearing.y) * scale;
+      float w = static_cast<float>(ch.size.x) * scale;
+      float h = static_cast<float>(ch.size.y) * scale;
 
-    GLfloat vertices[] = {
-      xpos,     ypos + h, 0.0f,
-      xpos,     ypos,     0.0f,
-      xpos + w, ypos,     0.0f,
-      xpos,     ypos + h, 0.0f,
-      xpos + w, ypos,     0.0f,
-      xpos + w, ypos + h, 0.0f
-    };
+      float vertices[] = {
+        xpos,     ypos + h, 0.0f,
+        xpos,     ypos,     0.0f,
+        xpos + w, ypos,     0.0f,
+        xpos,     ypos + h, 0.0f,
+        xpos + w, ypos,     0.0f,
+        xpos + w, ypos + h, 0.0f
+      };
 
-    GLfloat tex[] = {
-      0.0, 0.0,
-      0.0, 1.0,
-      1.0, 1.0,
-      0.0, 0.0,
-      1.0, 1.0,
-      1.0, 0.0
-    };
+      float tex[] = {
+        0.0, 0.0,
+        0.0, 1.0,
+        1.0, 1.0,
+        0.0, 0.0,
+        1.0, 1.0,
+        1.0, 0.0
+      };
 
-    glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-    glUniform1i(samplerLoc, 0);
+      glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+      glUniform1i(samplerLoc, 0);
+/*
+      bool outline = true;
+      if(outline) {
+        float outlineOffset = 2.0 * scale;
 
-    bool outline = true;
-    if(outline) {
-      GLfloat outlineOffset = 2.0 / _vW * scale * 2.0;
+        if(color.size() < 3)
+          glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
+        else if(color[0] + color[1] + color[2] < 1.5f)
+          glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+        else
+          glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
 
+        if(color.size() < 4)
+          glUniform1f(opaLoc, 1.0f);
+        else
+          glUniform1f(opaLoc, color[3]);
+
+        glEnableVertexAttribArray(texLoc);
+        glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
+
+        int dir[] = {
+           0,  1,
+          -1,  1,
+          -1,  0,
+          -1, -1,
+           0, -1,
+           1, -1,
+           1,  0,
+           1,  1
+        };
+        for(int i = 0; i < 8; ++i) {
+          float outlineV[6 * 3];
+          for(int j = 0; j < 6 * 3; ++j) {
+            switch(j % 3) {
+              case 0:
+                outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset;
+                break;
+              case 1:
+                outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset;
+                break;
+              case 2:
+                outlineV[j] = vertices[j];
+                break;
+            }
+          }
+
+          glEnableVertexAttribArray(posLoc);
+          glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, outlineV);
+
+          glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+      }
+*/
       if(color.size() < 3)
-        glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
-      else if(color[0] + color[1] + color[2] < 1.5f)
         glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
       else
-        glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
+        glUniform3f(colLoc, color[0], color[1], color[2]);
 
       if(color.size() < 4)
         glUniform1f(opaLoc, 1.0f);
       else
         glUniform1f(opaLoc, color[3]);
 
+      glEnableVertexAttribArray(posLoc);
+      glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+
       glEnableVertexAttribArray(texLoc);
       glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
 
-      int dir[] = {
-         0,  1,
-        -1,  1,
-        -1,  0,
-        -1, -1,
-         0, -1,
-         1, -1,
-         1,  0,
-         1,  1
-      };
-      for(int i = 0; i < 8; ++i) {
-        GLfloat outlineV[6 * 3];
-        for(int j = 0; j < 6 * 3; ++j) {
-          switch(j % 3) {
-            case 0:
-              outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset;
-              break;
-            case 1:
-              outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset;
-              break;
-            case 2:
-              outlineV[j] = vertices[j];
-              break;
-          }
-        }
-
-        glEnableVertexAttribArray(posLoc);
-        glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, outlineV);
-
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-      }
+      glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-
-    if(color.size() < 3)
-      glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
-    else
-      glUniform3f(colLoc, color[0], color[1], color[2]);
-
-    if(color.size() < 4)
-      glUniform1f(opaLoc, 1.0f);
-    else
-      glUniform1f(opaLoc, color[3]);
-
-    glEnableVertexAttribArray(posLoc);
-    glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-
-    glEnableVertexAttribArray(texLoc);
-    glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
-
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    x += static_cast<float>(ch.advance.x >> 6) / _vW * scale * 2.0; // advance is in 1/64px
+    advance(pos, *c, fontId, scale);
   }
   glBindTexture(GL_TEXTURE_2D, 0);
-
   glUseProgram(0);
-
 }
-
-/*void Text::render(std::string text) {
-  return;
-
-  GLfloat x = -0.9;
-  GLfloat y = 0.8;
-  GLfloat scale = 0.001;
-
-  glUseProgram(programObject);
-  //glActiveTexture(GL_TEXTURE0);
-
-  std::string::const_iterator c;
-  for(c = text.begin(); c != text.end(); ++c) {
-    Character ch = fonts[0].ch[*c];
-
-    GLfloat xpos = x + ch.bearing.x * scale;
-    GLfloat ypos = y - (ch.size.y - ch.bearing.y) * scale;
-    GLfloat w = ch.size.x * scale;
-    GLfloat h = ch.size.y * scale;
-
-    GLfloat vertices[] = {
-      xpos,     ypos + h, 0.0f,
-      xpos,     ypos,     0.0f,
-      xpos + w, ypos,     0.0f,
-      xpos,     ypos + h, 0.0f,
-      xpos + w, ypos,     0.0f,
-      xpos + w, ypos + h, 0.0f
-    };
-
-    GLfloat tex[] = {
-      0.0, 0.0,
-      0.0, 1.0,
-      1.0, 1.0,
-      0.0, 0.0,
-      1.0, 1.0,
-      1.0, 0.0
-    };
-
-    glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-    GLuint samplerLoc = glGetUniformLocation(programObject, "s_texture");
-    glUniform1i(samplerLoc, 0);
-
-    GLuint colLoc = glGetUniformLocation(programObject, "u_color");
-    glUniform3f(colLoc, 0.0f, 1.0f, 0.0f);
-    GLuint opaLoc = glGetUniformLocation(programObject, "u_opacity");
-    glUniform1f(opaLoc, 1.0f);
-
-    GLint posLoc = glGetAttribLocation(programObject, "a_position");
-    glEnableVertexAttribArray(posLoc);
-    glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-
-    GLint texLoc = glGetAttribLocation(programObject, "a_texCoord");
-    glEnableVertexAttribArray(texLoc);
-    glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
-
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    x += (ch.advance >> 6) * scale; // advance is in 1/64px
-  }
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  glUseProgram(0);
-}*/
 
 void Text::checkShaderCompileError(GLuint shader) {
   GLint isCompiled = 0;

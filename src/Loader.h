@@ -293,12 +293,12 @@ void Loader::render(Text &text) {
   {
     std::pair<int, int> viewport = {1920, 1080};
     int fontHeight = 48;
-    int textLeft = (viewport.first - text.getTextSize("Loading... 0%", {0, fontHeight}, 0).first) / 2;
+    int textLeft = (viewport.first - text.getTextSize("Loading... 0%", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0) / 2;
     int textDown = viewport.second / 2 - 100;
     text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
 
     fontHeight *= 1.5;
-    textLeft = (viewport.first - text.getTextSize("JuvoPlayer", {0, fontHeight}, 0).first) / 2;
+    textLeft = (viewport.first - text.getTextSize("JuvoPlayer", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0) / 2;
     textDown = viewport.second / 2 + 100;
 
     float d = (int)t > 0 && ((int)t + 1) % 2 == 0 ? t - (int)t : 0;

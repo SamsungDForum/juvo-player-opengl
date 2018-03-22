@@ -390,14 +390,14 @@ void Playback::renderText(Text &text, float opacity) {
 
   // render total time
   int fontHeight = 24;
-  int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0).first;
+  int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
   int textLeft = viewport.first - textWidth - ((viewport.first - progressBarWidth) / 2 - textWidth) / 2;
   int textDown = progressBarMarginBottom - fontHeight / 2;
   text.render(timeToString(totalTime), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, opacity}, true);
 
   //render current time
   fontHeight = 24;
-  textLeft = ((viewport.first - progressBarWidth) / 2 + progressBarWidth * currentTime / totalTime /*- text.getTextSize("00:00:00", {0, fontHeight}, 0).first / 2*/) + 2;
+  textLeft = ((viewport.first - progressBarWidth) / 2 + progressBarWidth * currentTime / totalTime) + 2;
   textDown = progressBarMarginBottom + fontHeight + 2;
   text.render(timeToString(currentTime), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, opacity}, true);
 

@@ -213,7 +213,8 @@ void Menu::render() {
     int fontHeight = 10;
     int margin = 10;
     int marginBottom = margin;
-    int marginLeft = 1920 - text.getTextSize(footer, {0, fontHeight}, 0).first - margin;
+    int textWidth = text.getTextSize(footer, {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
+    int marginLeft = 1920 - textWidth - margin;
     text.render(footer, {marginLeft, marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
   }
   { // controls/playback
@@ -241,6 +242,8 @@ void Menu::render() {
       int margin = 12;
       text.render(std::to_string(static_cast<int>(fps)), {viewport.first - margin - 100, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
     }
+
+//    text.render("jX{0}/abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstulllllllvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", {100, 1080 / 2}, {1720, 96}, {1920, 1080}, 0, {1.0, 1.0, 1.0, 1.0}, true);
   }
 //  glUseProgram(0);
 
