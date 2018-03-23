@@ -21,6 +21,8 @@
 
 #include "log.h"
 
+#define CACHED_RENDERING
+
 class Text {
 private:
 
@@ -70,12 +72,18 @@ private:
     int underline_thickness;
   };
 
+  struct TextTexture {
+    GLuint textureId;
+    GLuint width;
+    GLuint height;
+  };
+
 private:
   GLuint programObject;
   FT_Library ftLibrary;
   std::vector<Font> fonts;
 
-  std::unordered_map<TextKey, GLuint, TextKey> generatedTextures;
+  std::unordered_map<TextKey, TextTexture, TextKey> generatedTextures;
 
 private:
   void prepareShaders();
@@ -87,14 +95,15 @@ public:
   ~Text();
   int AddFont(char *data, int size, int fontsize);
   void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
-  GLuint getCachedTexture(const std::string &text, int fontId);
   std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
   std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, float scale);
   std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
   void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f);
   void breakLines(std::string &text, int fontId, float w, float scale = 1.0f);
   float getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport);
-
+  TextTexture getTextTexture(const std::string &text, int fontId, bool cache);
+  void render2(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color);
 };
 
 Text::Text() {
@@ -231,54 +240,7 @@ int Text::AddFont(char *data, int size, int fontsize) {
   return fonts.size() - 1;
 }
 
-GLuint Text::getCachedTexture(const std::string &text, int fontId) {
-  /*
-  if(generatedTextures.count(TextKey{text, 0}))
-    return generatedTextures.at(TextKey{text, 0});
-
-  GLuint framebuffer;
-  GLuint texture;
-  // GLuint depthRenderbuffer;
-
-  glGenFramebuffers(1, &framebuffer);
-  //glGenRenderbuffers(1, &depthRenderbuffer);
-  glGenTextures(1, &texture);
-
-  glBindTexture(GL_TEXTURE_2D, texture);
-  std::pair<int, int> size = getTextSize(text, fontId);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.first, size.second, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-  //glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-  //glRenderbufferStprage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size.first, size.second);
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-  //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
-
-  GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  if(status == GL_FRAMEBUFFER_COMPLETE) {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    draw(text, fontId, {1.0f, 1.0f, 1.0f, 1.0f}); // set shaders and uniforms and draw to framebuffer
-  }
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0); // set rendering back to system framebuffer; glGetIntegerv(GL_FRAMEBUFFER_BINDING, &result);
-  //glDeleteRenderbuffers(1, &depthRenderbuffer);
-  glDeleteFramebuffers(1, &framebuffer);
-  //glDeleteTextures(1, &texture);
-
-  generatedTextures.insert({TextKey{text, 0}, texture});
-  return texture;
-  */
-  return -1;
-}
-
-float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) {
+float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
   if(viewport.second == 0 || fonts[fontId].height == 0)
     return 1.0;
   return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(viewport.second);
@@ -304,13 +266,11 @@ std::pair<float, float> Text::getTextSize(const std::string &text, int fontId, f
   }
   advance(position, '\n', fontId, scale);
   position.first = maxWidth;
+  position.second = std::fabs(position.second); // we want size, not offset
   return position;
 }
 
 void Text::renderToTexture(const std::string &text, const std::pair<int, int> &size, const std::pair<int, int> &viewport, int fontId) {
-  /*
-  if(size.first > 0)
-    breakLines(text, fontId, size.first);*/
 }
 
 void Text::advance(std::pair<float, float> &position, char character, int fontId, float scale) {
@@ -325,6 +285,8 @@ void Text::advance(std::pair<float, float> &position, char character, int fontId
 }
 
 void Text::breakLines(std::string &text, int fontId, float w, float scale) {
+  // TODO: cache?
+
   if(w == 0)
     return;
 
@@ -355,7 +317,306 @@ void Text::breakLines(std::string &text, int fontId, float w, float scale) {
   }
 }
 
+#ifdef CACHED_RENDERING
 void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+#else
+void Text::render2(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+#endif
+  if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
+    return;
+
+  float scale = getScale(size, fontId, viewport);
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
+  if(size.first > 0)
+    breakLines(text, fontId, textMaxWidth, scale);
+
+  TextTexture textTexture = getTextTexture(text, fontId, cache);
+
+  renderTextTexture(textTexture, position, size, viewport, color);
+
+  if(!cache)
+    glDeleteTextures(1, &textTexture.textureId);
+}
+
+Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool cache) {
+  TextKey tk {text, fontId};
+  if(generatedTextures.count(tk))
+    return generatedTextures.at(tk);
+
+  float scale = 1.0;
+  bool alignedToOrigin = false;
+  std::pair<float, float> startingPos = {fonts[fontId].max_bearingx * scale, (alignedToOrigin ? 0 : fonts[fontId].max_descend) * scale};
+  //std::pair<float, float> tSize = getTextSize(text, size, fontId, scale);
+  std::pair<float, float> tSize = getTextSize(text, fontId, scale);
+  //std::pair<GLuint, GLuint> texSize = {tSize.first * static_cast<float>(viewport.first) / 2.0f, tSize.second * static_cast<float>(viewport.second) / 2.0f};
+  std::pair<GLuint, GLuint> texSize = {tSize.first / 2.0f, tSize.second / 2.0f};
+
+  glActiveTexture(GL_TEXTURE0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  GLuint framebuffer;
+  GLuint depthRenderbuffer;
+  GLuint texture;
+
+  glGenFramebuffers(1, &framebuffer);
+  glGenRenderbuffers(1, &depthRenderbuffer);
+  glGenTextures(1, &texture);
+
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      GL_RGBA,
+      texSize.first,
+      texSize.second,
+      0,
+      GL_RGBA,
+      GL_UNSIGNED_BYTE,
+      NULL
+  );
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, texSize.first, texSize.second);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
+
+  GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if(status == GL_FRAMEBUFFER_COMPLETE) {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO 1. set fbo texture shader and uniforms
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO 2. render the text glyph by glyph
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+
+    std::pair<float, float> startingPos = {fonts[fontId].max_bearingx * scale, fonts[fontId].max_descend * scale};
+
+    glUseProgram(programObject);
+
+    std::pair<float, float> pos = {0.0f, 0.0f};
+    std::string::const_iterator c;
+    for(c = text.begin(); c != text.end(); ++c) {
+      if(*c < 0 || *c >= 128)
+        continue;
+
+      if(isprint(*c)) {
+        Character ch = fonts[fontId].ch[*c];
+
+        float xpos = (pos.first + startingPos.first) + static_cast<float>(ch.bearing.x) * scale;
+        float ypos = (pos.second + startingPos.second) - static_cast<float>(ch.size.y - ch.bearing.y) * scale;
+        float w = static_cast<float>(ch.size.x) * scale;
+        float h = static_cast<float>(ch.size.y) * scale;
+
+        float vertices[] = {
+          xpos,     ypos + h, 0.0f,
+          xpos,     ypos,     0.0f,
+          xpos + w, ypos,     0.0f,
+          xpos,     ypos + h, 0.0f,
+          xpos + w, ypos,     0.0f,
+          xpos + w, ypos + h, 0.0f
+        };
+
+        float tex[] = {
+          0.0, 0.0,
+          0.0, 1.0,
+          1.0, 1.0,
+          0.0, 0.0,
+          1.0, 1.0,
+          1.0, 0.0
+        };
+
+        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+        glUniform1i(samplerLoc, 0);
+  
+        glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+        glUniform1f(opaLoc, 1.0f);
+
+        glEnableVertexAttribArray(posLoc);
+        glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+
+        glEnableVertexAttribArray(texLoc);
+        glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+      }
+      advance(pos, *c, fontId, scale);
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
+
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO 1. set fbo texture shader and uniforms
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO 2. render the text glyph by glyph
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+
+  }
+  else {
+    _INFO("--- CREATING FRAMEBUFFER FOR TEXT RENDERING HAS FAILED! ---");
+    switch(status) {
+      case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        _INFO("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+        break;
+      case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+        _INFO("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+        break;
+      case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        _INFO("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+        break;
+      case GL_FRAMEBUFFER_UNSUPPORTED:
+        _INFO("GL_FRAMEBUFFER_UNSUPPORTED");
+        break;
+      case GL_INVALID_ENUM:
+        _INFO("GL_INVALID_ENUM");
+        break;
+      case GL_INVALID_OPERATION:
+        _INFO("GL_INVALID_OPERATION");
+        break;
+      default:
+        _INFO("UNKNOWN ERROR: %d", status);
+        break;
+    }
+  }
+
+  glDeleteRenderbuffers(1, &depthRenderbuffer);
+  glDeleteFramebuffers(1, &framebuffer);
+  //glDeleteTextures(1, &texture);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  TextTexture tt {texture, texSize.first, texSize.second};
+  if(cache)
+    generatedTextures.insert(std::make_pair(tk, tt));
+  return tt;
+}
+
+void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color) {
+  if(textTexture.textureId == GL_INVALID_VALUE) {
+    _INFO("INVALID TEXT TEXTURE");
+    return;
+  }
+
+  float zoom = 1.0;
+  float w = textTexture.width; // TODO: scale???
+  float h = textTexture.height; // TODO: scale???
+  float xPos = position.first;
+  float yPos = position.second;
+  float leftPx = xPos - (w / 2.0) * (zoom - 1.0);
+  float rightPx = (xPos + w) + (w / 2.0) * (zoom - 1.0);
+  float downPx = yPos - (h / 2.0) * (zoom - 1.0);
+  float topPx = (yPos + h) + (h / 2.0) * (zoom - 1.0);
+  float left = (leftPx / viewport.first) * 2.0 - 1.0;
+  float right = (rightPx / viewport.first) * 2.0 - 1.0;
+  float down = (downPx / viewport.second) * 2.0 - 1.0;
+  float top = (topPx / viewport.second) * 2.0 - 1.0;
+
+  _INFO("Rendering text texture: left=%f, right=%f, up=%f, down=%f", left, right, top, down);
+
+  float vertices[] = {
+    left,  top,  0.0f,
+    left,  down, 0.0f,
+    right, down, 0.0f,
+    left,  top,  0.0f,
+    right, down, 0.0f,
+    right, top,  0.0f
+  };
+
+  float tex[] = {
+    0.0, 0.0,
+    0.0, 1.0,
+    1.0, 1.0,
+    0.0, 0.0,
+    1.0, 1.0,
+    1.0, 0.0
+  };
+
+  glUseProgram(programObject);
+
+
+  glBindTexture(GL_TEXTURE_2D, textTexture.textureId);
+  glUniform1i(samplerLoc, 0);
+
+  if(color.size() < 3)
+    glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+  else
+    glUniform3f(colLoc, color[0], color[1], color[2]);
+
+  if(color.size() < 4)
+    glUniform1f(opaLoc, 1.0f);
+  else
+    glUniform1f(opaLoc, color[3]);
+
+  glEnableVertexAttribArray(posLoc);
+  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+
+  glEnableVertexAttribArray(texLoc);
+  glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
+
+
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glUseProgram(0);
+}
+
+#ifdef CACHED_RENDERING
+void Text::render2(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+#else
+void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+#endif
   bool alignedToOrigin = false; // TODO: add as a function parameter
 
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
@@ -376,36 +637,97 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RENDERING TO TEXTURE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+  std::pair<float, float> tSize = getTextSize(text, size, fontId, scale);
+  _INFO("Rendering text texture %fx%f: %s", tSize.first, tSize.second, text.c_str());
+  std::pair<GLuint, GLuint> texSize = {tSize.first * static_cast<float>(viewport.first) / 2.0f, tSize.second * static_cast<float>(viewport.second) / 2.0f};
+  _INFO("Rendering text texture %ux%u: %s", texSize.first, texSize.second, text.c_str());
 
-
-  /*
-  if(0) {
   glActiveTexture(GL_TEXTURE0);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  GLuint texId;
-  glGenTextures(1, &texId);
-  glBindTexture(GL_TEXTURE_2D, texId);
+  GLuint framebuffer;
+  GLuint depthRenderbuffer;
+  GLuint texture;
+
+  glGenFramebuffers(1, &framebuffer);
+  glGenRenderbuffers(1, &depthRenderbuffer);
+  glGenTextures(1, &texture);
+
+  glBindTexture(GL_TEXTURE_2D, texture);
   glTexImage2D(
       GL_TEXTURE_2D,
       0,
-      GL_LUMINANCE,
-      ftFace->glyph->bitmap.width,
-      ftFace->glyph->bitmap.rows,
+      GL_RGBA,
+      texSize.first,
+      texSize.second,
       0,
-      GL_LUMINANCE,
+      GL_RGBA,
       GL_UNSIGNED_BYTE,
-      ftFace->glyph->bitmap.buffer
+      NULL
   );
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  }
-  */
 
+  glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, texSize.first, texSize.second);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
+
+  GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if(status == GL_FRAMEBUFFER_COMPLETE) {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // TODO: set fbo texture shader and uniforms
+    // TODO: draw
+  }
+  else {
+    _INFO("--- CREATING FRAMEBUFFER FOR TEXT RENDERING HAS FAILED! ---");
+    switch(status) {
+      case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        _INFO("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+        break;
+      case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+        _INFO("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+        break;
+      case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        _INFO("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+        break;
+      case GL_FRAMEBUFFER_UNSUPPORTED:
+        _INFO("GL_FRAMEBUFFER_UNSUPPORTED");
+        break;
+      case GL_INVALID_ENUM:
+        _INFO("GL_INVALID_ENUM");
+        break;
+      case GL_INVALID_OPERATION:
+        _INFO("GL_INVALID_OPERATION");
+        break;
+      default:
+        _INFO("UNKNOWN ERROR: %d", status);
+        break;
+    }
+  }
+
+  glDeleteRenderbuffers(1, &depthRenderbuffer);
+  glDeleteFramebuffers(1, &framebuffer);
+  glDeleteTextures(1, &texture); // TODO: save it instead of deleting it
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  // TODO: restore state
+*/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
