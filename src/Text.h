@@ -21,8 +21,6 @@
 
 #include "log.h"
 
-#define CACHED_RENDERING
-
 class Text {
 private:
 
@@ -49,12 +47,6 @@ private:
     }
   };
 
-    GLuint samplerLoc = GL_INVALID_VALUE;
-    GLuint colLoc = GL_INVALID_VALUE;
-    GLuint opaLoc = GL_INVALID_VALUE;
-    GLuint posLoc = GL_INVALID_VALUE;
-    GLuint texLoc = GL_INVALID_VALUE;
-
   struct Font {
     int id;
     int size;
@@ -76,10 +68,25 @@ private:
     GLuint textureId;
     GLuint width;
     GLuint height;
+    GLuint fontId;
   };
 
 private:
   GLuint programObject;
+  GLuint samplerLoc = GL_INVALID_VALUE;
+  GLuint colLoc = GL_INVALID_VALUE;
+  GLuint opaLoc = GL_INVALID_VALUE;
+  GLuint posLoc = GL_INVALID_VALUE;
+  GLuint texLoc = GL_INVALID_VALUE;
+
+  GLuint programObject2;
+  GLuint samplerLoc2 = GL_INVALID_VALUE;
+  GLuint colLoc2 = GL_INVALID_VALUE;
+  GLuint opaLoc2 = GL_INVALID_VALUE;
+  GLuint posLoc2 = GL_INVALID_VALUE;
+  GLuint texLoc2 = GL_INVALID_VALUE;
+
+
   FT_Library ftLibrary;
   std::vector<Font> fonts;
 
@@ -88,23 +95,47 @@ private:
 private:
   void prepareShaders();
   void checkShaderCompileError(GLuint shader);
-  void renderToTexture(const std::string &text, const std::pair<int, int> &size, const std::pair<int, int> &viewport, int fontId);
 
 public:
   Text();
   ~Text();
   int AddFont(char *data, int size, int fontsize);
-  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
   std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
   std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, float scale);
   std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
-  void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f);
+  void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f, bool invertVerticalAdvance = false);
   void breakLines(std::string &text, int fontId, float w, float scale = 1.0f);
   float getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport);
   TextTexture getTextTexture(const std::string &text, int fontId, bool cache);
-  void render2(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
   void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color);
+
+
+  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  void renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  void renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+
+
+  int renderingMode = 1; // 0 - direct, 1 - cached
+  void switchRenderingMode() {
+    renderingMode = (renderingMode + 1) % 2;
+    _INFO("Text rendering mode switched to %s.", renderingMode ? "cached" : "direct");
+  }
+
+  enum class Shadow {
+    None,
+    Single,
+    Outline
+  };
+  Shadow shadowMode = Shadow::Single;
+
 };
+
+void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+  if(!renderingMode)
+    renderDirect(text, position, size, viewport, fontId, color, cache);
+  else
+    renderCached(text, position, size, viewport, fontId, color, cache);
+}
 
 Text::Text() {
   /*FT_Error error = */FT_Init_FreeType(&ftLibrary);
@@ -116,6 +147,7 @@ Text::~Text() {
 }
 
 void Text::prepareShaders() {
+
   const GLchar* vShaderTexStr =
     "attribute vec4 a_position;    \n"
     "attribute vec2 a_texCoord;    \n"
@@ -158,6 +190,49 @@ void Text::prepareShaders() {
   posLoc = glGetAttribLocation(programObject, "a_position");
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
   //glBindAttribLocation(programObject, 0, "a_position");
+
+  const GLchar* vShaderTexStr2 =
+    "attribute vec4 a_position;    \n"
+    "attribute vec2 a_texCoord;    \n"
+    "varying vec2 v_texCoord;      \n"
+    "void main()                   \n"
+    "{                             \n"
+    "  v_texCoord = a_texCoord;    \n"
+    "  gl_Position = a_position;   \n"
+    "}                             \n";
+
+  const GLchar* fShaderTexStr2 =
+    "precision mediump float;      \n"
+    "uniform vec3 u_color;         \n"
+    "varying vec2 v_texCoord;      \n"
+    "uniform sampler2D s_texture;  \n"
+    "uniform float u_opacity;      \n"
+    "void main()                   \n"
+    "{                             \n"
+    "  gl_FragColor = texture2D(s_texture, v_texCoord) * vec4(u_color, u_opacity); \n"
+    "}                             \n";
+
+  GLuint vertexShader2 = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertexShader2, 1, &vShaderTexStr2, NULL);
+  glCompileShader(vertexShader2);
+  checkShaderCompileError(vertexShader2);
+
+  GLuint fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentShader2, 1, &fShaderTexStr2, NULL);
+  glCompileShader(fragmentShader2);
+  checkShaderCompileError(fragmentShader2);
+
+  programObject2 = glCreateProgram();
+  glAttachShader(programObject2, vertexShader2);
+  glAttachShader(programObject2, fragmentShader2);
+  glLinkProgram(programObject2);
+
+  samplerLoc2 = glGetUniformLocation(programObject2, "s_texture");
+  colLoc2 = glGetUniformLocation(programObject2, "u_color");
+  opaLoc2 = glGetUniformLocation(programObject2, "u_opacity");
+  posLoc2 = glGetAttribLocation(programObject2, "a_position");
+  texLoc2 = glGetAttribLocation(programObject2, "a_texCoord");
+  //glBindAttribLocation(programObject2, 0, "a_position");
 }
 
 int Text::AddFont(char *data, int size, int fontsize) {
@@ -201,7 +276,7 @@ int Text::AddFont(char *data, int size, int fontsize) {
       glm::ivec2(ftFace->glyph->bitmap_left, ftFace->glyph->bitmap_top),
       glm::ivec2(static_cast<GLuint>(ftFace->glyph->advance.x), static_cast<GLuint>(ftFace->glyph->advance.y))
     };
-    _INFO("font[%d].ch[%d (%c)]: size={%d, %d}, bearing={%d, %d}, advance={%d, %d}", fonts.size(), c, isprint(c) ? c : '?', character.size.x, character.size.y, character.bearing.x, character.bearing.y, character.advance.x, character.advance.y);
+    //_INFO("font[%d].ch[%d (%c)]: size={%d, %d}, bearing={%d, %d}, advance={%d, %d}", fonts.size(), c, isprint(c) ? c : '?', character.size.x, character.size.y, character.bearing.x, character.bearing.y, character.advance.x, character.advance.y);
     font.max_advance.x = std::max(font.max_advance.x, character.advance.x);
     font.max_advance.y = std::max(font.max_advance.y, character.advance.y);
     font.ch.insert(std::pair<GLchar, Character>(c, character));
@@ -265,28 +340,23 @@ std::pair<float, float> Text::getTextSize(const std::string &text, int fontId, f
     maxWidth = std::max(maxWidth, position.first); // new lines reset position.first value
   }
   advance(position, '\n', fontId, scale);
-  position.first = maxWidth;
+  position.first = maxWidth + fonts[fontId].max_bearingx * scale;
   position.second = std::fabs(position.second); // we want size, not offset
   return position;
 }
 
-void Text::renderToTexture(const std::string &text, const std::pair<int, int> &size, const std::pair<int, int> &viewport, int fontId) {
-}
-
-void Text::advance(std::pair<float, float> &position, char character, int fontId, float scale) {
+void Text::advance(std::pair<float, float> &position, char character, int fontId, float scale, bool invertVerticalAdvance) {
   if(character < 0 || character >= 128)
     return;
   if(character == '\n') {
-    position.second -= fonts[fontId].height * scale;
-    position.first = 0;
+    position.second -= fonts[fontId].height * scale * (invertVerticalAdvance ? -1.0 : 1.0);
+    position.first = 0.0f;
     return;
   }
   position.first += static_cast<float>(fonts[fontId].ch[character].advance.x >> 6) * scale; // advance is in 1/64px
 }
 
 void Text::breakLines(std::string &text, int fontId, float w, float scale) {
-  // TODO: cache?
-
   if(w == 0)
     return;
 
@@ -317,11 +387,7 @@ void Text::breakLines(std::string &text, int fontId, float w, float scale) {
   }
 }
 
-#ifdef CACHED_RENDERING
-void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
-#else
-void Text::render2(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
-#endif
+void Text::renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
@@ -343,13 +409,10 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   if(generatedTextures.count(tk))
     return generatedTextures.at(tk);
 
-  float scale = 1.0;
-  bool alignedToOrigin = false;
-  std::pair<float, float> startingPos = {fonts[fontId].max_bearingx * scale, (alignedToOrigin ? 0 : fonts[fontId].max_descend) * scale};
-  //std::pair<float, float> tSize = getTextSize(text, size, fontId, scale);
-  std::pair<float, float> tSize = getTextSize(text, fontId, scale);
-  //std::pair<GLuint, GLuint> texSize = {tSize.first * static_cast<float>(viewport.first) / 2.0f, tSize.second * static_cast<float>(viewport.second) / 2.0f};
-  std::pair<GLuint, GLuint> texSize = {tSize.first / 2.0f, tSize.second / 2.0f};
+  float scale = 1.0; // TODO: Check if it's correct
+  std::pair<float, float> texSize = getTextSize(text, fontId, scale);
+
+  _INFO("Generating texture of size {%f, %f} for text \"%s\"", texSize.first, texSize.second, text.c_str());
 
   glActiveTexture(GL_TEXTURE0);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -390,40 +453,22 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
 
   GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if(status == GL_FRAMEBUFFER_COMPLETE) {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    glEnable(GL_BLEND);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO 1. set fbo texture shader and uniforms
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO 2. render the text glyph by glyph
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
+//    std::pair<float, float> startingPos = {static_cast<float>(fonts[fontId].max_bearingx) * 2.0f / texSize.first - 1.0f,
+//                                           static_cast<float>(fonts[fontId].max_descend) * 2.0f / texSize.second - 1.0f};
+    std::pair<float, float> startingPos = {static_cast<float>(fonts[fontId].max_bearingx),
+                                           -static_cast<float>(fonts[fontId].max_descend)};
 
-    std::pair<float, float> startingPos = {fonts[fontId].max_bearingx * scale, fonts[fontId].max_descend * scale};
+    //_INFO("startingPos = {%f, %f}", startingPos.first, startingPos.second);
 
     glUseProgram(programObject);
+    glViewport(0, 0, texSize.first, texSize.second); // TODO: Remove if it's not needed
 
     std::pair<float, float> pos = {0.0f, 0.0f};
     std::string::const_iterator c;
@@ -434,12 +479,20 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
       if(isprint(*c)) {
         Character ch = fonts[fontId].ch[*c];
 
-        float xpos = (pos.first + startingPos.first) + static_cast<float>(ch.bearing.x) * scale;
-        float ypos = (pos.second + startingPos.second) - static_cast<float>(ch.size.y - ch.bearing.y) * scale;
-        float w = static_cast<float>(ch.size.x) * scale;
-        float h = static_cast<float>(ch.size.y) * scale;
+        float xpos = (pos.first + startingPos.first) + static_cast<float>(ch.bearing.x);
+        //float ypos = (pos.second + startingPos.second) - static_cast<float>(ch.size.y - ch.bearing.y);
+        float ypos = (pos.second + startingPos.second) + (static_cast<float>(fonts[fontId].height) - static_cast<float>(ch.size.y)) + static_cast<float>(ch.size.y - ch.bearing.y);
+        float w = static_cast<float>(ch.size.x);
+        float h = static_cast<float>(ch.size.y);
 
-        float vertices[] = {
+        float left = xpos * 2.0f / texSize.first - 1.0f;
+        float right = (xpos + w) * 2.0f / texSize.first - 1.0f;
+        float top = ypos * 2.0f / texSize.second - 1.0f;
+        float down = (ypos + h) * 2.0f / texSize.second - 1.0f;
+
+        //_INFO("'%c', left=%f, right=%f, top=%f, down=%f, size.x=%f, bearing.x=%f, size.y=%f, bearing.y=%f", *c, left, right, top, down, static_cast<float>(ch.size.x), static_cast<float>(ch.bearing.x), static_cast<float>(ch.size.y), static_cast<float>(ch.bearing.y));
+
+        /*float vertices[] = {
           xpos,     ypos + h, 0.0f,
           xpos,     ypos,     0.0f,
           xpos + w, ypos,     0.0f,
@@ -455,54 +508,105 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
           0.0, 0.0,
           1.0, 1.0,
           1.0, 0.0
+        };*/
+
+        GLfloat vVertices[] = { left,   top,  0.0f,
+                                left,   down, 0.0f,
+                                right,  down, 0.0f,
+                                right,  top,  0.0f
         };
+
+        GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+
+        float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
+                             1.0f, 1.0f,    1.0f, 0.0f };
+
+
 
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
         glUniform1i(samplerLoc, 0);
   
-        glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
-        glUniform1f(opaLoc, 1.0f);
+        glEnableVertexAttribArray(texLoc);
+        glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
-        glEnableVertexAttribArray(posLoc);
+        if(shadowMode != Shadow::None) {
+          std::pair<int, int> scaleSize = {0, fonts[fontId].height};
+          float scale = getScale(scaleSize, fontId, texSize);
+          float aspectRatio = texSize.second / texSize.first;
+          std::pair<float, float> outlineOffset = {1.0 * scale * aspectRatio, 2.0 * scale};
+
+          float dir[] = {
+             0.0f,  1.0f,
+            -1.0f,  1.0f,
+            -1.0f,  0.0f,
+            -1.0f, -1.0f,
+             0.0f, -1.0f,
+             1.0f, -1.0f,
+             1.0f,  0.0f,
+             1.0f,  1.0f
+          };
+
+          std::pair<int, int> dirs = {0, 0};
+          switch(shadowMode) {
+            case Shadow::Single:
+              dirs = {3, 4};
+              break;
+            case Shadow::Outline:
+              dirs = {0, 8};
+              break;
+            default:
+              dirs = {0, 0};
+              break;
+          }
+
+          for(int i = dirs.first; i < dirs.second; ++i) {
+            float outlineV[4 * 3];
+            for(int j = 0; j < 4 * 3; ++j) {
+              switch(j % 3) {
+                case 0:
+                  outlineV[j] = vVertices[j] + dir[2 * i] * outlineOffset.first;
+                  break;
+                case 1:
+                  outlineV[j] = vVertices[j] + dir[2 * i + 1] * outlineOffset.second * -1.0f;
+                  break;
+                case 2:
+                  outlineV[j] = vVertices[j];
+                  break;
+              }
+            }
+
+            glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
+            glUniform1f(opaLoc, 1.0f);
+
+            glEnableVertexAttribArray(posLoc);
+            glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, outlineV);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+          }
+        }
+
+        /*glEnableVertexAttribArray(posLoc);
         glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
         glEnableVertexAttribArray(texLoc);
         glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 6);*/
+
+        glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+        glUniform1f(opaLoc, 1.0f);
+
+        glEnableVertexAttribArray(posLoc);
+        glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
       }
-      advance(pos, *c, fontId, scale);
+      advance(pos, *c, fontId, scale, true);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
 
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO 1. set fbo texture shader and uniforms
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO 2. render the text glyph by glyph
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
 
   }
   else {
@@ -536,10 +640,13 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   glDeleteFramebuffers(1, &framebuffer);
   //glDeleteTextures(1, &texture);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, 1920, 1080); // TODO: Remove if it's not needed
 
-  TextTexture tt {texture, texSize.first, texSize.second};
-  if(cache)
+  TextTexture tt {texture, static_cast<GLuint>(texSize.first), static_cast<GLuint>(texSize.second), static_cast<GLuint>(fontId)};
+  if(cache) {
     generatedTextures.insert(std::make_pair(tk, tt));
+    //_INFO("Cacheing text texture (\"%s\", %d, %d) with ID=%d", text.c_str(), texSize.first, texSize.second, texture);
+  }
   return tt;
 }
 
@@ -549,23 +656,26 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
     return;
   }
 
-  float zoom = 1.0;
-  float w = textTexture.width; // TODO: scale???
-  float h = textTexture.height; // TODO: scale???
-  float xPos = position.first;
-  float yPos = position.second;
-  float leftPx = xPos - (w / 2.0) * (zoom - 1.0);
-  float rightPx = (xPos + w) + (w / 2.0) * (zoom - 1.0);
-  float downPx = yPos - (h / 2.0) * (zoom - 1.0);
-  float topPx = (yPos + h) + (h / 2.0) * (zoom - 1.0);
-  float left = (leftPx / viewport.first) * 2.0 - 1.0;
-  float right = (rightPx / viewport.first) * 2.0 - 1.0;
-  float down = (downPx / viewport.second) * 2.0 - 1.0;
-  float top = (topPx / viewport.second) * 2.0 - 1.0;
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f,
+                                         static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f};
+  float scale = getScale(size, textTexture.fontId, viewport);
 
-  _INFO("Rendering text texture: left=%f, right=%f, up=%f, down=%f", left, right, top, down);
+  //float lineHeight = advance('\n', textTexture.fontId, scale).second;
+  float lineHeight = -fonts[textTexture.fontId].height * scale;
 
-  float vertices[] = {
+  float left = startingPos.first;
+  float top = startingPos.second - lineHeight;
+  float down = top - textTexture.height * scale * 1.0f;
+  float right = left + textTexture.width * scale * 1.0f;
+
+  /*left = static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
+  right = (static_cast<float>(position.first) + w) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
+  top = static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
+  down = (static_cast<float>(position.second) + h) / static_cast<float>(viewport.second) * 2.0f - 1.0f;*/
+
+//  _INFO("Rendering text texture: left=%f, right=%f, up=%f, down=%f", left, right, top, down);
+
+/*  float vertices[] = {
     left,  top,  0.0f,
     left,  down, 0.0f,
     right, down, 0.0f,
@@ -581,48 +691,65 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
     0.0, 0.0,
     1.0, 1.0,
     1.0, 0.0
+  };*/
+
+  GLfloat vVertices[] = { left,   top,  0.0f,
+                          left,   down, 0.0f,
+                          right,  down, 0.0f,
+                          right,  top,  0.0f
   };
 
-  glUseProgram(programObject);
+  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
+  float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
+                       1.0f, 1.0f,    1.0f, 0.0f };
+
+  glUseProgram(programObject2);
 
   glBindTexture(GL_TEXTURE_2D, textTexture.textureId);
-  glUniform1i(samplerLoc, 0);
+  glUniform1i(samplerLoc2, 0);
 
   if(color.size() < 3)
-    glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
+    glUniform3f(colLoc2, 1.0f, 1.0f, 1.0f);
   else
-    glUniform3f(colLoc, color[0], color[1], color[2]);
+    glUniform3f(colLoc2, color[0], color[1], color[2]);
 
   if(color.size() < 4)
-    glUniform1f(opaLoc, 1.0f);
+    glUniform1f(opaLoc2, 1.0f);
   else
-    glUniform1f(opaLoc, color[3]);
+    glUniform1f(opaLoc2, color[3]);
 
-  glEnableVertexAttribArray(posLoc);
-  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+  /*glEnableVertexAttribArray(posLoc2);
+  glVertexAttribPointer(posLoc2, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
-  glEnableVertexAttribArray(texLoc);
-  glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
+  glEnableVertexAttribArray(texLoc2);
+  glVertexAttribPointer(texLoc2, 2, GL_FLOAT, GL_FALSE, 0, tex);
 
+  glDrawArrays(GL_TRIANGLES, 0, 6);*/
 
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glEnableVertexAttribArray(posLoc2);
+  glVertexAttribPointer(posLoc2, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
+
+  glEnableVertexAttribArray(texLoc2);
+  glVertexAttribPointer(texLoc2, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
+
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glBindTexture(GL_TEXTURE_2D, 0);
   glUseProgram(0);
 }
 
-#ifdef CACHED_RENDERING
-void Text::render2(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
-#else
-void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
-#endif
+void Text::renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
   bool alignedToOrigin = false; // TODO: add as a function parameter
 
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
-  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f, static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f};
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f,
+                                         static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f};
 
   float scale = getScale(size, fontId, viewport);
 
@@ -634,102 +761,6 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
     breakLines(text, fontId, textMaxWidth, scale);
 
   glUseProgram(programObject);
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// RENDERING TO TEXTURE
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-  std::pair<float, float> tSize = getTextSize(text, size, fontId, scale);
-  _INFO("Rendering text texture %fx%f: %s", tSize.first, tSize.second, text.c_str());
-  std::pair<GLuint, GLuint> texSize = {tSize.first * static_cast<float>(viewport.first) / 2.0f, tSize.second * static_cast<float>(viewport.second) / 2.0f};
-  _INFO("Rendering text texture %ux%u: %s", texSize.first, texSize.second, text.c_str());
-
-  glActiveTexture(GL_TEXTURE0);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-  GLuint framebuffer;
-  GLuint depthRenderbuffer;
-  GLuint texture;
-
-  glGenFramebuffers(1, &framebuffer);
-  glGenRenderbuffers(1, &depthRenderbuffer);
-  glGenTextures(1, &texture);
-
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(
-      GL_TEXTURE_2D,
-      0,
-      GL_RGBA,
-      texSize.first,
-      texSize.second,
-      0,
-      GL_RGBA,
-      GL_UNSIGNED_BYTE,
-      NULL
-  );
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, texSize.first, texSize.second);
-
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
-
-  GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  if(status == GL_FRAMEBUFFER_COMPLETE) {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // TODO: set fbo texture shader and uniforms
-    // TODO: draw
-  }
-  else {
-    _INFO("--- CREATING FRAMEBUFFER FOR TEXT RENDERING HAS FAILED! ---");
-    switch(status) {
-      case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-        _INFO("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-        _INFO("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-        _INFO("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-        break;
-      case GL_FRAMEBUFFER_UNSUPPORTED:
-        _INFO("GL_FRAMEBUFFER_UNSUPPORTED");
-        break;
-      case GL_INVALID_ENUM:
-        _INFO("GL_INVALID_ENUM");
-        break;
-      case GL_INVALID_OPERATION:
-        _INFO("GL_INVALID_OPERATION");
-        break;
-      default:
-        _INFO("UNKNOWN ERROR: %d", status);
-        break;
-    }
-  }
-
-  glDeleteRenderbuffers(1, &depthRenderbuffer);
-  glDeleteFramebuffers(1, &framebuffer);
-  glDeleteTextures(1, &texture); // TODO: save it instead of deleting it
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  // TODO: restore state
-*/
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   std::pair<float, float> pos = {0.0f, 0.0f};
   std::string::const_iterator c;
@@ -765,10 +796,11 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
 
       glBindTexture(GL_TEXTURE_2D, ch.TextureID);
       glUniform1i(samplerLoc, 0);
-/*
-      bool outline = true;
-      if(outline) {
-        float outlineOffset = 2.0 * scale;
+
+      if(shadowMode != Shadow::None) {
+        float aspectRatio = static_cast<float>(viewport.second) / static_cast<float>(viewport.first);
+        std::pair<float, float> outlineOffset = {2.0 * scale * aspectRatio, 2.0 * scale};
+
 
         if(color.size() < 3)
           glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
@@ -785,25 +817,39 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
         glEnableVertexAttribArray(texLoc);
         glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
 
-        int dir[] = {
-           0,  1,
-          -1,  1,
-          -1,  0,
-          -1, -1,
-           0, -1,
-           1, -1,
-           1,  0,
-           1,  1
+        float dir[] = {
+           0.0f,  1.0f,
+          -1.0f,  1.0f,
+          -1.0f,  0.0f,
+          -1.0f, -1.0f,
+           0.0f, -1.0f,
+           1.0f, -1.0f,
+           1.0f,  0.0f,
+           1.0f,  1.0f
         };
-        for(int i = 0; i < 8; ++i) {
+
+        std::pair<int, int> dirs = {0, 0};
+        switch(shadowMode) {
+          case Shadow::Single:
+            dirs = {3, 4};
+            break;
+          case Shadow::Outline:
+            dirs = {0, 8};
+            break;
+          default:
+            dirs = {0, 0};
+            break;
+        }
+
+        for(int i = dirs.first; i < dirs.second; ++i) {
           float outlineV[6 * 3];
           for(int j = 0; j < 6 * 3; ++j) {
             switch(j % 3) {
               case 0:
-                outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset;
+                outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset.first;
                 break;
               case 1:
-                outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset;
+                outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset.second;
                 break;
               case 2:
                 outlineV[j] = vertices[j];
@@ -817,7 +863,7 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
           glDrawArrays(GL_TRIANGLES, 0, 6);
         }
       }
-*/
+
       if(color.size() < 3)
         glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
       else

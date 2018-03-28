@@ -89,6 +89,7 @@ public:
   void SetIcon(int id, char* pixels, int w, int h);
   void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text);
   void SetVersion(std::string version);
+  void SwitchTextRenderingMode();
 };
 
 Menu::Menu(int viewportWidth, int viewportHeight, int tileWidth, int tileHeight, int tilesHorizontal, int tilesVertical, float zoom, int animationsDurationMilliseconds)
@@ -105,6 +106,10 @@ Menu::Menu(int viewportWidth, int viewportHeight, int tileWidth, int tileHeight,
 
 Menu::Menu() {
   initialize();
+}
+
+void Menu::SwitchTextRenderingMode() {
+  text.switchRenderingMode();
 }
 
 void Menu::initialize() {
@@ -210,7 +215,7 @@ void Menu::render() {
   { // footer
     std::pair<int, int> viewport = {1920, 1080};
     std::string footer = std::string("JuvoPlayer v") + version + std::string(", Samsung R&D Poland, 2018");
-    int fontHeight = 10;
+    int fontHeight = 13;
     int margin = 10;
     int marginBottom = margin;
     int textWidth = text.getTextSize(footer, {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;

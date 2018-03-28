@@ -89,6 +89,13 @@ public:
   void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay);
   void setOpacity(float opacity) { this->opacity = opacity; }
   float getOpacity() { return opacity; }
+
+  enum class Shadow {
+    None,
+    Single,
+    Outline
+  };
+  Shadow shadowMode = Shadow::Single;
 };
 
 Playback::Playback()
@@ -322,11 +329,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
   glEnableVertexAttribArray(texLoc);
   glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, tex);
 
-  bool outline = true;
-  if(outline) {
-    GLfloat scale = 1.0;
-    GLfloat outlineOffset = 2.0 / vW * scale * 1.0;
-
+  if(shadowMode != Shadow::None) {
     if(color.size() < 3)
       glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
     else if(color[0] + color[1] + color[2] < 1.5f)
@@ -336,26 +339,42 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 
     glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
 
-    int dir[] = {
-       0,  1,
-      -1,  1,
-      -1,  0,
-      -1, -1,
-       0, -1,
-       1, -1,
-       1,  0,
-       1,  1
+    std::pair<float, float> viewport = {viewportWidth, viewportHeight};
+    std::pair<float, float> outlineOffset = {3.0 / viewport.first, 3.0 / viewport.second};
+
+    float dir[] = {
+       0.0f,  1.0f,
+      -1.0f,  1.0f,
+      -1.0f,  0.0f,
+      -1.0f, -1.0f,
+       0.0f, -1.0f,
+       1.0f, -1.0f,
+       1.0f,  0.0f,
+       1.0f,  1.0f
     };
 
-    for(int i = 0; i < 8; ++i) {
+    std::pair<int, int> dirs = {0, 0};
+    switch(shadowMode) {
+      case Shadow::Single:
+        dirs = {3, 4};
+        break;
+      case Shadow::Outline:
+        dirs = {0, 8};
+        break;
+      default:
+        dirs = {0, 0};
+        break;
+    }
+
+    for(int i = dirs.first; i < dirs.second; ++i) {
       GLfloat outlineV[4 * 3];
       for(int j = 0; j < 4 * 3; ++j) {
         switch(j % 3) {
           case 0:
-            outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset;
+            outlineV[j] = vertices[j] + dir[2 * i] * outlineOffset.first;
             break;
           case 1:
-            outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset;
+            outlineV[j] = vertices[j] + dir[2 * i + 1] * outlineOffset.second;
             break;
           case 2:
             outlineV[j] = vertices[j];

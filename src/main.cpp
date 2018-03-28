@@ -25,10 +25,16 @@ void ShowLoader(int enabled, int percent);
 void SetIcon(int id, char* pixels, int w, int h);
 void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen);
 void SetVersion(char* ver, int verLen);
+void SwitchTextRenderingMode();
 
 #ifdef __cplusplus
 }
 #endif
+
+void SwitchTextRenderingMode()
+{
+  menu.SwitchTextRenderingMode();
+}
 
 void Create()
 {
