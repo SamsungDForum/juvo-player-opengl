@@ -1,102 +1,4 @@
-#ifndef _PLAYBACK_H_
-#define _PLAYBACK_H_
-
-#include <chrono>
-#include <vector>
-#include <utility>
-
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
-#include "Text.h"
-#include "log.h"
-#include "TileAnimation.h"
-
-class Playback {
-private:
-  enum class State {
-    Idle = 0,
-    Preparing = 1,
-    Prepared = 2,
-    Stopped = 3,
-    Paused = 4,
-    Playing = 5,
-    Error = 6,
-  };
-
-  enum class Icon {
-    Play,
-    Resume,
-    Stop,
-    Pause,
-    FastForward,
-    Rewind,
-    SkipToEnd,
-    SkipToStart,
-    LENGTH
-  };
-
-private:
-  GLuint barProgramObject;
-  GLuint iconProgramObject;
-  TileAnimation animation;
-  std::vector<GLuint> icons;
-
-  bool enabled;
-  State state;
-  int currentTime;
-  int totalTime;
-  std::string displayText;
-  float opacity;
-
-  const int viewportWidth = 1920;
-  const int viewportHeight = 1080;
-  const int progressBarWidth = 1500;
-  const int progressBarHeight = 8;
-  const int progressBarMarginBottom = 100;
-
-  GLint posBarLoc =       GL_INVALID_VALUE; 
-  GLuint paramBarLoc =    GL_INVALID_VALUE; 
-  GLuint opacityBarLoc =  GL_INVALID_VALUE; 
-  GLuint viewportBarLoc = GL_INVALID_VALUE;
-  GLuint sizeBarLoc =     GL_INVALID_VALUE; 
-  GLuint marginBarLoc =   GL_INVALID_VALUE;  
-
-  GLuint samplerLoc = GL_INVALID_VALUE;
-  GLuint colLoc =     GL_INVALID_VALUE;
-  GLuint opacityLoc = GL_INVALID_VALUE;
-  GLuint posLoc =     GL_INVALID_VALUE;
-  GLuint texLoc =     GL_INVALID_VALUE;
-
-private:
-  bool initialize();
-  void initTexture(int id);
-  void checkShaderCompileError(GLuint shader);
-  void renderIcons(float opacity);
-  void renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity);
-  void renderText(Text &text, float opacity);
-  void renderProgressBar(float opacity);
-  std::string timeToString(int time);
-
-public:
-  Playback();
-  ~Playback();
-  void setIcon(int id, char* pixels, int w, int h, GLuint format);
-  void render(Text &text);
-  void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay);
-  void setOpacity(float opacity) { this->opacity = opacity; }
-  float getOpacity() { return opacity; }
-
-  enum class Shadow {
-    None,
-    Single,
-    Outline
-  };
-  Shadow shadowMode = Shadow::Single;
-};
+#include "../include/Playback.h"
 
 Playback::Playback()
   : barProgramObject(GL_INVALID_VALUE),
@@ -146,10 +48,13 @@ bool Playback::initialize() {
     "    p.x <= pos.x + size.x &&                                                \n"
     "    p.y >= pos.y &&                                                         \n"
     "    p.y <= pos.y + size.y) {                                                \n"
-    "    if(abs(p.x - pos.x) < 1.0                                               \n"
-    "    || abs(p.y - pos.y) < 1.0                                               \n"
-    "    || abs(p.x - (pos.x + size.x)) < 1.0                                    \n"
-    "    || abs(p.y - (pos.y + size.y)) < 1.0) {                                 \n"
+//    "    if(abs(p.x - pos.x) < 1.0                                               \n"
+//    "    || abs(p.y - pos.y) < 1.0                                               \n"
+//    "    || abs(p.x - (pos.x + size.x)) < 1.0                                    \n"
+//    "    || abs(p.y - (pos.y + size.y)) < 1.0                                    \n"
+    "    if((abs((p.x + 2.0) - pos.x) < 1.0 && abs(p.y - (pos.y + size.y)) >= 2.0) \n"
+    "    || (abs((p.y + 2.0) - pos.y) < 1.0 && abs(p.x - (pos.x + size.x)) >= 2.0)  \n"
+    "    ) {                                                                     \n"
     "      if(p.x < progPoint.x)                                                 \n"
     "        c = FRAM_A;                                                         \n"
     "      else                                                                  \n"
@@ -482,14 +387,14 @@ void Playback::initTexture(int id) {
   glGenTextures(1, &icons[id]);
 }
 
-void Playback::setIcon(int id, char* pixels, int width, int height, GLuint format) {
+void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint format) {
   if(id >= static_cast<int>(icons.size()))
    return; 
   if(icons[id] == GL_INVALID_VALUE)
     initTexture(id);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glBindTexture(GL_TEXTURE_2D, icons[id]);
-  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, format, size.first, size.second, 0, format, GL_UNSIGNED_BYTE, pixels);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*GL_NEAREST*/);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR/*GL_NEAREST*/);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -545,4 +450,3 @@ std::string Playback::timeToString(int time) {
        */
 }
 
-#endif // _PLAYBACK_H_

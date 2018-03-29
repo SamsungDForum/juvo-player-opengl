@@ -25,7 +25,17 @@ IF(NOT DEFINED LIBDIR)
 	SET(LIBDIR "${PREFIX}/lib")
 ENDIF(NOT DEFINED LIBDIR)
 
-SET(SRCS src/main.cpp)
+SET(SRCS
+  src/main.cpp
+  src/Menu.cpp
+  src/Animation.cpp
+  src/Background.cpp
+  src/Loader.cpp
+  src/Playback.cpp
+  src/Text.cpp
+  src/Tile.cpp
+  src/TileAnimation.cpp
+)
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED

@@ -1,96 +1,4 @@
-#ifndef _TILE_H_
-#define _TILE_H_
-
-#include <string>
-#include <chrono>
-
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
-#include "TileAnimation.h"
-#include "Text.h"
-#include "log.h"
-
-class Tile {
-  private:
-    int id;
-    GLuint programObject = GL_INVALID_VALUE;
-    GLuint textureFormat = GL_INVALID_VALUE;
-    int x;
-    int y;
-    int width;
-    int height;
-    int viewportWidth;
-    int viewportHeight;
-    float zoom;
-    float opacity;
-    std::string name;
-    std::string description;
-
-    TileAnimation animation;
-    GLuint textureId = GL_INVALID_VALUE;
-/*    GLuint samplerLoc;
-    GLint posLoc;
-    GLint texLoc;
-    GLuint opacityLoc;*/
-
-    void initTexture();
-    void initGL();
-    void checkShaderCompileError(GLuint shader);
-
-  public:
-    Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat);
-    Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description);
-    Tile(int tileId);
-    ~Tile();
-    Tile(Tile &) = delete; // no copy constructor
-    Tile(const Tile &) = delete; // no copy constructor
-    //Tile(Tile &&) = default; // default move constructor
-    Tile& operator=(Tile&&) = delete;
-    Tile(Tile &&other);
-
-    void render(Text &text);
-    void setTexture(char *pixels, int width, int heigth, GLuint format);
-    void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce = 0);
-
-    void setId(int id) { this->id = id; }
-    int  getId() { return id; }
-    void setSize(int width, int height) { this->width = width; this->height = height; }
-    void setSize(const std::pair<int, int> &size) { width = size.first; height = size.second; }
-    std::pair<int, int> getSize() { return std::make_pair(width, height); }
-    int getWidth() { return width; }
-    int getHeight() { return height; }
-    void setPosition(int x, int y) { this->x = x; this->y = y; }
-    void setPosition(const std::pair<int, int> &position) { x = position.first; y = position.second; }
-    int getX() { return x; }
-    int getY() { return y; }
-    std::pair<int, int> getPosition() { return std::make_pair(x, y); }
-    void setName(const std::string &name) { this->name = name; }
-    std::string getName() { return name; }
-    std::string getDescription() { return description; }
-    void setDescription(const std::string &description) { this->description = description; }
-    void setViewportSize(const std::pair<int, int> &viewportSize) { viewportWidth = viewportSize.first; viewportHeight = viewportSize.second; }
-    void setViewportSize(int viewportWidth, int viewportHeight) { this->viewportWidth = viewportWidth; this->viewportHeight = viewportHeight; }
-    int getTextureId() { return textureId; }
-    void setZoom(float zoom) { this->zoom = zoom; }
-    void setOpacity(float opacity) { this->opacity = opacity; }
-    float getZoom() { return zoom; }
-    float getOpacity() { return opacity; }
-
-    std::pair<int, int> getSourcePosition() { return animation.isActive() ? animation.getSourcePosition() : getPosition(); }
-    std::pair<int, int> getTargetPosition() { return animation.isActive() ? animation.getTargetPosition() : getPosition(); }
-    float getSourceZoom() { return animation.isActive() ? animation.getSourceZoom() : getZoom(); }
-    float getTargetZoom() { return animation.isActive() ? animation.getTargetZoom() : getZoom(); }
-    std::pair<int, int> getSourceSize() { return animation.isActive() ? animation.getSourceSize() : getSize(); }
-    std::pair<int, int> getTargetSize() { return animation.isActive() ? animation.getTargetSize() : getSize(); }
-    float getSourceOpacity() { return animation.isActive() ? animation.getSourceOpacity() : getOpacity(); }
-    float getTargetOpacity() { return animation.isActive() ? animation.getTargetOpacity() : getOpacity(); }
-    bool isAnimationActive() { return animation.isActive(); }
-
-};
+#include "../include/Tile.h"
 
 Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat)
           : id(tileId),
@@ -107,7 +15,7 @@ Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, s
             textureId(GL_INVALID_VALUE) {
   initGL();
   initTexture();
-  setTexture(texturePixels, textureSize.first, textureSize.second, textureFormat);
+  setTexture(texturePixels, textureSize, textureFormat);
 }
 
 Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description)
@@ -137,11 +45,6 @@ Tile::Tile(int tileId)
 void Tile::initTexture() {
   glActiveTexture(GL_TEXTURE0);
   glGenTextures(1, &textureId);
-/*  glUseProgram(programObject);
-  samplerLoc = glGetUniformLocation(programObject, "s_texture");
-  posLoc = glGetAttribLocation(programObject, "a_position");
-  texLoc = glGetAttribLocation(programObject, "a_texCoord");
-  opacityLoc = glGetUniformLocation(programObject, "u_opacity"); */
 }
 
 void Tile::initGL() {
@@ -199,6 +102,16 @@ void Tile::initGL() {
   glLinkProgram(programObject);
 
   glBindAttribLocation(programObject, 0, "a_position");
+
+  // saving locations for later use breaks rendering... o_O
+  /*tileSizeLoc = glGetUniformLocation(programObject, "u_tileSize");
+  tilePositionLoc = glGetUniformLocation(programObject, "u_tilePosition");
+  frameColorLoc = glGetUniformLocation(programObject, "u_frameColor");
+  frameWidthLoc = glGetUniformLocation(programObject, "u_frameWidth");
+  samplerLoc = glGetUniformLocation(programObject, "s_texture");
+  posLoc = glGetAttribLocation(programObject, "a_position");
+  texLoc = glGetAttribLocation(programObject, "a_texCoord");
+  opacityLoc = glGetUniformLocation(programObject, "u_opacity");*/
 }
 
 Tile::Tile(Tile &&other) {
@@ -319,51 +232,33 @@ void Tile::render(Text &text) {
   glUniform1f(frameWidthLoc, frameWidth);
 
   glBindTexture(GL_TEXTURE_2D, textureId);
-  GLuint samplerLoc = glGetUniformLocation(programObject, "s_texture"); // TODO: Store the location somewhere.
+  GLuint samplerLoc = glGetUniformLocation(programObject, "s_texture");
   glUniform1i(samplerLoc, 0);
 
   GLint posLoc = glGetAttribLocation(programObject, "a_position");
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
-  float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f, // TODO: Move it to VBO... Or somewhene in GPU's memory.
+  float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
                        1.0f, 1.0f,    1.0f, 0.0f };
                        
-  GLint texLoc = glGetAttribLocation(programObject, "a_texCoord"); // TODO: Store the location somewhere.
+  GLint texLoc = glGetAttribLocation(programObject, "a_texCoord");
   glEnableVertexAttribArray(texLoc);
   glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
-  GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity"); // TODO: Store the location somewhere.
+  GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //glEnable(GL_BLEND);
-
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
-
-  /*
-  if(!name.empty()) {
-    std::pair<int, int> viewport = {vW, vH};
-    int fontHeight = 24;
-    fontHeight *= (zoom - 1.0) > 0.01 ? zoom : 1.0;
-    int margin = 12;
-    //int leftText = ((left + 1.0) * vW / 2.0) + margin;
-    //int topText = ((top + 1.0) * vH / 2.0) - fontHeight - margin;
-    int leftText = (xPos + margin) - (w / 2.0) * ((zoom - 1.0) > 0.01 ? (zoom - 1.0) : 0.0);
-    int topText = ((yPos + h) - fontHeight - margin) + (h / 2.0) * ((zoom - 1.0) > 0.01 ? (zoom - 1.0) : 0.0);
-
-    text.render(name, {leftText, topText}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, opacity}, true);
-  }
-  */
 }
 
-void Tile::setTexture(char *pixels, int width, int height, GLuint format) {
+void Tile::setTexture(char *pixels, std::pair<int, int> size, GLuint format) {
   _ERR("texture %dx%d", width, height);
   if(textureId == GL_INVALID_VALUE)
     initTexture();
   textureFormat = format;
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glBindTexture(GL_TEXTURE_2D, textureId);
-  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, format, size.first, size.second, 0, format, GL_UNSIGNED_BYTE, pixels);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*GL_NEAREST*/);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR/*GL_NEAREST*/);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -388,4 +283,3 @@ void Tile::checkShaderCompileError(GLuint shader) {
   }
 }
 
-#endif // _TILE_H_
