@@ -94,7 +94,7 @@ void TileAnimation::update(std::pair<int, int> &position, float &zoom, std::pair
   std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart - animationDelay);
 
   std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
-  float fraction = time_span.count() / target.count();
+  float fraction = target.count() ? time_span.count() / target.count() : 1.0;
   switch(positionEasingType) {
     case Easing::BounceLeft:
     case Easing::BounceRight:

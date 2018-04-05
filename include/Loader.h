@@ -12,7 +12,7 @@
 #endif // _INCLUDE_GLES_
 
 #include "Text.h"
-#include "TileAnimation.h"
+#include "Animation.h"
 #include "log.h"
 
 class Loader {
@@ -21,7 +21,7 @@ private:
   std::chrono::time_point<std::chrono::high_resolution_clock> time;
   bool initialize();
   int param;
-  TileAnimation animation;
+  Animation animation;
 
 public:
   Loader();

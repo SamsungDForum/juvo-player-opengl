@@ -73,7 +73,7 @@ std::vector<double> Animation::update() {
 
   std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart - animationDelay);
   std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
-  double fraction = time_span.count() / target.count();
+  double fraction = target.count() ? time_span.count() / target.count() : 1.0;
   if(fraction > 0.999)
     active = false;
 

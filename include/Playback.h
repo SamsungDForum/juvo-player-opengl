@@ -13,7 +13,7 @@
 
 #include "Text.h"
 #include "log.h"
-#include "TileAnimation.h"
+#include "Animation.h"
 
 class Playback {
 private:
@@ -42,7 +42,7 @@ private:
 private:
   GLuint barProgramObject;
   GLuint iconProgramObject;
-  TileAnimation animation;
+  Animation animation;
   std::vector<GLuint> icons;
 
   bool enabled;

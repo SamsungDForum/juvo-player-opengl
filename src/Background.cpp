@@ -120,10 +120,9 @@ void Background::render(Text &text) {
   glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
-  std::pair<int, int> position {0, 0};
-  float zoom = 0;
-  std::pair<int, int> size {0, 0};
-  animation.update(position, zoom, size, black);
+  std::vector<double> updated = animation.update();
+  if(!updated.empty())
+    black = animation.update()[0];
   glUniform1f(blackLoc, static_cast<GLfloat>(black));
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
@@ -182,24 +181,13 @@ void Background::setViewport(int viewportWidth, int viewportHeight) {
 
 
 void Background::setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay) {
-  if(!animation.isActive() || duration != std::chrono::milliseconds(0)) {
-    animation = TileAnimation(std::chrono::high_resolution_clock::now(),
+  if(!animation.isActive() || duration != std::chrono::milliseconds(0))
+    animation = Animation(std::chrono::high_resolution_clock::now(),
                               duration,
                               delay,
-                              {0, 0},
-                              {0, 0},
-                              TileAnimation::Easing::Linear,
-                              0,
-                              0,
-                              TileAnimation::Easing::Linear,
-                              {0, 0},
-                              {0, 0},
-                              TileAnimation::Easing::Linear,
-                              1.0,
-                              0.0,
-                              TileAnimation::Easing::CubicInOut);
-    black = 1.0;
-  }
+                              {1.0},
+                              {0.0},
+                              Animation::Easing::CubicInOut);
   this->sourceTile = sourceTile;
 }
 

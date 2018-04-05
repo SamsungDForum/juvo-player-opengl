@@ -150,10 +150,9 @@ bool Playback::initialize() {
 }
 
 void Playback::render(Text &text) {
-  std::pair<int, int> position {0, 0};
-  float zoom = 0;
-  std::pair<int, int> size {0, 0};
-  animation.update(position, zoom, size, opacity);
+  std::vector<double> updated = animation.update();
+  if(!updated.empty())
+    opacity = static_cast<float>(updated[0]);
   if(opacity <= 0.0)
     return;
   renderProgressBar(opacity);
@@ -378,21 +377,12 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
 void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay) {
   if(static_cast<bool>(show) != enabled) {
     enabled = static_cast<bool>(show);
-    animation = TileAnimation(std::chrono::high_resolution_clock::now(),
+    animation = Animation(std::chrono::high_resolution_clock::now(),
                               animationDuration,
                               animationDelay,
-                              {0, 0},
-                              {0, 0},
-                              TileAnimation::Easing::Linear,
-                              0,
-                              0,
-                              TileAnimation::Easing::Linear,
-                              {0, 0},
-                              {0, 0},
-                              TileAnimation::Easing::Linear,
-                              opacity,
-                              enabled ? 1.0 : 0.0,
-                              animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut);
+                              {static_cast<double>(opacity)},
+                              {enabled ? 1.0 : 0.0},
+                              animation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut);
   }
   this->state = static_cast<State>(state);
   this->currentTime = currentTime;

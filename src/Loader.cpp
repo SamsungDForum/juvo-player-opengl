@@ -104,21 +104,12 @@ void Loader::checkShaderCompileError(GLuint shader) {
 }
 
 void Loader::setValue(int value) {
-  TileAnimation::Easing easing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
-  animation = TileAnimation(std::chrono::high_resolution_clock::now(),
+  Animation::Easing easing = animation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut;
+  animation = Animation(std::chrono::high_resolution_clock::now(),
                             std::chrono::milliseconds(500),
                             std::chrono::milliseconds(0),
-                            {0, 0},
-                            {0, 0},
-                            TileAnimation::Easing::Linear,
-                            0,
-                            0,
-                            TileAnimation::Easing::Linear,
-                            {0, 0},
-                            {0, 0},
-                            TileAnimation::Easing::Linear,
-                            param,
-                            value,
+                            {static_cast<double>(param)},
+                            {static_cast<double>(value)},
                             easing);
 
   param = value;
@@ -128,10 +119,10 @@ void Loader::render(Text &text) {
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float, std::milli> timespan = now - time;
 
-  float down = -1.0f;
-  float top = 1.0f;
-  float left = -1.0f;
-  float right = 1.0f;
+  float down  = -1.0f;
+  float top   =  1.0f;
+  float left  = -1.0f;
+  float right =  1.0f;
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -152,24 +143,24 @@ void Loader::render(Text &text) {
 
   float paramArg = param;
   if(animation.isActive()) {
-    std::pair<int, int> fakePosition, fakeSize;
-    float fakeZoom;
-    animation.update(fakePosition, fakeZoom, fakeSize, paramArg);
+    std::vector<double> updated = animation.update();
+    if(!updated.empty())
+      paramArg = static_cast<float>(updated[0]);
   }
+  
   GLuint paramLoc = glGetUniformLocation(programObject, "u_param");
   glUniform1f(paramLoc, paramArg);
 
   GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   glUniform1f(opacityLoc, 1.0f);
-
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   //glEnable(GL_BLEND);
-
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   //glViewport(0, 0, 1920, 1080);
   glUseProgram(0);
-  {
+
+  { // render text
     std::pair<int, int> viewport = {1920, 1080};
     int fontHeight = 48;
     int textLeft = (viewport.first - text.getTextSize("Loading... 0%", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0) / 2;

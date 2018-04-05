@@ -1,5 +1,5 @@
-#ifndef _ANIMATION_H_
-#define _ANIMATION_H_
+#ifndef _TILEANIMATION_H_
+#define _TILEANIMATION_H_
 
 #include <chrono>
 #include <utility>
@@ -70,4 +70,4 @@ public:
 };
 
 
-#endif // _ANIMATION_H_
+#endif // _TILEANIMATION_H_

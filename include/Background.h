@@ -14,7 +14,7 @@
 #include "Tile.h"
 #include "Text.h"
 #include "log.h"
-#include "TileAnimation.h"
+#include "Animation.h"
 
 class Background {
 private:
@@ -26,7 +26,7 @@ private:
   float black;
   Tile *sourceTile;
   std::vector<float> clearColor;
-  TileAnimation animation;
+  Animation animation;
 
   GLuint samplerLoc = GL_INVALID_VALUE;
   GLint posLoc =      GL_INVALID_VALUE;
