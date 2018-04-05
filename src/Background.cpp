@@ -71,8 +71,6 @@ void Background::initGL() {
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
 
-  glBindAttribLocation(programObject, 0, "a_position");
-
   samplerLoc = glGetUniformLocation(programObject, "s_texture");
   posLoc = glGetAttribLocation(programObject, "a_position");
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
@@ -110,7 +108,7 @@ void Background::render(Text &text) {
   glUseProgram(programObject);
 
   glBindTexture(GL_TEXTURE_2D, textureId);
-  glUniform1i(samplerLoc, 0);
+  glUniform1i(samplerLoc, posLoc);
 
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
@@ -173,7 +171,7 @@ void Background::checkShaderCompileError(GLuint shader) {
     glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
     _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
 
-    glDeleteShader(shader); // Don't leak the shader.
+    glDeleteShader(shader);
   }
 }
 

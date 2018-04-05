@@ -28,15 +28,14 @@ private:
   std::vector<float> clearColor;
   TileAnimation animation;
 
-private:
-  void initGL();
-  void checkShaderCompileError(GLuint shader);
-
   GLuint samplerLoc = GL_INVALID_VALUE;
   GLint posLoc =      GL_INVALID_VALUE;
   GLint texLoc =      GL_INVALID_VALUE;
   GLuint opacityLoc = GL_INVALID_VALUE;
   GLuint blackLoc = GL_INVALID_VALUE;
+
+  void initGL();
+  void checkShaderCompileError(GLuint shader);
 
 public:
   Background();

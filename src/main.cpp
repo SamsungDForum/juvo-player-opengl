@@ -5,6 +5,13 @@
 #include "../include/Menu.h"
 #include "log.h"
 
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <array>
+
 static Menu menu;
 
 #ifdef __cplusplus

@@ -58,6 +58,8 @@ private:
 
 private:
   void initialize();
+  int AddTile(char *pixels, std::pair<int, int> size);
+  std::pair<int, int> getTilePosition(int tileNo, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, std::pair<int, int> viewport, bool initialMargin = true);
 
 public:
   Menu();
@@ -66,17 +68,14 @@ public:
 
   void render();
   void ShowMenu(int enable);
-  std::pair<int, int> getTilePosition(int tileNo, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, std::pair<int, int> viewport, bool initialMargin = true);
-  int AddTile(char *pixels, std::pair<int, int> size);
   int AddTile();
   void SetTileTexture(int tileNo, char *pixels, std::pair<int, int> size);
   void SelectTile(int tileNo);
-  void FullscreenTile(bool fullscreen);
   int AddFont(char *data, int size);
   void ShowLoader(bool enabled, int percent);
   void SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc);
-  void SetIcon(int id, char* pixels, std::pair<int, int> size);
   void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text);
+  void SetIcon(int id, char* pixels, std::pair<int, int> size);
   void SetVersion(std::string version);
   void SwitchTextRenderingMode();
   void SwitchFPSCounterVisibility();

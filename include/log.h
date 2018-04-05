@@ -17,7 +17,7 @@
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "JuvoGL"
+#define LOG_TAG "JuvoPlayer"
 #ifndef _ERR
 #define _ERR(fmt, args...) LOGE(fmt "\n", ##args)
 #endif

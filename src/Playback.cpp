@@ -25,6 +25,7 @@ bool Playback::initialize() {
     "   gl_Position = a_position;   \n"
     "}                              \n";
 
+// TODO: It seems rendering this progress bar is quite performance heavy - look into optimizing it.
   const GLchar* barFShaderTexStr =  
     "precision mediump float;                                                    \n"
     "uniform float u_time;                                                       \n"
@@ -48,10 +49,6 @@ bool Playback::initialize() {
     "    p.x <= pos.x + size.x &&                                                \n"
     "    p.y >= pos.y &&                                                         \n"
     "    p.y <= pos.y + size.y) {                                                \n"
-//    "    if(abs(p.x - pos.x) < 1.0                                               \n"
-//    "    || abs(p.y - pos.y) < 1.0                                               \n"
-//    "    || abs(p.x - (pos.x + size.x)) < 1.0                                    \n"
-//    "    || abs(p.y - (pos.y + size.y)) < 1.0                                    \n"
     "    if((abs((p.x + 2.0) - pos.x) < 1.0 && abs(p.y - (pos.y + size.y)) >= 2.0) \n"
     "    || (abs((p.y + 2.0) - pos.y) < 1.0 && abs(p.x - (pos.x + size.x)) >= 2.0)  \n"
     "    ) {                                                                     \n"
@@ -128,8 +125,6 @@ bool Playback::initialize() {
     "                 * vec4(u_color, u_opacity);                          \n"
     "}                                                                     \n";
 
-
-
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &iconVShaderTexStr, NULL);
   glCompileShader(vertexShader);
@@ -159,8 +154,8 @@ void Playback::render(Text &text) {
   float zoom = 0;
   std::pair<int, int> size {0, 0};
   animation.update(position, zoom, size, opacity);
-  /*if(opacity <= 0.0)
-    return;*/
+  if(opacity <= 0.0)
+    return;
   renderProgressBar(opacity);
   renderIcons(opacity);
   renderText(text, opacity);
@@ -195,26 +190,15 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
   if(static_cast<int>(icon) >= static_cast<int>(icons.size()) || icons[static_cast<int>(icon)] == GL_INVALID_VALUE)
     return;
 
-  //float x = position.first;
-  //float y = position.second;
-  float width = size.first;
-  float height = size.second;
-  float zoom = 1.0;
-
-  float vW = viewportWidth;
-  float vH = viewportHeight;
-  float w = width;
-  float h = height;
-  float xPos = position.first;
-  float yPos = position.second;
-  float leftPx = xPos - (w / 2.0) * (zoom - 1.0);
-  float rightPx = (xPos + w) + (w / 2.0) * (zoom - 1.0);
-  float downPx = yPos - (h / 2.0) * (zoom - 1.0);
-  float topPx = (yPos + h) + (h / 2.0) * (zoom - 1.0);
-  float left = (leftPx / vW) * 2.0 - 1.0;
-  float right = (rightPx / vW) * 2.0 - 1.0;
-  float down = (downPx / vH) * 2.0 - 1.0;
-  float top = (topPx / vH) * 2.0 - 1.0;
+  float scale = 1.0;
+  float leftPx = position.first - (size.first / 2.0) * (scale - 1.0);
+  float rightPx = (position.first + size.first) + (size.first / 2.0) * (scale - 1.0);
+  float downPx = position.second - (size.second / 2.0) * (scale - 1.0);
+  float topPx = (position.second + size.second) + (size.second / 2.0) * (scale - 1.0);
+  float left = (leftPx / viewportWidth) * 2.0 - 1.0;
+  float right = (rightPx / viewportWidth) * 2.0 - 1.0;
+  float down = (downPx / viewportHeight) * 2.0 - 1.0;
+  float top = (topPx / viewportHeight) * 2.0 - 1.0;
 
   GLfloat vertices[] = { left,   top,  0.0f,
                          left,   down, 0.0f,
@@ -244,9 +228,6 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 
     glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
 
-    std::pair<float, float> viewport = {viewportWidth, viewportHeight};
-    std::pair<float, float> outlineOffset = {3.0 / viewport.first, 3.0 / viewport.second};
-
     float dir[] = {
        0.0f,  1.0f,
       -1.0f,  1.0f,
@@ -271,6 +252,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
         break;
     }
 
+    std::pair<float, float> outlineOffset = {3.0 / viewportWidth, 3.0 / viewportHeight};
     for(int i = dirs.first; i < dirs.second; ++i) {
       GLfloat outlineV[4 * 3];
       for(int j = 0; j < 4 * 3; ++j) {
@@ -343,25 +325,16 @@ void Playback::renderProgressBar(float opacity) {
                           right,  top,  0.0f
   };
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-
   glUseProgram(barProgramObject);
-
   glEnableVertexAttribArray(posBarLoc);
   glVertexAttribPointer(posBarLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-
   glUniform1f(paramBarLoc, totalTime ? static_cast<float>(currentTime) / static_cast<float>(totalTime) : 0.0f);
-
   glUniform1f(opacityBarLoc, opacity);
-
   glUniform2f(viewportBarLoc, viewportWidth, viewportHeight);
-
   glUniform2f(sizeBarLoc, progressBarWidth, progressBarHeight);
-
   glUniform1f(marginBarLoc, progressBarMarginBottom);
-
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   //glEnable(GL_BLEND);
-
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
@@ -376,7 +349,7 @@ void Playback::checkShaderCompileError(GLuint shader) {
     glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
     _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
 
-    glDeleteShader(shader); // Don't leak the shader.
+    glDeleteShader(shader);
   }
 }
 
@@ -395,8 +368,8 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glBindTexture(GL_TEXTURE_2D, icons[id]);
   glTexImage2D(GL_TEXTURE_2D, 0, format, size.first, size.second, 0, format, GL_UNSIGNED_BYTE, pixels);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*GL_NEAREST*/);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR/*GL_NEAREST*/);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glFlush();
@@ -439,14 +412,5 @@ std::string Playback::timeToString(int time) {
        + (":") // m:s colon
        + (s < 10 ? "0" : "") // s leading 0
        + std::to_string(s); // seconds
-  /*
-  return (h ? std::to_string(h) : "") // hours
-       + (h ? ":" : "") // h:m colon
-       + (h && m < 10 ? "0" : "") // m leading 0
-       + (h || m ? std::to_string(m) : "") // minutes
-       + (h || m ? ":" : "") // m:s colon
-       + ((h|| m) && s < 10 ? "0" : "") // s leading 0
-       + std::to_string(s); // seconds
-       */
 }
 

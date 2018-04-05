@@ -2,12 +2,9 @@
 
 Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat)
           : id(tileId),
-            x(position.first),
-            y(position.second),
-            width(size.first),
-            height(size.second),
-            viewportWidth(viewport.first),
-            viewportHeight(viewport.second),
+            position(position),
+            size(size),
+            viewport(viewport),
             zoom(zoom),
             opacity(opacity),
             name(name),
@@ -20,12 +17,9 @@ Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, s
 
 Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description)
           : id(tileId),
-            x(position.first),
-            y(position.second),
-            width(size.first),
-            height(size.second),
-            viewportWidth(viewport.first),
-            viewportHeight(viewport.second),
+            position(position),
+            size(size),
+            viewport(viewport),
             zoom(zoom),
             opacity(opacity),
             name(name),
@@ -101,28 +95,22 @@ void Tile::initGL() {
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
 
-  glBindAttribLocation(programObject, 0, "a_position");
-
-  // saving locations for later use breaks rendering... o_O
-  /*tileSizeLoc = glGetUniformLocation(programObject, "u_tileSize");
+  tileSizeLoc = glGetUniformLocation(programObject, "u_tileSize");
   tilePositionLoc = glGetUniformLocation(programObject, "u_tilePosition");
   frameColorLoc = glGetUniformLocation(programObject, "u_frameColor");
   frameWidthLoc = glGetUniformLocation(programObject, "u_frameWidth");
   samplerLoc = glGetUniformLocation(programObject, "s_texture");
   posLoc = glGetAttribLocation(programObject, "a_position");
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
-  opacityLoc = glGetUniformLocation(programObject, "u_opacity");*/
+  opacityLoc = glGetUniformLocation(programObject, "u_opacity");
 }
 
-Tile::Tile(Tile &&other) {
+Tile::Tile(Tile &&other) { // update this move constructor when adding new members!
   if(this != &other) {
     id = other.id;
-    width = other.width;
-    height = other.height;
-    x = other.x;
-    y = other.y;
-    viewportWidth = other.viewportWidth;
-    viewportHeight = other.viewportHeight;
+    position = other.position;
+    size = other.size;
+    viewport = other.viewport;
     textureId = other.textureId;
     textureFormat = other.textureFormat;
     programObject = other.programObject;
@@ -131,6 +119,15 @@ Tile::Tile(Tile &&other) {
     zoom = other.zoom;
     opacity = other.opacity;
     animation = other.animation;
+
+    tileSizeLoc = other.tileSizeLoc;
+    tilePositionLoc = other.tilePositionLoc;
+    frameColorLoc = other.frameColorLoc;
+    frameWidthLoc = other.frameWidthLoc;
+    samplerLoc = other.samplerLoc;
+    posLoc = other.posLoc;
+    texLoc = other.texLoc;
+    opacityLoc = other.opacityLoc;
 
     other.textureId = GL_INVALID_VALUE; // prevent destructor of the object we moved from from deleting the texture
   }
@@ -152,20 +149,18 @@ void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> 
   animation = TileAnimation(std::chrono::high_resolution_clock::now(),
                             std::chrono::milliseconds(duration),
                             std::chrono::milliseconds(delay),
-                            {x, y},
+                            this->position,
                             position,
                             positionEasing,
                             this->zoom,
                             zoom,
                             zoomEasing,
-                            {width, height},
+                            this->size,
                             size,
                             sizeEasing,
                             this->opacity,
                             opacity,
                             opacityEasing);
-  x = position.first;
-  y = position.second;
 }
 
 void Tile::render(Text &text) {
@@ -173,44 +168,16 @@ void Tile::render(Text &text) {
   if(textureId == GL_INVALID_VALUE)
     return;
 
-  std::pair<int, int> position {x, y};
-  std::pair<int, int> size {width, height};
   animation.update(position, zoom, size, opacity);
-  x = position.first;
-  y = position.second;
-  width = size.first;
-  height = size.second;
 
-/*
-  float vW = viewportWidth;
-  float vH = viewportHeight;
-  float w = width;
-  float h = height;
-  float xPos = position.first;
-  float yPos = position.second;
-  float left = xPos / vW * 2 - 1;
-  float down = yPos / vH * 2 - 1;
-  float right = (xPos + w) / vW * 2 - 1;
-  float top = (yPos + h) / vH * 2 - 1;
-  left -= (w / vW) * (zoom - 1.0);
-  right += (w / vW) * (zoom - 1.0);
-  down -= (h / vH) * (zoom - 1.0);
-  top += (h / vH) * (zoom - 1.0);
-*/  
-  float vW = viewportWidth;
-  float vH = viewportHeight;
-  float w = width;
-  float h = height;
-  float xPos = position.first;
-  float yPos = position.second;
-  float leftPx = xPos - (w / 2.0) * (zoom - 1.0);
-  float rightPx = (xPos + w) + (w / 2.0) * (zoom - 1.0);
-  float downPx = yPos - (h / 2.0) * (zoom - 1.0);
-  float topPx = (yPos + h) + (h / 2.0) * (zoom - 1.0);
-  float left = (leftPx / vW) * 2.0 - 1.0;
-  float right = (rightPx / vW) * 2.0 - 1.0;
-  float down = (downPx / vH) * 2.0 - 1.0;
-  float top = (topPx / vH) * 2.0 - 1.0;
+  float leftPx = position.first - (size.first / 2.0) * (zoom - 1.0);
+  float rightPx = (position.first + size.first) + (size.first / 2.0) * (zoom - 1.0);
+  float downPx = position.second - (size.second / 2.0) * (zoom - 1.0);
+  float topPx = (position.second + size.second) + (size.second / 2.0) * (zoom - 1.0);
+  float left = (leftPx / viewport.first) * 2.0 - 1.0;
+  float right = (rightPx / viewport.first) * 2.0 - 1.0;
+  float down = (downPx / viewport.second) * 2.0 - 1.0;
+  float top = (topPx / viewport.second) * 2.0 - 1.0;
 
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
@@ -221,49 +188,39 @@ void Tile::render(Text &text) {
 
   glUseProgram(programObject);
 
-  GLuint tileSizeLoc = glGetUniformLocation(programObject, "u_tileSize");
   glUniform2f(tileSizeLoc, static_cast<float>(rightPx - leftPx), static_cast<float>(topPx - downPx));
-  GLuint tilePositionLoc = glGetUniformLocation(programObject, "u_tilePosition");
   glUniform2f(tilePositionLoc, static_cast<float>(leftPx), static_cast<float>(downPx));
-  GLuint frameColorLoc = glGetUniformLocation(programObject, "u_frameColor");
   glUniform4f(frameColorLoc, 1.0, 1.0, 1.0, opacity);
-  GLuint frameWidthLoc = glGetUniformLocation(programObject, "u_frameWidth");
   float frameWidth = std::max(0.0, (zoom - 1.0) > 0.01 ? (zoom - 1.0) * 50.0 : 0.0);
   glUniform1f(frameWidthLoc, frameWidth);
 
   glBindTexture(GL_TEXTURE_2D, textureId);
-  GLuint samplerLoc = glGetUniformLocation(programObject, "s_texture");
-  glUniform1i(samplerLoc, 0);
+  glUniform1i(samplerLoc, posLoc);
 
-  GLint posLoc = glGetAttribLocation(programObject, "a_position");
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
   float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
                        1.0f, 1.0f,    1.0f, 0.0f };
                        
-  GLint texLoc = glGetAttribLocation(programObject, "a_texCoord");
   glEnableVertexAttribArray(texLoc);
   glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
-  GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
 void Tile::setTexture(char *pixels, std::pair<int, int> size, GLuint format) {
-  _ERR("texture %dx%d", width, height);
   if(textureId == GL_INVALID_VALUE)
     initTexture();
   textureFormat = format;
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glBindTexture(GL_TEXTURE_2D, textureId);
   glTexImage2D(GL_TEXTURE_2D, 0, format, size.first, size.second, 0, format, GL_UNSIGNED_BYTE, pixels);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*GL_NEAREST*/);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR/*GL_NEAREST*/);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glFlush();
 }
 
 void Tile::checkShaderCompileError(GLuint shader) {
@@ -276,10 +233,8 @@ void Tile::checkShaderCompileError(GLuint shader) {
     std::vector<GLchar> errorLog(maxLength);
     glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
     _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
-    //_DBG("test dbg");
-    //i_INFO("test info");
 
-    glDeleteShader(shader); // Don't leak the shader.
+    glDeleteShader(shader);
   }
 }
 

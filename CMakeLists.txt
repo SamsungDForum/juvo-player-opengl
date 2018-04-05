@@ -39,8 +39,8 @@ SET(SRCS
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED
-	gles20
-	egl
+  gles20
+  egl
   dlog)
 
 FOREACH(flag ${PKGS_CFLAGS})

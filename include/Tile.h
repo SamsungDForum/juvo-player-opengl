@@ -19,12 +19,9 @@ private:
   int id;
   GLuint programObject = GL_INVALID_VALUE;
   GLuint textureFormat = GL_INVALID_VALUE;
-  int x;
-  int y;
-  int width;
-  int height;
-  int viewportWidth;
-  int viewportHeight;
+  std::pair<int, int> position;
+  std::pair<int, int> size;
+  std::pair<int, int> viewport;
   float zoom;
   float opacity;
   std::string name;
@@ -33,14 +30,14 @@ private:
   TileAnimation animation;
   GLuint textureId = GL_INVALID_VALUE;
 
-  /*GLuint tileSizeLoc     = GL_INVALID_VALUE;
+  GLuint tileSizeLoc     = GL_INVALID_VALUE;
   GLuint tilePositionLoc = GL_INVALID_VALUE;
   GLuint frameColorLoc   = GL_INVALID_VALUE;
   GLuint frameWidthLoc   = GL_INVALID_VALUE;
   GLuint samplerLoc      = GL_INVALID_VALUE;
-  GLint posLoc           = GL_INVALID_VALUE;
-  GLint texLoc           = GL_INVALID_VALUE;
-  GLuint opacityLoc      = GL_INVALID_VALUE;*/
+  GLuint posLoc           = GL_INVALID_VALUE;
+  GLuint texLoc           = GL_INVALID_VALUE;
+  GLuint opacityLoc      = GL_INVALID_VALUE;
 
   void initTexture();
   void initGL();
@@ -63,22 +60,22 @@ public:
 
   void setId(int id) { this->id = id; }
   int  getId() { return id; }
-  void setSize(int width, int height) { this->width = width; this->height = height; }
-  void setSize(const std::pair<int, int> &size) { width = size.first; height = size.second; }
-  std::pair<int, int> getSize() { return std::make_pair(width, height); }
-  int getWidth() { return width; }
-  int getHeight() { return height; }
-  void setPosition(int x, int y) { this->x = x; this->y = y; }
-  void setPosition(const std::pair<int, int> &position) { x = position.first; y = position.second; }
-  int getX() { return x; }
-  int getY() { return y; }
-  std::pair<int, int> getPosition() { return std::make_pair(x, y); }
+  void setSize(int width, int height) { size.first = width; size.second = height; }
+  void setSize(const std::pair<int, int> &size) { this->size = size; }
+  std::pair<int, int> getSize() { return size; }
+  int getWidth() { return size.first; }
+  int getHeight() { return size.second; }
+  void setPosition(int x, int y) { position.first = x; position.second = y; }
+  void setPosition(const std::pair<int, int> &position) { this->position = position; }
+  int getX() { return position.first; }
+  int getY() { return position.second; }
+  std::pair<int, int> getPosition() { return position; }
   void setName(const std::string &name) { this->name = name; }
   std::string getName() { return name; }
   std::string getDescription() { return description; }
   void setDescription(const std::string &description) { this->description = description; }
-  void setViewportSize(const std::pair<int, int> &viewportSize) { viewportWidth = viewportSize.first; viewportHeight = viewportSize.second; }
-  void setViewportSize(int viewportWidth, int viewportHeight) { this->viewportWidth = viewportWidth; this->viewportHeight = viewportHeight; }
+  void setViewportSize(const std::pair<int, int> &viewport) { this->viewport = viewport; }
+  void setViewportSize(int viewportWidth, int viewportHeight) { viewport.first = viewportWidth; viewport.second = viewportHeight; }
   int getTextureId() { return textureId; }
   void setZoom(float zoom) { this->zoom = zoom; }
   void setOpacity(float opacity) { this->opacity = opacity; }

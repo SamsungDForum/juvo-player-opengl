@@ -207,9 +207,6 @@ void Menu::ShowLoader(bool enabled, int percent) {
   loader.setValue(percent);
 }
 
-void Menu::FullscreenTile(bool fullscreen) {
-}
-
 void Menu::SetIcon(int id, char* pixels, std::pair<int, int> size) {
   playback.setIcon(id, pixels, size, GL_RGBA);
 }

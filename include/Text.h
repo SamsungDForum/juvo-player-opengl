@@ -27,6 +27,7 @@ class Text {
 private:
 
   const int CHARS = 128;
+  const std::pair<int, int> charRange = {0, CHARS};
 
   struct Character {
     GLuint TextureID;
@@ -39,14 +40,8 @@ private:
   public:
     std::string text;
     int fontId;
-
-    bool operator==(const TextKey& other) const {
-      return text == other.text && fontId == other.fontId;
-    }
-
-    std::size_t operator()(const TextKey& k) const { // hash function
-      return std::hash<std::string>()(k.text) + std::hash<int>()(k.fontId);
-    }
+    bool operator==(const TextKey& other) const { return text == other.text && fontId == other.fontId; }
+    std::size_t operator()(const TextKey& k) const { return std::hash<std::string>()(k.text) + std::hash<int>()(k.fontId); } // hash function
   };
 
   struct Font {
@@ -73,7 +68,6 @@ private:
     GLuint fontId;
   };
 
-private:
   GLuint programObject;
   GLuint samplerLoc = GL_INVALID_VALUE;
   GLuint colLoc = GL_INVALID_VALUE;
@@ -94,15 +88,8 @@ private:
 
   std::unordered_map<TextKey, TextTexture, TextKey> generatedTextures;
 
-private:
   void prepareShaders();
   void checkShaderCompileError(GLuint shader);
-
-public:
-  Text();
-  ~Text();
-  int AddFont(char *data, int size, int fontsize);
-  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
   std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, float scale);
   std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
   void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f, bool invertVerticalAdvance = false);
@@ -110,16 +97,19 @@ public:
   float getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport);
   TextTexture getTextTexture(const std::string &text, int fontId, bool cache);
   void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color);
-
-
-  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
   void renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
   void renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  // TODO: Add possibility to remove cached text texture
 
+public:
+  Text();
+  ~Text();
+  int AddFont(char *data, int size, int fontsize);
+  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
+  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
 
-  int renderingMode = 1; // 0 - direct, 1 - cached
   void switchRenderingMode() {
-    renderingMode = (renderingMode + 1) % 2;
+    renderingMode = !renderingMode;
     _INFO("Text rendering mode switched to %s.", renderingMode ? "cached" : "direct");
   }
 
@@ -128,6 +118,9 @@ public:
     Single,
     Outline
   };
+
+private:
+  int renderingMode = 1; // 0 - direct, 1 - cached
   Shadow shadowMode = Shadow::Single;
 };
 
