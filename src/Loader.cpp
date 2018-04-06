@@ -2,7 +2,7 @@
 
 Loader::Loader()
   : programObject(GL_INVALID_VALUE),
-  param(0)
+    param(0)
 {
   initialize();
 }
@@ -81,8 +81,6 @@ bool Loader::initialize() {
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
 
-  //glViewport(0, 0, viewport.first, viewport.second);
-
   time = std::chrono::high_resolution_clock::now();
 
   return true;
@@ -106,12 +104,11 @@ void Loader::checkShaderCompileError(GLuint shader) {
 void Loader::setValue(int value) {
   Animation::Easing easing = animation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut;
   animation = Animation(std::chrono::high_resolution_clock::now(),
-                            std::chrono::milliseconds(500),
-                            std::chrono::milliseconds(0),
-                            {static_cast<double>(param)},
-                            {static_cast<double>(value)},
-                            easing);
-
+                        std::chrono::milliseconds(500),
+                        std::chrono::milliseconds(0),
+                        {static_cast<double>(param)},
+                        {static_cast<double>(value)},
+                        easing);
   param = value;
 }
 
@@ -131,7 +128,6 @@ void Loader::render(Text &text) {
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
   glUseProgram(programObject);
-  //glViewport(0, 0, 1920, 1080);
 
   GLint posLoc = glGetAttribLocation(programObject, "a_position");
   glEnableVertexAttribArray(posLoc);
@@ -153,11 +149,8 @@ void Loader::render(Text &text) {
 
   GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   glUniform1f(opacityLoc, 1.0f);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //glEnable(GL_BLEND);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-  //glViewport(0, 0, 1920, 1080);
   glUseProgram(0);
 
   { // render text
@@ -165,7 +158,13 @@ void Loader::render(Text &text) {
     int fontHeight = 48;
     int textLeft = (viewport.first - text.getTextSize("Loading... 0%", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0) / 2;
     int textDown = viewport.second / 2 - 100;
-    text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"), {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+    text.render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"),
+                {textLeft, textDown},
+                {0, fontHeight},
+                viewport,
+                0,
+                {1.0, 1.0, 1.0, 1.0},
+                true);
 
     fontHeight *= 1.5;
     textLeft = (viewport.first - text.getTextSize("JuvoPlayer", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0) / 2;
@@ -173,7 +172,13 @@ void Loader::render(Text &text) {
 
     float d = (int)t > 0 && ((int)t + 1) % 2 == 0 ? t - (int)t : 0;
     float a = (cos(d * 20 / M_PI) + 1.0) / 2.0;
-    text.render("JuvoPlayer", {textLeft, textDown}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, a}, true);
+    text.render("JuvoPlayer",
+                {textLeft, textDown},
+                {0, fontHeight},
+                viewport,
+                0,
+                {1.0, 1.0, 1.0, a},
+                true);
   }
 }
 

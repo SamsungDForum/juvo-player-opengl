@@ -40,21 +40,21 @@ void Background::initGL() {
     "}                              \n";
  
   const GLchar* fShaderTexStr =  
-    "precision mediump float;       \n"
-    "varying vec2 v_texCoord;       \n"
-    "uniform sampler2D s_texture;   \n"
-    "uniform float u_opacity;       \n"
-    "uniform float u_black;         \n"
-    "void main()                    \n"
-    "{                              \n"
-    "  gl_FragColor = texture2D(s_texture, v_texCoord);    \n"
-    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), \n"
+    "precision mediump float;                                                                      \n"
+    "varying vec2 v_texCoord;                                                                      \n"
+    "uniform sampler2D s_texture;                                                                  \n"
+    "uniform float u_opacity;                                                                      \n"
+    "uniform float u_black;                                                                        \n"
+    "void main()                                                                                   \n"
+    "{                                                                                             \n"
+    "  gl_FragColor = texture2D(s_texture, v_texCoord);                                            \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0),                               \n"
     "                         clamp((-atan(gl_FragCoord.x / 1920.0 - 0.5) / (1.57079632679) + 0.6) \n"
-    " + pow(1.0 - gl_FragCoord.y / 1080.0, 6.0) \n"
-    "                    , 0.0, 1.0));        \n"
-    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), u_black); \n"
-    "  gl_FragColor.a *= u_opacity; \n"
-    "}                              \n";
+    "                               + pow(1.0 - gl_FragCoord.y / 1080.0, 6.0)                      \n"
+    "                               , 0.0, 1.0));                                                  \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), u_black);                     \n"
+    "  gl_FragColor.a *= u_opacity;                                                                \n"
+    "}                                                                                             \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
@@ -79,7 +79,6 @@ void Background::initGL() {
 }
 
 void Background::render(Text &text) {
-
   GLuint textureId = sourceTile != nullptr ? sourceTile->getTextureId() : GL_INVALID_VALUE;
   opacity = sourceTile != nullptr ? sourceTile->getOpacity() : 1.0;
 
@@ -132,14 +131,26 @@ void Background::render(Text &text) {
     int fontHeight = 52;
     int leftText = 100;
     int topText = viewportHeight - fontHeight - 200;
-    text.render(name, {leftText, topText}, {0, fontHeight}, {viewportWidth, viewportHeight}, 0, {1.0, 1.0, 1.0, opacity}, true);
+    text.render(name,
+                {leftText, topText},
+                {0, fontHeight},
+                {viewportWidth, viewportHeight},
+                0,
+                {1.0, 1.0, 1.0, opacity},
+                true);
   }
   std::string description = sourceTile != nullptr ? sourceTile->getDescription() : "";
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
     int topText = viewportHeight - fontHeight - 300;
-    text.render(description, {leftText, topText}, {viewportWidth - 2 * leftText, fontHeight}, {viewportWidth, viewportHeight}, 0, {1.0, 1.0, 1.0, opacity}, true);
+    text.render(description,
+                {leftText, topText},
+                {viewportWidth - 2 * leftText, fontHeight},
+                {viewportWidth, viewportHeight},
+                0,
+                {1.0, 1.0, 1.0, opacity},
+                true);
   }
 }
 
@@ -183,11 +194,11 @@ void Background::setViewport(int viewportWidth, int viewportHeight) {
 void Background::setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay) {
   if(!animation.isActive() || duration != std::chrono::milliseconds(0))
     animation = Animation(std::chrono::high_resolution_clock::now(),
-                              duration,
-                              delay,
-                              {1.0},
-                              {0.0},
-                              Animation::Easing::CubicInOut);
+                          duration,
+                          delay,
+                          {1.0},
+                          {0.0},
+                          Animation::Easing::CubicInOut);
   this->sourceTile = sourceTile;
 }
 

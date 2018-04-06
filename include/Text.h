@@ -70,17 +70,17 @@ private:
 
   GLuint programObject;
   GLuint samplerLoc = GL_INVALID_VALUE;
-  GLuint colLoc = GL_INVALID_VALUE;
-  GLuint opaLoc = GL_INVALID_VALUE;
-  GLuint posLoc = GL_INVALID_VALUE;
-  GLuint texLoc = GL_INVALID_VALUE;
+  GLuint colLoc     = GL_INVALID_VALUE;
+  GLuint opaLoc     = GL_INVALID_VALUE;
+  GLuint posLoc     = GL_INVALID_VALUE;
+  GLuint texLoc     = GL_INVALID_VALUE;
 
   GLuint programObject2;
   GLuint samplerLoc2 = GL_INVALID_VALUE;
-  GLuint colLoc2 = GL_INVALID_VALUE;
-  GLuint opaLoc2 = GL_INVALID_VALUE;
-  GLuint posLoc2 = GL_INVALID_VALUE;
-  GLuint texLoc2 = GL_INVALID_VALUE;
+  GLuint colLoc2     = GL_INVALID_VALUE;
+  GLuint opaLoc2     = GL_INVALID_VALUE;
+  GLuint posLoc2     = GL_INVALID_VALUE;
+  GLuint texLoc2     = GL_INVALID_VALUE;
 
 
   FT_Library ftLibrary;

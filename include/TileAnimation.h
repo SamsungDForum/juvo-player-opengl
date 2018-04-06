@@ -39,20 +39,20 @@ private:
 public:
   TileAnimation();
   TileAnimation(std::chrono::time_point<std::chrono::high_resolution_clock> animationStart,
-            std::chrono::milliseconds animationDuration,
-            std::chrono::milliseconds animationDelay,
-            std::pair<int, int> sourcePosition,
-            std::pair<int, int> targetPosition,
-            Easing positionEasingType,
-            float sourceZoom,
-            float targetZoom,
-            Easing zoomEasingType,
-            std::pair<int, int> sourceSize,
-            std::pair<int, int> targetSize,
-            Easing sizeEasingType,
-            float sourceOpacity,
-            float targetOpacity,
-            Easing opacityEasingType);
+                std::chrono::milliseconds animationDuration,
+                std::chrono::milliseconds animationDelay,
+                std::pair<int, int> sourcePosition,
+                std::pair<int, int> targetPosition,
+                Easing positionEasingType,
+                float sourceZoom,
+                float targetZoom,
+                Easing zoomEasingType,
+                std::pair<int, int> sourceSize,
+                std::pair<int, int> targetSize,
+                Easing sizeEasingType,
+                float sourceOpacity,
+                float targetOpacity,
+                Easing opacityEasingType);
   ~TileAnimation() = default;
   float doEasing(float fraction, Easing easing);
   void update(std::pair<int, int> &position, float &zoom, std::pair<int, int> &size, float &opacity);

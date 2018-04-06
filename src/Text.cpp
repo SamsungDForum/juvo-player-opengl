@@ -29,15 +29,17 @@ void Text::prepareShaders() {
     "}                             \n";
 
   const GLchar* fShaderTexStr =
-    "precision mediump float;      \n"
-    "uniform vec3 u_color;         \n"
-    "varying vec2 v_texCoord;      \n"
-    "uniform sampler2D s_texture;  \n"
-    "uniform float u_opacity;      \n"
-    "void main()                   \n"
-    "{                             \n"
-    "  gl_FragColor = vec4(1.0, 1.0, 1.0, texture2D(s_texture, v_texCoord).r * u_opacity) * vec4(u_color, 1.0); \n"
-    "}                             \n";
+    "precision mediump float;                                              \n"
+    "uniform vec3 u_color;                                                 \n"
+    "varying vec2 v_texCoord;                                              \n"
+    "uniform sampler2D s_texture;                                          \n"
+    "uniform float u_opacity;                                              \n"
+    "void main()                                                           \n"
+    "{                                                                     \n"
+    "  gl_FragColor = vec4(1.0, 1.0, 1.0,                                  \n"
+    "                      texture2D(s_texture, v_texCoord).r * u_opacity) \n"
+    "                 * vec4(u_color, 1.0);                                \n"
+    "}                                                                     \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);

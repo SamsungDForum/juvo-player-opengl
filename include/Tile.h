@@ -35,8 +35,8 @@ private:
   GLuint frameColorLoc   = GL_INVALID_VALUE;
   GLuint frameWidthLoc   = GL_INVALID_VALUE;
   GLuint samplerLoc      = GL_INVALID_VALUE;
-  GLuint posLoc           = GL_INVALID_VALUE;
-  GLuint texLoc           = GL_INVALID_VALUE;
+  GLuint posLoc          = GL_INVALID_VALUE;
+  GLuint texLoc          = GL_INVALID_VALUE;
   GLuint opacityLoc      = GL_INVALID_VALUE;
 
   void initTexture();

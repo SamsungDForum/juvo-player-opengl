@@ -5,19 +5,19 @@ Animation::Animation()
 }
 
 Animation::Animation(std::chrono::time_point<std::chrono::high_resolution_clock> animationStart,
-                   std::chrono::milliseconds animationDuration,
-                   std::chrono::milliseconds animationDelay,
-                   const std::vector<double> sourceValues,
-                   const std::vector<double> targetValues,
-                   Easing easing)
+                     std::chrono::milliseconds animationDuration,
+                     std::chrono::milliseconds animationDelay,
+                     const std::vector<double> sourceValues,
+                     const std::vector<double> targetValues,
+                     Easing easing)
   :
-                   animationStart(animationStart),
-                   animationDuration(animationDuration),
-                   animationDelay(animationDelay),
-                   sourceValues(sourceValues),
-                   targetValues(targetValues),
-                   easing(easing),
-                   active(animationDuration > std::chrono::milliseconds(0) ? true : false) {
+                     animationStart(animationStart),
+                     animationDuration(animationDuration),
+                     animationDelay(animationDelay),
+                     sourceValues(sourceValues),
+                     targetValues(targetValues),
+                     easing(easing),
+                     active(animationDuration > std::chrono::milliseconds(0) ? true : false) {
   if(this->sourceValues.size() != this->targetValues.size()) {
     size_t minSize = std::min(this->sourceValues.size(), this->targetValues.size());
     this->sourceValues.resize(minSize);

@@ -42,7 +42,8 @@ private:
 private:
   GLuint barProgramObject;
   GLuint iconProgramObject;
-  Animation animation;
+  Animation opacityAnimation;
+  Animation progressAnimation;
   std::vector<GLuint> icons;
 
   bool enabled;
@@ -52,24 +53,27 @@ private:
   std::string displayText;
   float opacity;
 
+  float progress;
+  std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
+
   const int viewportWidth = 1920;
   const int viewportHeight = 1080;
   const int progressBarWidth = 1500;
-  const int progressBarHeight = 8;
-  const int progressBarMarginBottom = 100;
+  const int progressBarHeight = 32;
+  const int progressBarMarginBottom = 100 - progressBarHeight / 2;
 
-  GLint posBarLoc =       GL_INVALID_VALUE; 
-  GLuint paramBarLoc =    GL_INVALID_VALUE; 
-  GLuint opacityBarLoc =  GL_INVALID_VALUE; 
+  GLint posBarLoc       = GL_INVALID_VALUE; 
+  GLuint paramBarLoc    = GL_INVALID_VALUE; 
+  GLuint opacityBarLoc  = GL_INVALID_VALUE; 
   GLuint viewportBarLoc = GL_INVALID_VALUE;
-  GLuint sizeBarLoc =     GL_INVALID_VALUE; 
-  GLuint marginBarLoc =   GL_INVALID_VALUE;  
+  GLuint sizeBarLoc     = GL_INVALID_VALUE; 
+  GLuint marginBarLoc   = GL_INVALID_VALUE;  
 
   GLuint samplerLoc = GL_INVALID_VALUE;
-  GLuint colLoc =     GL_INVALID_VALUE;
+  GLuint colLoc     = GL_INVALID_VALUE;
   GLuint opacityLoc = GL_INVALID_VALUE;
-  GLuint posLoc =     GL_INVALID_VALUE;
-  GLuint texLoc =     GL_INVALID_VALUE;
+  GLuint posLoc     = GL_INVALID_VALUE;
+  GLuint texLoc     = GL_INVALID_VALUE;
 
 private:
   bool initialize();
@@ -80,6 +84,7 @@ private:
   void renderText(Text &text, float opacity);
   void renderProgressBar(float opacity);
   std::string timeToString(int time);
+  void updateProgress();
 
 public:
   Playback();

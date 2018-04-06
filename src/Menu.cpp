@@ -1,11 +1,11 @@
 #include "../include/Menu.h"
 
 Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, float zoom, int animationsDurationMilliseconds)
-          : viewport(viewport),
-          tileSize(tileSize),
-          tilesNumber(tilesNumber),
-          zoom(zoom),
-          animationsDurationMilliseconds(animationsDurationMilliseconds) {
+  : viewport(viewport),
+    tileSize(tileSize),
+    tilesNumber(tilesNumber),
+    zoom(zoom),
+    animationsDurationMilliseconds(animationsDurationMilliseconds) {
   initialize();
 }
 
@@ -57,7 +57,13 @@ void Menu::render() {
         int fontHeight = 24;
         int marginBottom = 20;
         int marginLeft = 100;
-        text.render("Available content list", {marginLeft, marginFromBottom + tileSize.second + marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, bgOpacity}, true);
+        text.render("Available content list",
+                    {marginLeft, marginFromBottom + tileSize.second + marginBottom},
+                    {0, fontHeight},
+                    viewport,
+                    0,
+                    {1.0, 1.0, 1.0, bgOpacity},
+                    true);
       }
     }
     for(size_t i = 0; i < tiles.size(); ++i) // render tiles
@@ -73,7 +79,13 @@ void Menu::render() {
     int marginBottom = margin;
     int textWidth = text.getTextSize(footer, {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
     int marginLeft = viewport.first - textWidth - margin;
-    text.render(footer, {marginLeft, marginBottom}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+    text.render(footer,
+                {marginLeft, marginBottom},
+                {0, fontHeight},
+                viewport,
+                0,
+                {1.0, 1.0, 1.0, 1.0},
+                true);
   }
   { // controls/playback
     playback.render(text);
@@ -95,7 +107,13 @@ void Menu::render() {
     {
       int fontHeight = 48;
       int margin = 12;
-      text.render(std::to_string(static_cast<int>(fps)), {viewport.first - margin - 100, viewport.second - fontHeight - margin}, {0, fontHeight}, viewport, 0, {1.0, 1.0, 1.0, 1.0}, true);
+      text.render(std::to_string(static_cast<int>(fps)),
+                  {viewport.first - margin - 100, viewport.second - fontHeight - margin},
+                  {0, fontHeight},
+                  viewport,
+                  0,
+                  {1.0, 1.0, 1.0, 1.0},
+                  true);
     }
   }
 }
@@ -103,7 +121,12 @@ void Menu::render() {
 void Menu::ShowMenu(int enable) {
   int animationDelay = playback.getOpacity() > 0.0 ? fadingDurationMilliseconds * 3 / 4 : 0;
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getSize(), enable ? 1 : 0, std::chrono::milliseconds(fadingDurationMilliseconds), std::chrono::milliseconds(animationDelay));
+    tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport),
+                    static_cast<int>(i) == selectedTile ? zoom : 1.0,
+                    tiles[i].getSize(),
+                    enable ? 1 : 0,
+                    std::chrono::milliseconds(fadingDurationMilliseconds),
+                    std::chrono::milliseconds(animationDelay));
 }
 
 std::pair<int, int> Menu::getTilePosition(int tileNo, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, std::pair<int, int> viewport, bool initialMargin) {
@@ -184,9 +207,17 @@ void Menu::SelectTile(int tileNo)
       firstTile += shiftRight;
   }
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport), static_cast<int>(i) == selectedTile ? zoom : 1.0, tiles[i].getTargetSize(), tiles[i].getTargetOpacity(), std::chrono::milliseconds(animationsDurationMilliseconds), std::chrono::milliseconds(0), (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
+    tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport),
+                    static_cast<int>(i) == selectedTile ? zoom : 1.0,
+                    tiles[i].getTargetSize(),
+                    tiles[i].getTargetOpacity(),
+                    std::chrono::milliseconds(animationsDurationMilliseconds),
+                    std::chrono::milliseconds(0),
+                    (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
   if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
-    background.setSourceTile(&tiles[selectedTile], !bounce ? std::chrono::milliseconds(fadingDurationMilliseconds) : std::chrono::milliseconds(0), std::chrono::milliseconds(0));
+    background.setSourceTile(&tiles[selectedTile],
+                             !bounce ? std::chrono::milliseconds(fadingDurationMilliseconds) : std::chrono::milliseconds(0),
+                             std::chrono::milliseconds(0));
 }
 
 int Menu::AddFont(char *data, int size) {
@@ -212,7 +243,13 @@ void Menu::SetIcon(int id, char* pixels, std::pair<int, int> size) {
 }
 
 void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text) {
-  playback.update(show, state, currentTime, totalTime, text, std::chrono::milliseconds(fadingDurationMilliseconds), std::chrono::milliseconds(show && menuEnabled ? fadingDurationMilliseconds * 3 / 4 : 0));
+  playback.update(show,
+                  state,
+                  currentTime,
+                  totalTime,
+                  text,
+                  std::chrono::milliseconds(fadingDurationMilliseconds),
+                  std::chrono::milliseconds(show && menuEnabled ? fadingDurationMilliseconds * 3 / 4 : 0));
 }
 
 void Menu::SetVersion(std::string version) {
