@@ -40,6 +40,7 @@ bool Playback::initialize() {
     "#define PROG_A vec4(1.0, 1.0, 1.0, 1.0)                                       \n"
     "#define PROG_B vec4(0.5, 0.5, 0.5, 0.5)                                       \n"
     "#define TRANSP vec4(1.0, 1.0, 1.0, 0.0)                                       \n"
+    "#define SHADOW vec4(0.0, 0.0, 0.0, 1.0)                                       \n"
     "#define SMOOTH 0.9                                                            \n"
     "                                                                              \n"
     "vec4 progressBar(vec2 pos, vec2 size, vec2 res, float dot, float prog) {      \n"
@@ -48,7 +49,7 @@ bool Playback::initialize() {
     "  vec4 c = TRANSP;                                                            \n"
     "  vec4 d = vec4(0.0, 0.0, 0.0, 0.0);                                          \n"
     "                                                                              \n"
-    "  d = mix(TRANSP, PROG_A, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH, length(p - (pos + vec2(0.0, size.y / 2.0))))); \n"
+   "  d = mix(TRANSP, PROG_A, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH, length(p - (pos + vec2(0.0, size.y / 2.0))))); \n"
     "  if(d.a > 0.0)                                                               \n"
     "    c = d;                                                                    \n"
     "  d = mix(TRANSP, PROG_B, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH, length(p - (pos + vec2(size.x, size.y / 2.0))))); \n"
@@ -146,7 +147,6 @@ void Playback::updateProgress() {
     std::vector<double> updates = progressAnimation.update();
     if(!updates.empty())
       progress = static_cast<float>(updates[0]);
-    _INFO("Animation active, %f", progress);
   }
   else if(totalTime) {
     progress = static_cast<float>(currentTime) / static_cast<float>(totalTime);
@@ -296,12 +296,12 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 void Playback::renderText(Text &text, float opacity) {
   std::pair<int, int> viewport = {viewportWidth, viewportHeight};
 
-  // render total time
+  // render remaining time
   int fontHeight = 24;
   int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
   int textLeft = viewport.first - textWidth - ((viewport.first - progressBarWidth) / 2 - textWidth) / 2 + progressBarHeight / 2;
   int textDown = progressBarMarginBottom + progressBarHeight / 2 - fontHeight / 2;
-  text.render(timeToString(totalTime),
+  text.render(timeToString(totalTime - currentTime),
               {textLeft, textDown},
               {0, fontHeight},
               viewport,
@@ -310,7 +310,7 @@ void Playback::renderText(Text &text, float opacity) {
               true);
 
   //render current time
-  fontHeight = 24;
+/*  fontHeight = 24;
   textLeft = ((viewport.first - progressBarWidth) / 2 + progressBarWidth * progress) + 2;
   textDown = progressBarMarginBottom + progressBarHeight + 4;
   text.render(timeToString(currentTime),
@@ -319,7 +319,7 @@ void Playback::renderText(Text &text, float opacity) {
               viewport,
               0,
               {1.0, 1.0, 1.0, opacity},
-              true);
+              true);*/
 
   //render title
   fontHeight = 48;
@@ -401,16 +401,9 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
   updateProgress();
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::milliseconds fromLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate);
-  lastUpdate = now;
-  //_INFO("%d", static_cast<int>(fromLastUpdate.count())); // time difference between updates is ~50ms
-  // TODO
-  // TODO
-  // TODO Pass the time from C# to C++ in milliseconds!!!
-  // TODO
-  // TODO
   if(static_cast<bool>(show) != enabled) {
     enabled = static_cast<bool>(show);
-    opacityAnimation = Animation(std::chrono::high_resolution_clock::now(),
+    opacityAnimation = Animation(now, //std::chrono::high_resolution_clock::now(),
                           animationDuration,
                           animationDelay,
                           {static_cast<double>(opacity)},
@@ -419,8 +412,9 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
   }
 
   if(currentTime != this->currentTime) {
+    lastUpdate = now;
     progressAnimation = Animation(now,
-                          fromLastUpdate,
+                          std::min(fromLastUpdate, std::chrono::milliseconds(1000)),
                           std::chrono::milliseconds(0),
                           {progress},
                           {static_cast<double>(currentTime) / static_cast<double>(totalTime)},

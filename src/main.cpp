@@ -24,6 +24,7 @@ void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime,
 void SetVersion(char* ver, int verLen);
 void SwitchTextRenderingMode();
 void SwitchFPSCounterVisibility();
+void ShowSubtitle(int duration, char* text, int textLen);
 #ifdef __cplusplus
 }
 #endif
@@ -101,4 +102,10 @@ void SwitchTextRenderingMode()
 void SwitchFPSCounterVisibility()
 {
   menu.SwitchFPSCounterVisibility();
+}
+
+
+void ShowSubtitle(int duration, char* text, int textLen)
+{
+  // TODO: Implement
 }
