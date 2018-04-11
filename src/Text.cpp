@@ -347,7 +347,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
         float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
                              1.0f, 1.0f,    1.0f, 0.0f };
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-        glUniform1i(samplerLoc, posLoc);
+        glUniform1i(samplerLoc, 0);
         glEnableVertexAttribArray(texLoc);
         glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
@@ -485,7 +485,7 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
 
   glUseProgram(programObject2);
   glBindTexture(GL_TEXTURE_2D, textTexture.textureId);
-  glUniform1i(samplerLoc2, posLoc2);
+  glUniform1i(samplerLoc2, 0);
   if(color.size() < 3)
     glUniform3f(colLoc2, 1.0f, 1.0f, 1.0f);
   else
@@ -557,7 +557,7 @@ void Text::renderDirect(std::string text, std::pair<int, int> position, std::pai
       };
 
       glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-      glUniform1i(samplerLoc, posLoc);
+      glUniform1i(samplerLoc, 0);
 
       if(shadowMode != Shadow::None) {
         float aspectRatio = static_cast<float>(viewport.second) / static_cast<float>(viewport.first);

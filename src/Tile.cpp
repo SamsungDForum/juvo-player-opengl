@@ -195,7 +195,7 @@ void Tile::render(Text &text) {
   glUniform1f(frameWidthLoc, frameWidth);
 
   glBindTexture(GL_TEXTURE_2D, textureId);
-  glUniform1i(samplerLoc, posLoc);
+  glUniform1i(samplerLoc, 0);
 
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
