@@ -4,6 +4,7 @@
 
 #include "../include/Menu.h"
 #include "log.h"
+#include "version.h"
 
 static Menu menu;
 
@@ -21,10 +22,11 @@ int AddFont(char *data, int size);
 void ShowLoader(int enabled, int percent);
 void SetIcon(int id, char* pixels, int w, int h);
 void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen);
-void SetVersion(char* ver, int verLen);
+void SetFooter(char* footer, int footerLen);
 void SwitchTextRenderingMode();
 void SwitchFPSCounterVisibility();
 void ShowSubtitle(int duration, char* text, int textLen);
+int OpenGLLibVersion();
 #ifdef __cplusplus
 }
 #endif
@@ -79,9 +81,9 @@ void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime,
   menu.UpdatePlaybackControls(show, state, currentTime, totalTime, std::string(text, textLen));
 }
 
-void SetVersion(char* ver, int verLen)
+void SetFooter(char* footer, int footerLen)
 {
-  menu.SetVersion(std::string(ver, verLen));
+  menu.SetFooter(std::string(footer, footerLen));
 }
 
 void Draw(void *cDisplay, void *cSurface)
@@ -104,8 +106,16 @@ void SwitchFPSCounterVisibility()
   menu.SwitchFPSCounterVisibility();
 }
 
-
 void ShowSubtitle(int duration, char* text, int textLen)
 {
-  // TODO: Implement
+  menu.ShowSubtitle(duration, std::string(text, textLen));
 }
+
+int OpenGLLibVersion() {
+#ifdef VERSION
+  return VERSION;
+#else
+  return 0;
+#endif
+}
+

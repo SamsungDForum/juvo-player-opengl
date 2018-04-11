@@ -35,6 +35,7 @@ SET(SRCS
   src/Text.cpp
   src/Tile.cpp
   src/TileAnimation.cpp
+  src/Subtitles.cpp
 )
 
 INCLUDE(FindPkgConfig)

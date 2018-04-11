@@ -20,8 +20,7 @@ class Background {
 private:
   GLuint programObject = GL_INVALID_VALUE;
   GLuint textureFormat = GL_INVALID_VALUE;
-  int viewportWidth;
-  int viewportHeight;
+  std::pair<int, int> viewport;
   float opacity;
   float black;
   Tile *sourceTile;
@@ -39,12 +38,12 @@ private:
 
 public:
   Background();
-  Background(int viewportWidth, int viewportHeight, float opacity);
+  Background(std::pair<int, int> viewport, float opacity);
   ~Background();
   void render(Text &text);
   void setOpacity(float opacity);
   void setBlack(float black);
-  void setViewport(int viewportWidth, int viewportHeight);
+  void setViewport(std::pair<int, int> viewport);
   void setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay);
   void setClearColor(std::vector<float> color);
   float getOpacity();

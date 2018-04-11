@@ -3,8 +3,7 @@
 Background::Background()
   : programObject(GL_INVALID_VALUE),
     textureFormat(GL_INVALID_VALUE),
-    viewportWidth(0),
-    viewportHeight(0),
+    viewport({0, 0}),
     opacity(0),
     black(1.0),
     sourceTile(nullptr),
@@ -13,11 +12,10 @@ Background::Background()
 
 }
 
-Background::Background(int viewportWidth, int viewportHeight, float opacity)
+Background::Background(std::pair<int, int> viewport, float opacity)
   : programObject(GL_INVALID_VALUE),
     textureFormat(GL_INVALID_VALUE),
-    viewportWidth(viewportWidth),
-    viewportHeight(viewportHeight),
+    viewport(viewport),
     opacity(opacity),
     black(1.0),
     sourceTile(nullptr),
@@ -130,11 +128,11 @@ void Background::render(Text &text) {
   if(!name.empty()) {
     int fontHeight = 52;
     int leftText = 100;
-    int topText = viewportHeight - fontHeight - 200;
+    int topText = viewport.second - fontHeight - 200;
     text.render(name,
                 {leftText, topText},
                 {0, fontHeight},
-                {viewportWidth, viewportHeight},
+                {viewport},
                 0,
                 {1.0, 1.0, 1.0, opacity},
                 true);
@@ -143,11 +141,11 @@ void Background::render(Text &text) {
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
-    int topText = viewportHeight - fontHeight - 300;
+    int topText = viewport.second - fontHeight - 300;
     text.render(description,
                 {leftText, topText},
-                {viewportWidth - 2 * leftText, fontHeight},
-                {viewportWidth, viewportHeight},
+                {viewport.first - 2 * leftText, fontHeight},
+                {viewport},
                 0,
                 {1.0, 1.0, 1.0, opacity},
                 true);
@@ -185,9 +183,8 @@ void Background::checkShaderCompileError(GLuint shader) {
   }
 }
 
-void Background::setViewport(int viewportWidth, int viewportHeight) {
-  this->viewportWidth = viewportWidth;
-  this->viewportHeight = viewportHeight;
+void Background::setViewport(std::pair<int, int> viewport) {
+  this->viewport = viewport;
 }
 
 

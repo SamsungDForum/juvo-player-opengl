@@ -20,6 +20,7 @@
 #include "Loader.h"
 #include "Background.h"
 #include "Playback.h"
+#include "Subtitles.h"
 
 class Menu {
 private:
@@ -32,7 +33,7 @@ private:
   int firstTile;
   float backgroundOpacity;
   bool fpsCounterVisible = false;
-  std::string version = "0.0.1 prealpha";
+  std::string footer = "JuvoPlayer prealpha, OpenGL UI, Samsung R&D Poland, 2017-2018";
 
   // tiles positioning and animation constants
   const std::pair<int, int> viewport {1920, 1080};
@@ -55,6 +56,7 @@ private:
   Loader loader;
   Background background;
   Playback playback;
+  Subtitles subtitles;
 
 private:
   void initialize();
@@ -76,9 +78,10 @@ public:
   void SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc);
   void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text);
   void SetIcon(int id, char* pixels, std::pair<int, int> size);
-  void SetVersion(std::string version);
+  void SetFooter(std::string footer);
   void SwitchTextRenderingMode();
   void SwitchFPSCounterVisibility();
+  void ShowSubtitle(int duration, std::string text);
 };
 
 #endif // _MENU_H_

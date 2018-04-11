@@ -34,7 +34,7 @@ void Menu::initialize() {
   fpsN = 30;
   fpsT = std::chrono::high_resolution_clock::now();
 
-  background.setViewport(viewport.first, viewport.second);
+  background.setViewport(viewport);
   background.setOpacity(0.0);
 }
 
@@ -73,7 +73,6 @@ void Menu::render() {
       tiles[selectedTile].render(text);
   }
   { // footer
-    std::string footer = std::string("JuvoPlayer v") + version + std::string(", Samsung R&D Poland, 2018");
     int fontHeight = 13;
     int margin = 5;
     int marginBottom = margin;
@@ -89,6 +88,7 @@ void Menu::render() {
   }
   { // controls/playback
     playback.render(text);
+    subtitles.render(text);
   }
   // render FPS counter
   if(fpsCounterVisible)
@@ -252,8 +252,8 @@ void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int tota
                   std::chrono::milliseconds(show && menuEnabled ? fadingDurationMilliseconds * 3 / 4 : 0));
 }
 
-void Menu::SetVersion(std::string version) {
-  this->version = version;
+void Menu::SetFooter(std::string footer) {
+  this->footer = footer;
 }
 
 void Menu::SwitchTextRenderingMode() {
@@ -265,4 +265,8 @@ void Menu::SwitchFPSCounterVisibility() {
   _INFO("FPS counter visibility switched to %s.", fpsCounterVisible ? "visible" : "not visible");
 }
 
+
+void Menu::ShowSubtitle(int duration, std::string text) {
+  subtitles.showSubtitle(std::chrono::milliseconds(duration), text);
+}
 
