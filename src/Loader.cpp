@@ -8,6 +8,8 @@ Loader::Loader()
 }
 
 Loader::~Loader() {
+  if(programObject != GL_INVALID_VALUE)
+    glDeleteProgram(programObject);
 }
 
 bool Loader::initialize() {
@@ -18,7 +20,7 @@ bool Loader::initialize() {
     "   gl_Position = a_position;   \n"
     "}                              \n";
 
-  const GLchar* fShaderTexStr3 =  
+  const GLchar* fShaderTexStr =  
     "precision mediump float;                                                    \n"
     "uniform float u_time;                                                       \n"
     "uniform float u_param;                                                      \n"
@@ -72,7 +74,7 @@ bool Loader::initialize() {
   checkShaderCompileError(vertexShader);
 
   GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fShaderTexStr3, NULL);
+  glShaderSource(fragmentShader, 1, &fShaderTexStr, NULL);
   glCompileShader(fragmentShader);
   checkShaderCompileError(fragmentShader);
 
@@ -80,6 +82,14 @@ bool Loader::initialize() {
   glAttachShader(programObject, vertexShader);
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+
+  posLoc = glGetAttribLocation(programObject, "a_position");
+  timeLoc = glGetUniformLocation(programObject, "u_time");
+  paramLoc = glGetUniformLocation(programObject, "u_param");
+  opacityLoc = glGetUniformLocation(programObject, "u_opacity");
 
   time = std::chrono::high_resolution_clock::now();
 
@@ -129,12 +139,10 @@ void Loader::render(Text &text) {
 
   glUseProgram(programObject);
 
-  GLint posLoc = glGetAttribLocation(programObject, "a_position");
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
   GLfloat t = static_cast<float>(timespan.count()) / 1000.0f;
-  GLuint timeLoc = glGetUniformLocation(programObject, "u_time");
   glUniform1f(timeLoc, t);
 
   float paramArg = param;
@@ -144,10 +152,8 @@ void Loader::render(Text &text) {
       paramArg = static_cast<float>(updated[0]);
   }
   
-  GLuint paramLoc = glGetUniformLocation(programObject, "u_param");
   glUniform1f(paramLoc, paramArg);
 
-  GLuint opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   glUniform1f(opacityLoc, 1.0f);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 

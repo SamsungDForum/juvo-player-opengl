@@ -17,6 +17,10 @@ Playback::Playback()
 }
 
 Playback::~Playback() {
+  if(barProgramObject != GL_INVALID_VALUE)
+    glDeleteProgram(barProgramObject);
+  if(iconProgramObject != GL_INVALID_VALUE)
+    glDeleteProgram(iconProgramObject);
 }
 
 bool Playback::initialize() {
@@ -89,6 +93,9 @@ bool Playback::initialize() {
   glAttachShader(barProgramObject, fragmentShader);
   glLinkProgram(barProgramObject);
 
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+
   posBarLoc = glGetAttribLocation(barProgramObject, "a_position");
   paramBarLoc = glGetUniformLocation(barProgramObject, "u_param");
   opacityBarLoc = glGetUniformLocation(barProgramObject, "u_opacity");
@@ -132,6 +139,9 @@ bool Playback::initialize() {
   glAttachShader(iconProgramObject, vertexShader);
   glAttachShader(iconProgramObject, fragmentShader);
   glLinkProgram(iconProgramObject);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
 
   samplerLoc = glGetUniformLocation(iconProgramObject, "s_texture");
   colLoc = glGetUniformLocation(iconProgramObject, "u_color");

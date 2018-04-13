@@ -24,6 +24,8 @@ Background::Background(std::pair<int, int> viewport, float opacity)
 }
 
 Background::~Background() {
+  if(programObject != GL_INVALID_VALUE)
+    glDeleteProgram(programObject);
 }
 
 void Background::initGL() {
@@ -68,6 +70,9 @@ void Background::initGL() {
   glAttachShader(programObject, vertexShader);
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
 
   samplerLoc = glGetUniformLocation(programObject, "s_texture");
   posLoc = glGetAttribLocation(programObject, "a_position");

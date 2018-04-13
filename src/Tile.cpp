@@ -95,6 +95,9 @@ void Tile::initGL() {
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
 
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+
   tileSizeLoc = glGetUniformLocation(programObject, "u_tileSize");
   tilePositionLoc = glGetUniformLocation(programObject, "u_tilePosition");
   frameColorLoc = glGetUniformLocation(programObject, "u_frameColor");
@@ -130,12 +133,15 @@ Tile::Tile(Tile &&other) { // update this move constructor when adding new membe
     opacityLoc = other.opacityLoc;
 
     other.textureId = GL_INVALID_VALUE; // prevent destructor of the object we moved from from deleting the texture
+    other.programObject = GL_INVALID_VALUE; // prevent destructor of the object we moved from from deleting the program object
   }
 }
 
 Tile::~Tile() {
   if(textureId != GL_INVALID_VALUE)
     glDeleteTextures(1, &textureId);
+  if(programObject != GL_INVALID_VALUE)
+    glDeleteProgram(programObject);
 }
 
 void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce) {

@@ -23,6 +23,11 @@ private:
   int param;
   Animation animation;
 
+  GLuint posLoc     = GL_INVALID_VALUE;
+  GLuint timeLoc    = GL_INVALID_VALUE;
+  GLuint paramLoc   = GL_INVALID_VALUE;
+  GLuint opacityLoc = GL_INVALID_VALUE;
+
 public:
   Loader();
   ~Loader();

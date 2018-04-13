@@ -6,7 +6,7 @@
 #include <cstdlib> // malloc
 #include <cstring> // memcpy
 #include <vector>
-#include <queue>
+#include <deque>
 #include <chrono>
 
 #ifndef _INCLUDE_GLES_
@@ -21,6 +21,7 @@
 #include "Background.h"
 #include "Playback.h"
 #include "Subtitles.h"
+#include "Graph.h"
 
 class Menu {
 private:
@@ -49,7 +50,7 @@ private:
   std::chrono::time_point<std::chrono::high_resolution_clock> fpsT;
   float fpsS;
   int fpsN;
-  std::queue<float> fpsV;
+  std::deque<float> fpsV;
 
   // UI helper objects
   Text text;
@@ -57,6 +58,7 @@ private:
   Background background;
   Playback playback;
   Subtitles subtitles;
+  Graph graph;
 
 private:
   void initialize();

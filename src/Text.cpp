@@ -14,6 +14,10 @@ Text::Text() {
 
 Text::~Text() {
   FT_Done_FreeType(ftLibrary);
+  if(programObject != GL_INVALID_VALUE)
+    glDeleteProgram(programObject);
+  if(programObject2 != GL_INVALID_VALUE)
+    glDeleteProgram(programObject2);
 }
 
 void Text::prepareShaders() {
@@ -56,6 +60,9 @@ void Text::prepareShaders() {
   glAttachShader(programObject, fragmentShader);
   glLinkProgram(programObject);
 
+  glDeleteShader(fragmentShader);
+  glDeleteShader(vertexShader);
+
   samplerLoc = glGetUniformLocation(programObject, "s_texture");
   colLoc = glGetUniformLocation(programObject, "u_color");
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
@@ -97,6 +104,9 @@ void Text::prepareShaders() {
   glAttachShader(programObject2, vertexShader2);
   glAttachShader(programObject2, fragmentShader2);
   glLinkProgram(programObject2);
+
+  glDeleteShader(vertexShader2);
+  glDeleteShader(fragmentShader2);
 
   samplerLoc2 = glGetUniformLocation(programObject2, "s_texture");
   colLoc2 = glGetUniformLocation(programObject2, "u_color");
