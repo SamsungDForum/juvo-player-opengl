@@ -1,6 +1,6 @@
 #include "../include/Playback.h"
 
-Playback::Playback()
+Playback::Playback(std::pair<int, int> viewport)
   : barProgramObject(GL_INVALID_VALUE),
     iconProgramObject(GL_INVALID_VALUE),
     icons(std::vector<GLuint>(static_cast<int>(Icon::LENGTH), GL_INVALID_VALUE)),
@@ -11,7 +11,10 @@ Playback::Playback()
     displayText("Loading..."),
     opacity(0.0f),
     progress(0.0f),
-    lastUpdate(std::chrono::high_resolution_clock::now())
+    lastUpdate(std::chrono::high_resolution_clock::now()),
+    viewport(viewport),
+    progressBarSize({0.7815 * viewport.first, 0.02965 * viewport.second}), // 1500x32
+    progressBarMarginBottom(0.0927 * viewport.second - progressBarSize.second / 2) // 100-32/2
 {
   initialize();
 }
@@ -31,52 +34,55 @@ bool Playback::initialize() {
     "   gl_Position = a_position;   \n"
     "}                              \n";
 
-// TODO: It seems rendering this progress bar is quite performance heavy - look into optimizing it.
   const GLchar* barFShaderTexStr =  
-    "precision mediump float;                                                      \n"
-    "uniform float u_time;                                                         \n"
-    "uniform float u_param;                                                        \n"
-    "uniform float u_opacity;                                                      \n"
-    "uniform vec2 u_viewport;                                                      \n"
-    "uniform vec2 u_size;                                                          \n"
-    "uniform float u_margin;                                                       \n"
-    "                                                                              \n"
-    "#define PROG_A vec4(1.0, 1.0, 1.0, 1.0)                                       \n"
-    "#define PROG_B vec4(0.5, 0.5, 0.5, 0.5)                                       \n"
-    "#define TRANSP vec4(1.0, 1.0, 1.0, 0.0)                                       \n"
-    "#define SHADOW vec4(0.0, 0.0, 0.0, 1.0)                                       \n"
-    "#define SMOOTH 0.9                                                            \n"
-    "                                                                              \n"
-    "vec4 progressBar(vec2 pos, vec2 size, vec2 res, float dot, float prog) {      \n"
-    "  vec2 p = gl_FragCoord.xy;                                                   \n"
-    "  vec2 progPoint = vec2(pos.x + prog * size.x, pos.y + size.y / 2.0);         \n"
-    "  vec4 c = TRANSP;                                                            \n"
-    "  vec4 d = vec4(0.0, 0.0, 0.0, 0.0);                                          \n"
-    "                                                                              \n"
-   "  d = mix(TRANSP, PROG_A, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH, length(p - (pos + vec2(0.0, size.y / 2.0))))); \n"
-    "  if(d.a > 0.0)                                                               \n"
-    "    c = d;                                                                    \n"
-    "  d = mix(TRANSP, PROG_B, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH, length(p - (pos + vec2(size.x, size.y / 2.0))))); \n"
-    "  if(d.a > 0.0)                                                               \n"
-    "    c = d;                                                                    \n"
-    "                                                                              \n"
-    "  if(p.x >= pos.x && p.x <= pos.x + size.x &&                                 \n"
-    "     p.y >= pos.y && p.y <= pos.y + size.y)                                   \n"
-    "      c = mix(TRANSP, p.x < progPoint.x ? PROG_A : PROG_B, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH, abs(p.y - progPoint.y))); \n"
-    "  d = mix(TRANSP, PROG_A, smoothstep(dot, dot * SMOOTH, length(p - progPoint))); \n"
-    "  c = mix(c, d, d.a);                                                         \n"
-    "  return c;                                                                   \n"
-    "}                                                                             \n"
-    "                                                                              \n"
-    "void main()                                                                   \n"
-    "{                                                                             \n"
-    "  vec2 res = u_viewport;                                                      \n"
-    "  vec2 size = u_size;                                                         \n"
-    "  vec2 pos = vec2((res.x - size.x) / 2.0, u_margin);                          \n"
-    "  vec4 col = progressBar(pos, size, res, 1.25 * size.y / 2.0, u_param);       \n"
-    "  gl_FragColor = vec4(col.rgb, col.a * u_opacity);                            \n"
-    "                                                                              \n"
-    "}                                                                             \n";
+    "precision mediump float; // highp is not supported                               \n"
+    "uniform float u_param;                                                           \n"
+    "uniform float u_opacity;                                                         \n"
+    "uniform vec2 u_viewport;                                                         \n"
+    "uniform vec2 u_size;                                                             \n"
+    "uniform float u_margin;                                                          \n"
+    "                                                                                 \n"
+    "#define PROG_A vec4(1.0, 1.0, 1.0, 1.0)                                          \n"
+    "#define PROG_B vec4(0.5, 0.5, 0.5, 0.5)                                          \n"
+    "#define TRANSP vec4(1.0, 1.0, 1.0, 0.0)                                          \n"
+    "#define SHADOW vec4(0.0, 0.0, 0.0, 1.0)                                          \n"
+    "#define SMOOTH 0.9                                                               \n"
+    "                                                                                 \n"
+    "vec4 progressBar(vec2 pos, vec2 size, vec2 res, float dot, float prog) {         \n"
+    "  vec2 p = gl_FragCoord.xy;                                                      \n"
+    "  vec2 progPoint = vec2(pos.x + prog * size.x, pos.y + size.y / 2.0);            \n"
+    "  vec4 c = TRANSP;                                                               \n"
+    "  vec4 d = vec4(0.0, 0.0, 0.0, 0.0);                                             \n"
+    "                                                                                 \n"
+    "  d = mix(TRANSP, PROG_A, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH,        \n" // left rounded end
+    "                          length(p - (pos + vec2(0.0, size.y / 2.0)))));         \n"
+    "  if(d.a > 0.0)                                                                  \n"
+    "    c = d;                                                                       \n"
+    "                                                                                 \n"
+    "  d = mix(TRANSP, PROG_B, smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH,        \n" // right rounded end
+    "                          length(p - (pos + vec2(size.x, size.y / 2.0)))));      \n"
+    "  if(d.a > 0.0)                                                                  \n"
+    "    c = d;                                                                       \n"
+    "                                                                                 \n"
+    "  if(p.x >= pos.x && p.x <= pos.x + size.x &&                                    \n" // the bar
+    "     p.y >= pos.y && p.y <= pos.y + size.y)                                      \n"
+    "      c = mix(TRANSP, p.x < progPoint.x ? PROG_A : PROG_B,                       \n"
+    "              smoothstep(size.y / 2.0, size.y / 2.0 * SMOOTH,                    \n"
+    "                         abs(p.y - progPoint.y)));                               \n"
+    "                                                                                 \n"
+    "  d = mix(TRANSP, PROG_A, smoothstep(dot, dot * SMOOTH, length(p - progPoint))); \n" // progress dot
+    "  c = mix(c, d, d.a);                                                            \n"
+    "                                                                                 \n"
+    "  return c;                                                                      \n"
+    "}                                                                                \n"
+    "                                                                                 \n"
+    "void main()                                                                      \n"
+    "{                                                                                \n"
+    "  vec2 pos = vec2((u_viewport.x - u_size.x) / 2.0, u_margin);                    \n"
+    "  vec4 col = progressBar(pos, u_size, u_viewport,                                \n"
+    "                         1.25 * u_size.y / 2.0, u_param);                        \n"
+    "  gl_FragColor = vec4(col.rgb, col.a * u_opacity);                               \n"
+    "}                                                                                \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &barVShaderTexStr, NULL);
@@ -209,10 +215,10 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
   float rightPx = (position.first + size.first) + (size.first / 2.0) * (scale - 1.0);
   float downPx = position.second - (size.second / 2.0) * (scale - 1.0);
   float topPx = (position.second + size.second) + (size.second / 2.0) * (scale - 1.0);
-  float left = (leftPx / viewportWidth) * 2.0 - 1.0;
-  float right = (rightPx / viewportWidth) * 2.0 - 1.0;
-  float down = (downPx / viewportHeight) * 2.0 - 1.0;
-  float top = (topPx / viewportHeight) * 2.0 - 1.0;
+  float left = (leftPx / viewport.first) * 2.0 - 1.0;
+  float right = (rightPx / viewport.first) * 2.0 - 1.0;
+  float down = (downPx / viewport.second) * 2.0 - 1.0;
+  float top = (topPx / viewport.second) * 2.0 - 1.0;
 
   GLfloat vertices[] = { left,   top,  0.0f,
                          left,   down, 0.0f,
@@ -266,7 +272,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
         break;
     }
 
-    std::pair<float, float> outlineOffset = {3.0 / viewportWidth, 3.0 / viewportHeight};
+    std::pair<float, float> outlineOffset = {3.0 / viewport.first, 3.0 / viewport.second};
     for(int i = dirs.first; i < dirs.second; ++i) {
       GLfloat outlineV[4 * 3];
       for(int j = 0; j < 4 * 3; ++j) {
@@ -304,13 +310,11 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 }
 
 void Playback::renderText(Text &text, float opacity) {
-  std::pair<int, int> viewport = {viewportWidth, viewportHeight};
-
   // render remaining time
   int fontHeight = 24;
   int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
-  int textLeft = viewport.first - textWidth - ((viewport.first - progressBarWidth) / 2 - textWidth) / 2 + progressBarHeight / 2;
-  int textDown = progressBarMarginBottom + progressBarHeight / 2 - fontHeight / 2;
+  int textLeft = viewport.first - textWidth - ((viewport.first - progressBarSize.first) / 2 - textWidth) / 2 + progressBarSize.second / 2;
+  int textDown = progressBarMarginBottom + progressBarSize.second / 2 - fontHeight / 2;
   text.render(timeToString(totalTime - currentTime),
               {textLeft, textDown},
               {0, fontHeight},
@@ -321,8 +325,8 @@ void Playback::renderText(Text &text, float opacity) {
 
   //render current time
 /*  fontHeight = 24;
-  textLeft = ((viewport.first - progressBarWidth) / 2 + progressBarWidth * progress) + 2;
-  textDown = progressBarMarginBottom + progressBarHeight + 4;
+  textLeft = ((viewport.first - progressBarSize.first) / 2 + progressBarSize.first * progress) + 2;
+  textDown = progressBarMarginBottom + progressBarSize.second + 4;
   text.render(timeToString(currentTime),
               {textLeft, textDown},
               {0, fontHeight},
@@ -345,10 +349,11 @@ void Playback::renderText(Text &text, float opacity) {
 }
 
 void Playback::renderProgressBar(float opacity) {
-  float down = -1.0f;
-  float top = 1.0f;
-  float left = -1.0f;
-  float right = 1.0f;
+  float marginHeightScale = 1.5; // the dot is 1.25x
+  float down = static_cast<float>((progressBarMarginBottom + progressBarSize.second / 2) - marginHeightScale * progressBarSize.second / 2) / viewport.second * 2.0f - 1.0f;
+  float top = static_cast<float>((progressBarMarginBottom + progressBarSize.second / 2) + marginHeightScale * progressBarSize.second / 2) / viewport.second * 2.0f - 1.0f;
+  float left = static_cast<float>(0.9f * (viewport.first - progressBarSize.first) / 2) / viewport.first * 2.0f - 1.0f;
+  float right = static_cast<float>(viewport.first - (0.9f * (viewport.first - progressBarSize.first) / 2)) / viewport.first * 2.0f - 1.0f;
   GLfloat vertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -360,8 +365,8 @@ void Playback::renderProgressBar(float opacity) {
   glVertexAttribPointer(posBarLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
   glUniform1f(paramBarLoc, progress);
   glUniform1f(opacityBarLoc, opacity);
-  glUniform2f(viewportBarLoc, viewportWidth, viewportHeight);
-  glUniform2f(sizeBarLoc, progressBarWidth, progressBarHeight);
+  glUniform2f(viewportBarLoc, viewport.first, viewport.second);
+  glUniform2f(sizeBarLoc, progressBarSize.first, progressBarSize.second);
   glUniform1f(marginBarLoc, progressBarMarginBottom);
 
   glEnable(GL_BLEND);

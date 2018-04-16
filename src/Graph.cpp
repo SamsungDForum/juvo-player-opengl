@@ -20,39 +20,42 @@ bool Graph::initialize() {
     "}                              \n";
 
   const GLchar* fShaderTexStr =  
-    "precision highp float;                                                      \n"
-    "                                                                            \n"
-    "const int VALUES = 100;                                                     \n"
-    "                                                                            \n"
-    "uniform vec2 u_position;                                                    \n"
-    "uniform vec2 u_size;                                                        \n"
-    "uniform float u_value[VALUES];                                              \n"
-    "uniform vec3 u_color;                                                       \n"
-    "uniform float u_opacity;                                                    \n"
-    "                                                                            \n"
-    "void main()                                                                 \n"
-    "{                                                                           \n"
-    "  float f = (gl_FragCoord.x - u_position.x) / u_size.x;              \n" // global x position [0.0,1.0]
-    "  int i = int(f * float(VALUES - 1)); \n" // left value index [0, VALUES - 1]
-    "  float k = f * float(VALUES - 1) - float(i); \n" // local x position (between samples) [0.0, 1.0]
-    "  float v = mix(u_value[i], u_value[i + 1], k); \n" // value for current position [0.0, 1.0]
-//    "  float H = abs(u_value[i] - u_value[i + 1]) / (u_size.x / float(VALUES - 1)); \n" // vertical step between l&r value [0.0, 1.0]
-//    "  float m = 0.5 - abs(k - 0.5); \n" // distance from closest sample [0.0, 0.5]
-//    "  float h = max(WIDTH, H * smoothstep(0.0, 1.0, m * 2.0)); \n" // optimal "dot" height for current position [0.0, 1.0]
-//    "  float V = abs((gl_FragCoord.y - u_position.y) / u_size.y - v);            \n" // vdist btwn point and value [0.0, 1.0]
-    "                                                                            \n"
-    "  if(v * u_size.y >= gl_FragCoord.y - u_position.y) \n"
-    "    gl_FragColor = vec4(u_color, 0.75 * u_opacity); \n"
-    "  else \n"
-    "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.25 * u_opacity); \n"
-    "                                                                            \n"
-    "  if(gl_FragCoord.y <= u_position.y + 1.0                                   \n"
-    "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0                        \n"
-    "  || gl_FragCoord.x <= u_position.x + 1.0                                   \n"
-    "  || gl_FragCoord.x >= u_position.x + u_size.x - 1.0                        \n"
-    "  )                                                                         \n"
-    "    gl_FragColor = vec4(u_color, u_opacity);                                 \n"
-    "}                                                                           \n";
+    "precision highp float;                                                            \n"
+    "                                                                                  \n"
+    "#define FG vec4(u_color, 0.75 * u_opacity)                                        \n"
+    "#define BG vec4(0.0, 0.0, 0.0, 0.25 * u_opacity)                                  \n"
+    "//#define LOW vec4(1.0, 0.0, 0.0, 0.75 * u_opacity)                               \n"
+    "                                                                                  \n"
+    "const int VALUES = 100;                                                           \n"
+    "                                                                                  \n"
+    "uniform vec2 u_position;                                                          \n"
+    "uniform vec2 u_size;                                                              \n"
+    "uniform float u_value[VALUES];                                                    \n"
+    "uniform vec3 u_color;                                                             \n"
+    "uniform float u_opacity;                                                          \n"
+    "                                                                                  \n"
+    "void main()                                                                       \n"
+    "{                                                                                 \n"
+    "  float f = (gl_FragCoord.x - u_position.x) / u_size.x;                           \n" // global x position [0.0,1.0]
+    "  int i = int(f * float(VALUES - 1));                                             \n" // left value index [0, VALUES - 1]
+    "  float k = f * float(VALUES - 1) - float(i);                                     \n" // local x pos (btwn samples) [0.0, 1.0]
+    "  float v = mix(u_value[i], u_value[i + 1], k);                                   \n" // value for current position [0.0, 1.0]
+    "                                                                                  \n"
+    "//gl_FragColor = v * u_size.y >= gl_FragCoord.y - u_position.y ? FG : BG          \n"
+    "  gl_FragColor = mix(BG,                                                          \n"
+    "                     FG, //mix(LOW, FG, clamp(0.0, 1.0, v / 0.3)),                \n"
+    "                     smoothstep(0.0,                                              \n"
+    "                                5.0,                                              \n"
+    "                                v * u_size.y - (gl_FragCoord.y - u_position.y))); \n"
+    "                                                                                  \n"
+    "                                                                                  \n"
+    "  if(gl_FragCoord.y <= u_position.y + 1.0                                         \n"
+    "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0                              \n"
+    "  || gl_FragCoord.x <= u_position.x + 1.0                                         \n"
+    "  || gl_FragCoord.x >= u_position.x + u_size.x - 1.0                              \n"
+    "  )                                                                               \n"
+    "    gl_FragColor = vec4(u_color, 0.75 * u_opacity);                               \n"
+    "}                                                                                 \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);

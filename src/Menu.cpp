@@ -4,12 +4,29 @@ Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair
   : viewport(viewport),
     tileSize(tileSize),
     tilesNumber(tilesNumber),
+    marginFromBottom(50),
     zoom(zoom),
-    animationsDurationMilliseconds(animationsDurationMilliseconds) {
+    animationsDurationMilliseconds(animationsDurationMilliseconds),
+    fadingDurationMilliseconds(500),
+    bouncing(true),
+    background(viewport, 0.0),
+    playback(viewport),
+    framerate(viewport) {
   initialize();
 }
 
-Menu::Menu() {
+Menu::Menu(std::pair<int, int> viewport)
+  : viewport(viewport),
+    tileSize({432, 432 * viewport.second / viewport.first}),
+    tilesNumber({4, 1}),
+    marginFromBottom(50),
+    zoom(1.05),
+    animationsDurationMilliseconds(320),
+    fadingDurationMilliseconds(500),
+    bouncing(true),
+    background(viewport, 0.0),
+    playback(viewport),
+    framerate(viewport) {
   initialize();
 }
 
@@ -29,13 +46,6 @@ void Menu::initialize() {
   loaderEnabled = true;
   selectedTile = 0;
   firstTile = 0;
-
-  fpsS = 0;
-  fpsN = 100;
-  fpsT = std::chrono::high_resolution_clock::now();
-
-  background.setViewport(viewport);
-  background.setOpacity(0.0);
 }
 
 Menu::~Menu() {
@@ -94,70 +104,9 @@ void Menu::render() {
   }
   // render FPS counter
   {
-    std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> timespan = now - fpsT;
-    fpsT = now;
-    float fps = 1000.0f / timespan.count();
-    fpsS += fps;
-    fpsV.push_back(fps);
-    while(static_cast<int>(fpsV.size()) > fpsN) {
-      fpsS -= fpsV.front();
-      fpsV.pop_front();
-    }
-    fps = fpsS / (fpsV.size() ? : 1);
+    framerate.step();
     if(fpsCounterVisible)
-    {
-      {
-        int fontHeight = 48;
-        int margin = 12;
-        text.render(std::to_string(static_cast<int>(fps)),
-                    {viewport.first - margin - 100, viewport.second - fontHeight - margin},
-                    {0, fontHeight},
-                    viewport,
-                    0,
-                    {1.0, 1.0, 1.0, 1.0},
-                    true);
-      }
-      {
-        std::pair<int, int> margin = {4, 60};
-        std::pair<int, int> size = {600, 100};
-        std::pair<int, int> position = {viewport.first - size.first - margin.first,
-                                        viewport.second - size.second - margin.second};
-        graph.render({fpsV.begin(), fpsV.end()},
-                     {0.0f, 60.0f},
-                     position,
-                     size,
-                     viewport);
-      }
-/*      {
-        std::pair<int, int> margin = {614, 60};
-        std::pair<int, int> size = {600, 100};
-        std::pair<int, int> position = {viewport.first - size.first - margin.first,
-                                        viewport.second - size.second - margin.second};
-        std::vector<float> v;
-        for(int i = 0; i < fpsN; ++i)
-          v.push_back(sin(static_cast<float>(i) * 5.0f) / 2.0f);
-        graph.render(v,
-                     {-1.0f, 1.0f},
-                     position,
-                     size,
-                     viewport);
-      }
-      {
-        std::pair<int, int> margin = {1224, 60};
-        std::pair<int, int> size = {600, 100};
-        std::pair<int, int> position = {viewport.first - size.first - margin.first,
-                                        viewport.second - size.second - margin.second};
-        std::vector<float> v;
-        for(int i = 0; i < fpsN; ++i)
-          v.push_back(sin(static_cast<float>(i) * 2.0f));
-        graph.render(v,
-                     {-1.0f, 1.0f},
-                     position,
-                     size,
-                     viewport);
-      }*/
-    }
+      framerate.render(text);
   }
 }
 

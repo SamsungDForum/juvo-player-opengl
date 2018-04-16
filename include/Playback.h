@@ -56,11 +56,9 @@ private:
   float progress;
   std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
 
-  const int viewportWidth = 1920;
-  const int viewportHeight = 1080;
-  const int progressBarWidth = 1500;
-  const int progressBarHeight = 32;
-  const int progressBarMarginBottom = 100 - progressBarHeight / 2;
+  std::pair<int, int> viewport;
+  std::pair<int, int> progressBarSize;
+  const int progressBarMarginBottom;
 
   GLint posBarLoc       = GL_INVALID_VALUE; 
   GLuint paramBarLoc    = GL_INVALID_VALUE; 
@@ -87,7 +85,7 @@ private:
   void updateProgress();
 
 public:
-  Playback();
+  Playback(std::pair<int, int> viewport);
   ~Playback();
   void setIcon(int id, char* pixels, std::pair<int, int> size, GLuint format);
   void render(Text &text);

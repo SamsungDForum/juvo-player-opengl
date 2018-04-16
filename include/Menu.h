@@ -6,8 +6,6 @@
 #include <cstdlib> // malloc
 #include <cstring> // memcpy
 #include <vector>
-#include <deque>
-#include <chrono>
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
@@ -21,7 +19,7 @@
 #include "Background.h"
 #include "Playback.h"
 #include "Subtitles.h"
-#include "Graph.h"
+#include "Framerate.h"
 
 class Menu {
 private:
@@ -46,11 +44,6 @@ private:
   const int fadingDurationMilliseconds = 500;
   const bool bouncing = true;
 
-  // FPS counter variables
-  std::chrono::time_point<std::chrono::high_resolution_clock> fpsT;
-  float fpsS;
-  int fpsN;
-  std::deque<float> fpsV;
 
   // UI helper objects
   Text text;
@@ -58,7 +51,7 @@ private:
   Background background;
   Playback playback;
   Subtitles subtitles;
-  Graph graph;
+  Framerate framerate;
 
 private:
   void initialize();
@@ -66,7 +59,7 @@ private:
   std::pair<int, int> getTilePosition(int tileNo, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, std::pair<int, int> viewport, bool initialMargin = true);
 
 public:
-  Menu();
+  Menu(std::pair<int, int> viewport);
   Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, float zoom, int animationsDurationMilliseconds);
   ~Menu();
 

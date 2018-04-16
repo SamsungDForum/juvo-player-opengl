@@ -6,7 +6,7 @@
 #include "log.h"
 #include "version.h"
 
-static Menu menu;
+static Menu menu({1920, 1080});
 
 #ifdef __cplusplus
 extern "C" {
