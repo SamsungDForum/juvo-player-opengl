@@ -1,4 +1,4 @@
-#include "../include/Background.h"
+#include "Background.h"
 
 Background::Background()
   : programObject(GL_INVALID_VALUE),
@@ -9,7 +9,6 @@ Background::Background()
     sourceTile(nullptr),
     clearColor({}) {
   initGL();
-
 }
 
 Background::Background(std::pair<int, int> viewport, float opacity)
@@ -33,6 +32,7 @@ void Background::initGL() {
     "attribute vec4 a_position;     \n"
     "attribute vec2 a_texCoord;     \n"
     "varying vec2 v_texCoord;       \n"
+    "                               \n"
     "void main()                    \n"
     "{                              \n"
     "  v_texCoord = a_texCoord;     \n"
@@ -40,21 +40,23 @@ void Background::initGL() {
     "}                              \n";
  
   const GLchar* fShaderTexStr =  
-    "precision mediump float;                                                                      \n"
-    "varying vec2 v_texCoord;                                                                      \n"
-    "uniform sampler2D s_texture;                                                                  \n"
-    "uniform float u_opacity;                                                                      \n"
-    "uniform float u_black;                                                                        \n"
-    "void main()                                                                                   \n"
-    "{                                                                                             \n"
-    "  gl_FragColor = texture2D(s_texture, v_texCoord);                                            \n"
-    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0),                               \n"
-    "                         clamp((-atan(gl_FragCoord.x / 1920.0 - 0.5) / (1.57079632679) + 0.6) \n"
-    "                               + pow(1.0 - gl_FragCoord.y / 1080.0, 6.0)                      \n"
-    "                               , 0.0, 1.0));                                                  \n"
-    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), u_black);                     \n"
-    "  gl_FragColor.a *= u_opacity;                                                                \n"
-    "}                                                                                             \n";
+    "precision mediump float;                                                                            \n"
+    "varying vec2 v_texCoord;                                                                            \n"
+    "uniform sampler2D s_texture;                                                                        \n"
+    "uniform float u_opacity;                                                                            \n"
+    "uniform float u_black;                                                                              \n"
+    "uniform vec2 u_viewport;                                                                            \n"
+    "                                                                                                    \n"
+    "void main()                                                                                         \n"
+    "{                                                                                                   \n"
+    "  gl_FragColor = texture2D(s_texture, v_texCoord);                                                  \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0),                                     \n"
+    "                         clamp((-atan(gl_FragCoord.x / u_viewport.x - 0.5) / (1.57079632679) + 0.6) \n"
+    "                               + pow(1.0 - gl_FragCoord.y / u_viewport.y, 6.0)                      \n"
+    "                               , 0.0, 1.0));                                                        \n"
+    "  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.0, 0.0, 0.0), u_black);                           \n"
+    "  gl_FragColor.a *= u_opacity;                                                                      \n"
+    "}                                                                                                   \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
@@ -79,6 +81,7 @@ void Background::initGL() {
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
   opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   blackLoc = glGetUniformLocation(programObject, "u_black");
+  viewportLoc = glGetUniformLocation(programObject, "u_viewport");
 }
 
 void Background::render(Text &text) {
@@ -126,6 +129,7 @@ void Background::render(Text &text) {
   if(!updated.empty())
     black = animation.update()[0];
   glUniform1f(blackLoc, static_cast<GLfloat>(black));
+  glUniform2f(viewportLoc, static_cast<GLfloat>(viewport.first), static_cast<GLfloat>(viewport.second));
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 

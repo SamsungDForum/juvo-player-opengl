@@ -27,11 +27,12 @@ private:
   std::vector<float> clearColor;
   Animation animation;
 
-  GLuint samplerLoc = GL_INVALID_VALUE;
-  GLint posLoc =      GL_INVALID_VALUE;
-  GLint texLoc =      GL_INVALID_VALUE;
-  GLuint opacityLoc = GL_INVALID_VALUE;
-  GLuint blackLoc = GL_INVALID_VALUE;
+  GLuint samplerLoc  = GL_INVALID_VALUE;
+  GLint posLoc       = GL_INVALID_VALUE;
+  GLint texLoc       = GL_INVALID_VALUE;
+  GLuint opacityLoc  = GL_INVALID_VALUE;
+  GLuint blackLoc    = GL_INVALID_VALUE;
+  GLuint viewportLoc = GL_INVALID_VALUE;
 
   void initGL();
   void checkShaderCompileError(GLuint shader);

@@ -1,4 +1,4 @@
-#include "../include/Menu.h"
+#include "Menu.h"
 
 Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, float zoom, int animationsDurationMilliseconds)
   : viewport(viewport),
@@ -9,8 +9,10 @@ Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair
     animationsDurationMilliseconds(animationsDurationMilliseconds),
     fadingDurationMilliseconds(500),
     bouncing(true),
+    loader(viewport),
     background(viewport, 0.0),
     playback(viewport),
+    subtitles(viewport),
     framerate(viewport) {
   initialize();
 }
@@ -24,8 +26,10 @@ Menu::Menu(std::pair<int, int> viewport)
     animationsDurationMilliseconds(320),
     fadingDurationMilliseconds(500),
     bouncing(true),
+    loader(viewport),
     background(viewport, 0.0),
     playback(viewport),
+    subtitles(viewport),
     framerate(viewport) {
   initialize();
 }

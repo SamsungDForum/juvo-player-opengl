@@ -1,4 +1,4 @@
-#include "../include/Text.h"
+#include "Text.h"
 
 void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
   if(!renderingMode)

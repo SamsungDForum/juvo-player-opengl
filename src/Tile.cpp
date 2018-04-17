@@ -1,4 +1,4 @@
-#include "../include/Tile.h"
+#include "Tile.h"
 
 Tile::Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat)
           : id(tileId),

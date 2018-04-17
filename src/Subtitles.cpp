@@ -1,7 +1,7 @@
 #include "Subtitles.h"
 
-Subtitles::Subtitles()
-    : viewport({1920, 1080}),
+Subtitles::Subtitles(std::pair<int, int> viewport)
+    : viewport(viewport),
       active(false) {
 }
 

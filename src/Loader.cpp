@@ -1,8 +1,9 @@
-#include "../include/Loader.h"
+#include "Loader.h"
 
-Loader::Loader()
+Loader::Loader(std::pair<int, int> viewport)
   : programObject(GL_INVALID_VALUE),
-    param(0)
+    param(0),
+    viewport(viewport)
 {
   initialize();
 }
@@ -25,6 +26,7 @@ bool Loader::initialize() {
     "uniform float u_time;                                                       \n"
     "uniform float u_param;                                                      \n"
     "uniform float u_opacity;                                                    \n"
+    "uniform vec2 u_viewport;                                                    \n"
     "                                                                            \n"
     "#define LIM 0.001                                                           \n"
     "#define THICK 0.1                                                           \n"
@@ -46,7 +48,6 @@ bool Loader::initialize() {
     "  return vec2(uv.x * t.y - uv.y * t.x, uv.x * t.x + uv.y * t.y);            \n"
     "}                                                                           \n"
     "                                                                            \n"
-    "                                                                            \n"
     "vec4 loader(vec2 uv, float t) {                                             \n"
     "  if(udBox(uv, vec2(1.0, THICK + BORDER)) < LIM                             \n"
     "     && udBox(uv, vec2(1.0 - BORDER, THICK - BORDER)) > LIM)                \n"
@@ -59,10 +60,8 @@ bool Loader::initialize() {
     "                                                                            \n"
     "void main()                                                                 \n"
     "{                                                                           \n"
-    "  vec2 res = vec2(1920.0, 1080.0);                                          \n"
-    "  float rat = res.x / res.y;                                                \n"
-    "                                                                            \n"
-    "  vec2 uv = 2.0 * (gl_FragCoord.xy / res.y) - vec2(rat, 1.0);               \n"
+    "  float rat = u_viewport.x / u_viewport.y;                                  \n"
+    "  vec2 uv = 2.0 * (gl_FragCoord.xy / u_viewport.y) - vec2(rat, 1.0);        \n"
     "  vec4 col = loader(uv * (1.8 / vec2(rat, 1.0)), u_param / 100.0);          \n"
     "  gl_FragColor = vec4(col.rgb, u_opacity);                                  \n"
     "                                                                            \n"
@@ -90,6 +89,7 @@ bool Loader::initialize() {
   timeLoc = glGetUniformLocation(programObject, "u_time");
   paramLoc = glGetUniformLocation(programObject, "u_param");
   opacityLoc = glGetUniformLocation(programObject, "u_opacity");
+  viewportLoc = glGetUniformLocation(programObject, "u_viewport");
 
   time = std::chrono::high_resolution_clock::now();
 
@@ -155,12 +155,12 @@ void Loader::render(Text &text) {
   glUniform1f(paramLoc, paramArg);
 
   glUniform1f(opacityLoc, 1.0f);
+  glUniform2f(viewportLoc, static_cast<GLfloat>(viewport.first), static_cast<GLfloat>(viewport.second));
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glUseProgram(0);
 
   { // render text
-    std::pair<int, int> viewport = {1920, 1080};
     int fontHeight = 48;
     int textLeft = (viewport.first - text.getTextSize("Loading... 0%", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0) / 2;
     int textDown = viewport.second / 2 - 100;

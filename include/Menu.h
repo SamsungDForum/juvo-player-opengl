@@ -31,18 +31,18 @@ private:
   int selectedTile;
   int firstTile;
   float backgroundOpacity;
-  bool fpsCounterVisible = false;
-  std::string footer = "JuvoPlayer prealpha, OpenGL UI, Samsung R&D Poland, 2017-2018";
+  bool fpsCounterVisible;
+  std::string footer;
 
   // tiles positioning and animation constants
-  const std::pair<int, int> viewport {1920, 1080};
-  const std::pair<int, int> tileSize {432, 432 * viewport.second / viewport.first};
-  const std::pair<int, int> tilesNumber {4, 1};
-  const int marginFromBottom = 50;
-  const float zoom = 1.05;
-  const int animationsDurationMilliseconds = 320;
-  const int fadingDurationMilliseconds = 500;
-  const bool bouncing = true;
+  const std::pair<int, int> viewport;
+  const std::pair<int, int> tileSize;
+  const std::pair<int, int> tilesNumber;
+  const int marginFromBottom;
+  const float zoom;
+  const int animationsDurationMilliseconds;
+  const int fadingDurationMilliseconds;
+  const bool bouncing;
 
 
   // UI helper objects

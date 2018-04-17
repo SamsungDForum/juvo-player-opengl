@@ -2,6 +2,7 @@
 #define _PLAYBACK_H_
 
 #include <chrono>
+#include <ctime>
 #include <vector>
 #include <utility>
 
@@ -40,8 +41,9 @@ private:
   };
 
 private:
-  GLuint barProgramObject;
-  GLuint iconProgramObject;
+  GLuint barProgramObject    = GL_INVALID_VALUE;
+  GLuint iconProgramObject   = GL_INVALID_VALUE;
+  GLuint loaderProgramObject = GL_INVALID_VALUE;
   Animation opacityAnimation;
   Animation progressAnimation;
   std::vector<GLuint> icons;
@@ -60,18 +62,24 @@ private:
   std::pair<int, int> progressBarSize;
   const int progressBarMarginBottom;
 
-  GLint posBarLoc       = GL_INVALID_VALUE; 
-  GLuint paramBarLoc    = GL_INVALID_VALUE; 
-  GLuint opacityBarLoc  = GL_INVALID_VALUE; 
-  GLuint viewportBarLoc = GL_INVALID_VALUE;
-  GLuint sizeBarLoc     = GL_INVALID_VALUE; 
-  GLuint marginBarLoc   = GL_INVALID_VALUE;  
+  GLint posBarLoc          = GL_INVALID_VALUE; 
+  GLuint paramBarLoc       = GL_INVALID_VALUE; 
+  GLuint opacityBarLoc     = GL_INVALID_VALUE; 
+  GLuint viewportBarLoc    = GL_INVALID_VALUE;
+  GLuint sizeBarLoc        = GL_INVALID_VALUE; 
+  GLuint marginBarLoc      = GL_INVALID_VALUE;  
 
-  GLuint samplerLoc = GL_INVALID_VALUE;
-  GLuint colLoc     = GL_INVALID_VALUE;
-  GLuint opacityLoc = GL_INVALID_VALUE;
-  GLuint posLoc     = GL_INVALID_VALUE;
-  GLuint texLoc     = GL_INVALID_VALUE;
+  GLuint samplerLoc        = GL_INVALID_VALUE;
+  GLuint colLoc            = GL_INVALID_VALUE;
+  GLuint opacityLoc        = GL_INVALID_VALUE;
+  GLuint posLoc            = GL_INVALID_VALUE;
+  GLuint texLoc            = GL_INVALID_VALUE;
+
+  GLuint posLoaderLoc      = GL_INVALID_VALUE; 
+  GLuint paramLoaderLoc    = GL_INVALID_VALUE; 
+  GLuint opacityLoaderLoc  = GL_INVALID_VALUE; 
+  GLuint viewportLoaderLoc = GL_INVALID_VALUE; 
+  GLuint sizeLoaderLoc     = GL_INVALID_VALUE; 
 
 private:
   bool initialize();
@@ -83,6 +91,9 @@ private:
   void renderProgressBar(float opacity);
   std::string timeToString(int time);
   void updateProgress();
+  void renderLoader();
+  template<typename T> inline T max(T a, T b) { return a > b ? a : b; }
+  template<typename T> inline T clamp(T v, T lo, T hi) { return v < lo ? lo : v > hi ? hi : v; }
 
 public:
   Playback(std::pair<int, int> viewport);

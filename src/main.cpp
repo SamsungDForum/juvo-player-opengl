@@ -2,7 +2,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
-#include "../include/Menu.h"
+#include "Menu.h"
 #include "log.h"
 #include "version.h"
 

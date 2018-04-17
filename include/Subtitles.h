@@ -15,7 +15,7 @@ private:
   bool active;
 
 public:
-  Subtitles();
+  Subtitles(std::pair<int, int> viewport);
   void setViewport(const std::pair<int, int> &viewport);
   void render(Text &text);
   void showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle);

@@ -1,4 +1,4 @@
-#include "../include/Playback.h"
+#include "Playback.h"
 
 Playback::Playback(std::pair<int, int> viewport)
   : barProgramObject(GL_INVALID_VALUE),
@@ -155,6 +155,69 @@ bool Playback::initialize() {
   posLoc = glGetAttribLocation(iconProgramObject, "a_position");
   texLoc = glGetAttribLocation(iconProgramObject, "a_texCoord");
 
+  const GLchar* loaderVShaderTexStr =  
+    "attribute vec4 a_position;     \n"
+    "void main()                    \n"
+    "{                              \n"
+    "   gl_Position = a_position;   \n"
+    "}                              \n";
+
+  const GLchar* loaderFShaderTexStr =  
+    "precision mediump float; // highp is not supported                               \n"
+    "                                                                                 \n"
+    "#define SMOOTH(r) (mix(1.0, 0.0, smoothstep(0.9, 1.0, r)))                       \n"
+    "#define M_PI 3.14159265359                                                       \n"
+    "                                                                                 \n"
+    "uniform float u_param;                                                           \n"
+    "uniform float u_opacity;                                                         \n"
+    "uniform vec2 u_viewport;                                                         \n"
+    "uniform vec2 u_size;                                                             \n"
+    "                                                                                 \n"
+    "float ring(vec2 uv, vec2 center, float r1, float r2, float param)                \n"
+    "{                                                                                \n"
+    "  vec2 d = uv - center;                                                          \n"
+    "  float r = sqrt(dot(d, d));                                                     \n"
+    "  d = normalize(d);                                                              \n"
+    "  float t = -atan(d.y, d.x);                                                     \n"
+    "  t = mod(-param + 0.5 * (1.0 + t / M_PI), 1.0);                                 \n"
+    "  t -= max(t - 1.0 + 1e-2, 0.0) * 1e2; // antialiasing                           \n"
+    "  return t * (SMOOTH(r / r2) - SMOOTH(r / r1));                                  \n"
+    "}                                                                                \n"
+    "                                                                                 \n"
+    "void main()                                                                      \n"
+    "{                                                                                \n"
+    "  float r = ring(gl_FragCoord.xy,                                                \n"
+    "                 vec2(u_viewport.x / 2.0, u_viewport.y / 2.0),                   \n"
+    "                 u_size.y / 2.0 * 0.666,                                         \n"
+    "                 u_size.y / 2.0,                                                 \n"
+    "                 u_param);                                                       \n"
+    "  gl_FragColor = vec4(r * u_opacity);                                            \n"
+    "}                                                                                \n";
+
+  vertexShader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertexShader, 1, &loaderVShaderTexStr, NULL);
+  glCompileShader(vertexShader);
+  checkShaderCompileError(vertexShader);
+
+  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentShader, 1, &loaderFShaderTexStr, NULL);
+  glCompileShader(fragmentShader);
+  checkShaderCompileError(fragmentShader);
+
+  loaderProgramObject = glCreateProgram();
+  glAttachShader(loaderProgramObject, vertexShader);
+  glAttachShader(loaderProgramObject, fragmentShader);
+  glLinkProgram(loaderProgramObject);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+
+  posLoaderLoc = glGetAttribLocation(loaderProgramObject, "a_position");
+  paramLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_param");
+  opacityLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_opacity");
+  viewportLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_viewport");
+  sizeLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_size");
+
   return true;
 }
 
@@ -167,6 +230,8 @@ void Playback::updateProgress() {
   else if(totalTime) {
     progress = static_cast<float>(currentTime) / static_cast<float>(totalTime);
   }
+  else
+    progress = 0.0f;
 }
 
 void Playback::render(Text &text) {
@@ -179,6 +244,8 @@ void Playback::render(Text &text) {
   renderProgressBar(opacity);
   renderIcons(opacity);
   renderText(text, opacity);
+  if(state == State::Preparing || state == State::Idle)
+    renderLoader();
 }
 
 void Playback::renderIcons(float opacity) {
@@ -321,7 +388,7 @@ void Playback::renderText(Text &text, float opacity) {
               viewport,
               0,
               {1.0, 1.0, 1.0, opacity},
-              true);
+              false); // don't cache
 
   //render current time
 /*  fontHeight = 24;
@@ -363,7 +430,7 @@ void Playback::renderProgressBar(float opacity) {
   glUseProgram(barProgramObject);
   glEnableVertexAttribArray(posBarLoc);
   glVertexAttribPointer(posBarLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-  glUniform1f(paramBarLoc, progress);
+  glUniform1f(paramBarLoc, clamp<float>(progress, 0.0, 1.0));
   glUniform1f(opacityBarLoc, opacity);
   glUniform2f(viewportBarLoc, viewport.first, viewport.second);
   glUniform2f(sizeBarLoc, progressBarSize.first, progressBarSize.second);
@@ -432,13 +499,13 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
                           std::min(fromLastUpdate, std::chrono::milliseconds(1000)),
                           std::chrono::milliseconds(0),
                           {progress},
-                          {static_cast<double>(currentTime) / static_cast<double>(totalTime)},
+                          {static_cast<double>(currentTime) / static_cast<double>(totalTime ? totalTime : currentTime)},
                           Animation::Easing::Linear);
   }
 
   this->state = static_cast<State>(state);
-  this->currentTime = currentTime;
-  this->totalTime = totalTime;
+  this->totalTime = max<int>(0, totalTime);
+  this->currentTime = clamp<int>(currentTime, 0, totalTime);
   displayText = text;
 }
 
@@ -454,5 +521,31 @@ std::string Playback::timeToString(int time) {
        + (":") // m:s colon
        + (s < 10 ? "0" : "") // s leading 0
        + std::to_string(s); // seconds
+}
+
+void Playback::renderLoader() {
+  int squareWidth = 200;
+  float down = static_cast<float>((viewport.second - squareWidth) / 2) / viewport.second * 2.0f - 1.0f;
+  float top = static_cast<float>((viewport.second + squareWidth) / 2) / viewport.second * 2.0f - 1.0f;
+  float left = static_cast<float>((viewport.first - squareWidth) / 2) / viewport.first * 2.0f - 1.0f;
+  float right = static_cast<float>((viewport.first + squareWidth) / 2) / viewport.first * 2.0f - 1.0f;
+  GLfloat vertices[] = { left,   top,  0.0f,
+                          left,   down, 0.0f,
+                          right,  down, 0.0f,
+                          right,  top,  0.0f
+  };
+  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+  glUseProgram(loaderProgramObject);
+  glEnableVertexAttribArray(posLoaderLoc);
+  glVertexAttribPointer(posLoaderLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+  glUniform1f(paramLoaderLoc, fmod(static_cast<double>(std::clock()) / CLOCKS_PER_SEC, 1.0));
+  glUniform1f(opacityLoaderLoc, opacity);
+  glUniform2f(viewportLoaderLoc, viewport.first, viewport.second);
+  glUniform2f(sizeLoaderLoc, squareWidth, squareWidth);
+
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 

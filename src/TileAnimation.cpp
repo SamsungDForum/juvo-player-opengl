@@ -1,4 +1,4 @@
-#include "../include/TileAnimation.h"
+#include "TileAnimation.h"
 
 float TileAnimation::doEasing(float fraction, Easing easing) {
   float t  = fraction;
