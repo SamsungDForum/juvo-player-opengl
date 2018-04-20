@@ -268,6 +268,15 @@ void Text::renderCached(std::string text, std::pair<int, int> position, std::pai
     glDeleteTextures(1, &textTexture.textureId);
 }
 
+bool Text::removeFromCache(std::string text, int fontId) {
+  TextKey tk {text, fontId};
+  if(generatedTextures.count(tk)) {
+    generatedTextures.erase(tk);
+    return true;
+  }
+  return false;
+}
+
 Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool cache) {
   TextKey tk {text, fontId};
   if(generatedTextures.count(tk))

@@ -38,6 +38,7 @@ SET(SRCS
   src/Subtitles.cpp
   src/Graph.cpp
   src/Framerate.cpp
+  src/Options.cpp
 )
 
 INCLUDE(FindPkgConfig)

@@ -19,13 +19,14 @@
 class Playback {
 private:
   enum class State {
+    Error = -1,
     Idle = 0,
     Preparing = 1,
     Prepared = 2,
     Stopped = 3,
-    Paused = 4,
-    Playing = 5,
-    Error = 6,
+    Playing = 4,
+    Paused = 5,
+    Completed = 6
   };
 
   enum class Icon {
@@ -62,7 +63,7 @@ private:
   std::pair<int, int> progressBarSize;
   const int progressBarMarginBottom;
 
-  GLint posBarLoc          = GL_INVALID_VALUE; 
+  GLuint posBarLoc         = GL_INVALID_VALUE; 
   GLuint paramBarLoc       = GL_INVALID_VALUE; 
   GLuint opacityBarLoc     = GL_INVALID_VALUE; 
   GLuint viewportBarLoc    = GL_INVALID_VALUE;

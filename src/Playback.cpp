@@ -388,7 +388,7 @@ void Playback::renderText(Text &text, float opacity) {
               viewport,
               0,
               {1.0, 1.0, 1.0, opacity},
-              false); // don't cache
+              true); // TODO(g.skowinski): Decide on caching
 
   //render current time
 /*  fontHeight = 24;
@@ -408,7 +408,7 @@ void Playback::renderText(Text &text, float opacity) {
   textDown = viewport.second - fontHeight - 100;
   text.render(displayText,
               {textLeft, textDown},
-              {0, fontHeight},
+              {viewport.first - textLeft * 2, fontHeight},
               viewport,
               0,
               {1.0, 1.0, 1.0, opacity},
