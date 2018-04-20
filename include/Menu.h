@@ -20,6 +20,7 @@
 #include "Playback.h"
 #include "Subtitles.h"
 #include "Framerate.h"
+#include "Options.h"
 
 class Menu {
 private:

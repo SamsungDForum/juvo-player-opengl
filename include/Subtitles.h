@@ -13,12 +13,13 @@ private:
   std::chrono::milliseconds duration;
   std::string subtitle;
   bool active;
+  bool showForOneFrame;
 
 public:
   Subtitles(std::pair<int, int> viewport);
   void setViewport(const std::pair<int, int> &viewport);
   void render(Text &text);
-  void showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle);
+  void showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle); // duration == 0 means "show it just for next frame"
 };
 
 #endif // _SUBTITLES_H_
