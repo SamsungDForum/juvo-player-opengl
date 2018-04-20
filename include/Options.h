@@ -43,7 +43,7 @@ class Options {
     GLuint opaLoc = GL_INVALID_VALUE;
     GLuint fraLoc = GL_INVALID_VALUE;
 
-    initialize();
+    void initialize();
     checkShaderCompileError(GLuint shader);
     void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frame, const Text &text);
 

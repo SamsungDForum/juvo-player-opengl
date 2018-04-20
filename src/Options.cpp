@@ -7,6 +7,7 @@ Options::Options()
     activeSuboptionId(-1),
     selectedOptionId(-1),
     selectedSuboptionId(-1) {
+    initialize();
 }
 
 void Options::initialize() {
