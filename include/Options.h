@@ -12,9 +12,11 @@
 #endif // _INCLUDE_GLES_
 
 #include "Text.h"
+#include "log.h"
 
 class Options {
   private:
+    std::pair<int, int> viewport;
     const int maxTextLength;
 
     class Suboption {
@@ -28,33 +30,38 @@ class Options {
       public:
         int id;
         std::string name;
-        std::map<int, Suboption> subopt;
+        std::map<int, Suboption, std::less<int>> subopt;
     };
 
     std::map<int, Option> options;
-    int activeOptionId;
-    int activeSuboptionId;
-    int selectedOptionId;
-    int selectedSuboptionId;
+    int activeOptionId;      // currently active option
+    int activeSuboptionId;   // currently active suboption
+    int selectedOptionId;    // option selected at the moment in the menu
+    int selectedSuboptionId; // suboption selected at the moment in the menu
 
     GLuint programObject = GL_INVALID_VALUE;
-    GLuint posLoc = GL_INVALID_VALUE;
-    GLuint colLoc = GL_INVALID_VALUE;
-    GLuint opaLoc = GL_INVALID_VALUE;
-    GLuint fraLoc = GL_INVALID_VALUE;
+    GLuint apositionLoc  = GL_INVALID_VALUE;
+    GLuint positionLoc   = GL_INVALID_VALUE;
+    GLuint sizeLoc       = GL_INVALID_VALUE;
+    GLuint colorLoc      = GL_INVALID_VALUE;
+    GLuint opacityLoc    = GL_INVALID_VALUE;
+    GLuint frameWidthLoc = GL_INVALID_VALUE;
+    GLuint frameColorLoc = GL_INVALID_VALUE;
+    GLuint submenuSelectedLoc     = GL_INVALID_VALUE;
 
     void initialize();
-    checkShaderCompileError(GLuint shader);
-    void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frame, const Text &text);
+    void checkShaderCompileError(GLuint shader);
+    void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, Text &text, bool submenuSelected = false);
 
   public:
-    Options();
+    Options(std::pair<int, int> viewport);
 
     bool addOption(int id, std::string name);
     bool addSuboption(int parentId, int id, std::string name);
     bool updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
     void clearOptions();
-    void render(std::pair<int, int> position, std::pair<int, int> viewport, float opacity, const Text &text);
+    void render(Text &text);
+    void render(std::pair<int, int> position, std::pair<int, int> rectangleSize, std::pair<int, int> viewport, float opacity, Text &text);
     int getMaxTextLength() { return maxTextLength; }
 };
 

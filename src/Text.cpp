@@ -187,12 +187,23 @@ float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pai
 
 std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns text size in range [0.0, 2.0]
   float scale = getScale(size, fontId, viewport);
-  return getTextSize(text, size, fontId, scale);
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
+  std::string t = text;
+  breakLines(t, fontId, textMaxWidth, scale); 
+  return getTextSize(t, fontId, scale);
 }
 
+
+
+// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
+// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
+// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
+// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
+// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
+// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
 std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, float scale) { // returns text size in range [0.0, 2.0]
   std::string t = text;
-  breakLines(t, fontId, size.first, scale);
+  breakLines(t, fontId, static_cast<float>(size.first) * scale / 2.0f, scale);
   return getTextSize(t, fontId, scale);
 }
 

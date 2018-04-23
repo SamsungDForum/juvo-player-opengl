@@ -13,7 +13,8 @@ Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair
     background(viewport, 0.0),
     playback(viewport),
     subtitles(viewport),
-    framerate(viewport) {
+    framerate(viewport),
+    options(viewport) {
   initialize();
 }
 
@@ -30,7 +31,8 @@ Menu::Menu(std::pair<int, int> viewport)
     background(viewport, 0.0),
     playback(viewport),
     subtitles(viewport),
-    framerate(viewport) {
+    framerate(viewport),
+    options(viewport) {
   initialize();
 }
 
@@ -102,9 +104,8 @@ void Menu::render() {
   }
   { // controls/playback
     playback.render(text);
+    options.render(text);
     subtitles.render(text);
-  }
-  {
   }
   // render FPS counter
   {
@@ -264,5 +265,21 @@ void Menu::SwitchFPSCounterVisibility() {
 
 void Menu::ShowSubtitle(int duration, std::string text) {
   subtitles.showSubtitle(std::chrono::milliseconds(duration), text);
+}
+
+bool Menu::addOption(int id, std::string name) {
+  return options.addOption(id, name);
+}
+
+bool Menu::addSuboption(int parentId, int id, std::string name) {
+  return options.addSuboption(parentId, id, name);
+}
+
+bool Menu::updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
+  return options.updateSelection(activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+}
+
+void Menu::clearOptions() {
+  options.clearOptions();
 }
 

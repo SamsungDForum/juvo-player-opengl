@@ -1,8 +1,9 @@
 #include "Options.h"
 
 
-Options::Options()
-  : maxTextLength(16),
+Options::Options(std::pair<int, int> viewport)
+  : viewport(viewport),
+    maxTextLength(16),
     activeOptionId(-1),
     activeSuboptionId(-1),
     selectedOptionId(-1),
@@ -19,16 +20,31 @@ void Options::initialize() {
     "}                              \n";
 
   const GLchar* fShaderTexStr =  
-    "precision mediump float; // highp is not supported                               \n"
-    "uniform vec3 u_color;                                                            \n"
-    "uniform float u_opacity;                                                         \n"
-    "uniform float u_frame;                                                           \n"
-    "                                                                                 \n"
-   "                                                                                  \n"
-    "void main()                                                                      \n"
-    "{                                                                                \n"
-    "  gl_FragColor = vec4(1.0);                                                      \n"
-    "}                                                                                \n";
+    "precision mediump float;                         \n"
+    "uniform vec2 u_size;                             \n"
+    "uniform vec2 u_position;                         \n"
+    "uniform vec3 u_color;                            \n"
+    "uniform float u_opacity;                         \n"
+    "uniform float u_frameWidth;                      \n"
+    "uniform vec3 u_frameColor;                       \n"
+    "uniform int u_submenuSelected;                   \n"
+    "                                                 \n"
+    "void main()                                      \n"
+    "{                                                \n"
+    "  gl_FragColor = vec4(u_color, 1.0);             \n"
+    "                                                 \n"
+    "  if(u_frameWidth > 0.0) {                       \n"
+    "    vec2 pos = gl_FragCoord.xy - u_position.xy;  \n"
+    "    if(pos.x <= u_frameWidth ||                  \n"
+    "       pos.x >= u_size.x - u_frameWidth ||       \n"
+    "       pos.y <= u_frameWidth ||                  \n"
+    "       pos.y >= u_size.y - u_frameWidth) {       \n"
+    "      gl_FragColor.rgb = u_frameColor.rgb;       \n"
+    "    }                                            \n"
+    "  }                                              \n"
+    "                                                 \n"
+    "  gl_FragColor.a *= u_opacity;                   \n"
+    "}                                                \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
@@ -48,10 +64,14 @@ void Options::initialize() {
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 
-  posLoc = glGetAttribLocation(programObject, "a_position");
-  colLoc = glGetUniformLocation(programObject, "u_color");
-  opaLoc = glGetUniformLocation(programObject, "u_opacity");
-  fraLoc = glGetUniformLocation(programObject, "u_frame");
+  apositionLoc       = glGetAttribLocation(programObject, "a_position");
+  positionLoc        = glGetUniformLocation(programObject, "u_position");
+  sizeLoc            = glGetUniformLocation(programObject, "u_size");
+  colorLoc           = glGetUniformLocation(programObject, "u_color");
+  opacityLoc         = glGetUniformLocation(programObject, "u_opacity");
+  frameWidthLoc      = glGetUniformLocation(programObject, "u_frameWidth");
+  frameColorLoc      = glGetUniformLocation(programObject, "u_frameColor");
+  submenuSelectedLoc = glGetUniformLocation(programObject, "u_submenuSelected");
 }
 
 bool Options::addOption(int id, std::string name) {
@@ -85,18 +105,105 @@ void Options::clearOptions() {
   options.clear();
 }
 
-void Options::render(std::pair<int, int> position, std::pair<int, int> viewport, float opacity, const Text &text) {
+void Options::render(Text &text) {
+  std::pair<int, int> rectangleSize {300, 40};
+  render({viewport.first - 2 * rectangleSize.first - 20, 400}, rectangleSize, viewport, 1.0f, text);
+}
+
+void Options::render(std::pair<int, int> position, std::pair<int, int> rectangleSize, std::pair<int, int> viewport, float opacity, Text &text) {
+  std::pair<int, int> margin {1, 1};
+  int frameWidth = 2;
+  std::vector<float> optionColor = {0.3f, 0.3f, 0.3f};
+  std::vector<float> selectedOptionColor = {0.4f, 0.4f, 0.4f};
+  std::vector<float> activeOptionColor = {0.8f, 0.8f, 0.8f};
+  std::vector<float> suboptionColor = optionColor;
+  std::vector<float> selectedSuboptionColor = selectedOptionColor;
+  std::vector<float> activeSuboptionColor = activeOptionColor;
+  std::vector<float> frameColor = {1.0f, 1.0f, 1.0f};
+
+  std::pair<int, int> optionPosition = position;
   for(const std::pair<int, Option>& option : options) {
-    // TODO: render option rectangle
-    // TODO: render option text
-    for(const std::pair<int, Suboption>& suboption : option.second.subopt) {
-      // TODO: render suboption rectangle
-      // TODO: render suboption text
+    renderRectangle(optionPosition,
+                    rectangleSize,
+                    viewport,
+                    option.first == activeOptionId ? activeOptionColor : option.first == selectedOptionId ? selectedOptionColor : optionColor,
+                    opacity,
+                    option.second.name,
+                    option.first == selectedOptionId && selectedSuboptionId == -1 ? frameWidth : 0,
+                    frameColor,
+                    text,
+                    option.first == selectedOptionId ? true : false);
+    if(option.first == selectedOptionId) {
+      std::pair<int, int> suboptionPosition = {optionPosition.first + rectangleSize.first + margin.first, optionPosition.second};
+      for(const std::pair<int, Suboption>& suboption : option.second.subopt) {
+        renderRectangle(suboptionPosition,
+                        rectangleSize,
+                        viewport,
+                        suboption.first == activeSuboptionId ? activeSuboptionColor : suboption.first == selectedSuboptionId ? selectedSuboptionColor : suboptionColor,
+                        opacity,
+                        suboption.second.name,
+                        suboption.first == selectedSuboptionId ? frameWidth : 0,
+                        frameColor,
+                        text,
+                        false);
+        suboptionPosition.second -= rectangleSize.second + margin.second;
+      }
     }
+    optionPosition.second -= rectangleSize.second + margin.second;
   }
 }
 
-void Option::checkShaderCompileError(GLuint shader) {
+void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, Text &text, bool submenuSelected) {
+  float down = static_cast<float>(position.second) / viewport.second * 2.0f - 1.0f;
+  float top = static_cast<float>(position.second + size.second) / viewport.second * 2.0f - 1.0f;
+  float left = static_cast<float>(position.first) / viewport.first * 2.0f - 1.0f;
+  float right = static_cast<float>(position.first + size.first) / viewport.first * 2.0f - 1.0f;
+  GLfloat vertices[] = { left,   top,  0.0f,
+                          left,   down, 0.0f,
+                          right,  down, 0.0f,
+                          right,  top,  0.0f
+  };
+  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+  glUseProgram(programObject);
+  glEnableVertexAttribArray(positionLoc);
+  glVertexAttribPointer(apositionLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+
+  glUniform2f(positionLoc, position.first, position.second);
+  glUniform2f(sizeLoc, size.first, size.second);
+  if(color.size() >= 3)
+    glUniform3f(colorLoc, color[0], color[1], color[2]);
+  else if(color.size() == 1)
+    glUniform3f(colorLoc, color[0], color[0], color[0]);
+  else
+    glUniform3f(colorLoc, 0.0f, 0.0f, 0.0f);
+  glUniform1f(opacityLoc, opacity);
+
+  glUniform1f(frameWidthLoc, frameWidth);
+  if(frameColor.size() >= 3)
+    glUniform3f(frameColorLoc, frameColor[0], frameColor[1], frameColor[2]);
+  else if(frameColor.size() == 1)
+    glUniform3f(frameColorLoc, frameColor[0], frameColor[0], frameColor[0]);
+  else
+    glUniform3f(frameColorLoc, 0.0f, 0.0f, 0.0f);
+  glUniform1f(submenuSelectedLoc, submenuSelected ? 1 : 0);
+
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+  int fontHeight = size.second / 2;
+  int margin = (size.second - fontHeight) / 2;
+  text.render(name,
+              {position.first + margin, position.second + margin},
+              {0, fontHeight},
+              viewport,
+              0,
+              {1.0, 1.0, 1.0, opacity},
+              true);
+}
+
+void Options::checkShaderCompileError(GLuint shader) {
   GLint isCompiled = 0;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
   if(isCompiled == GL_FALSE) {
@@ -111,31 +218,4 @@ void Option::checkShaderCompileError(GLuint shader) {
   }
 }
 
-void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frame, const Text &text) {
-  float down = static_cast<float>(position.second) / viewport.second * 2.0f - 1.0f;
-  float top = static_cast<float>(position.second + size.second) / viewport.second * 2.0f - 1.0f;
-  float left = static_cast<float>(position.first) / viewport.first * 2.0f - 1.0f;
-  float right = static_cast<float>(position.first + size.first) / viewport.first * 2.0f - 1.0f;
-  GLfloat vertices[] = { left,   top,  0.0f,
-                          left,   down, 0.0f,
-                          right,  down, 0.0f,
-                          right,  top,  0.0f
-  };
-  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-  glUseProgram(programObject);
-  glEnableVertexAttribArray(posLoc);
-  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-  if(color.size() >= 3)
-    glUniform3f(colLoc, color[0], color[1], color[2]);
-  else if(color.size() == 1)
-    glUniform3f(colLoc, color[0], color[0], color[0]);
-  else
-    glUniform3f(colLoc, 0.0f, 0.0f, 0.0f);
-  glUniform1f(opaLoc, opacity);
-  glUniform1f(fraLoc, frame);
 
-  glEnable(GL_BLEND);
-  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
-}

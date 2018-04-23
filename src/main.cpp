@@ -27,6 +27,10 @@ void SwitchTextRenderingMode();
 void SwitchFPSCounterVisibility();
 void ShowSubtitle(int duration, char* text, int textLen);
 int OpenGLLibVersion();
+int AddOption(int id, char* text, int textLen);
+int AddSuboption(int parentId, int id, char* text, int textLen);
+int UpdateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+void ClearOptions();
 #ifdef __cplusplus
 }
 #endif
@@ -119,3 +123,18 @@ int OpenGLLibVersion() {
 #endif
 }
 
+int AddOption(int id, char* text, int textLen) {
+  return menu.addOption(id, std::string(text, textLen)) ? 1 : 0;
+}
+
+int AddSuboption(int parentId, int id, char* text, int textLen) {
+  return menu.addSuboption(parentId, id, std::string(text, textLen)) ? 1 : 0;
+}
+
+int UpdateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
+  return menu.updateSelection(activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+}
+
+void ClearOptions() {
+  menu.clearOptions();
+}

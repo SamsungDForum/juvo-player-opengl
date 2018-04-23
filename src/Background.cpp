@@ -134,27 +134,34 @@ void Background::render(Text &text) {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   std::string name = sourceTile != nullptr ? sourceTile->getName() : "";
+  int textLineOffset = 0;
   if(!name.empty()) {
     int fontHeight = 52;
     int leftText = 100;
     int topText = viewport.second - fontHeight - 200;
     text.render(name,
                 {leftText, topText},
-                {0, fontHeight},
-                {viewport},
+                {viewport.first - 2 * leftText, fontHeight},
+                viewport,
                 0,
                 {1.0, 1.0, 1.0, opacity},
                 true);
+
+    textLineOffset = text.getTextSize(name,
+                                      {viewport.first - 2 * leftText, fontHeight},
+                                      0,
+                                      viewport
+                     ).second * static_cast<float>(viewport.first) / 2.0f;
   }
   std::string description = sourceTile != nullptr ? sourceTile->getDescription() : "";
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
-    int topText = viewport.second - fontHeight - 300;
+    int topText = viewport.second - fontHeight - 200 - textLineOffset; // TODO(g.skowinski): Double title line causes more offset!!! Repair!!!
     text.render(description,
                 {leftText, topText},
                 {viewport.first - 2 * leftText, fontHeight},
-                {viewport},
+                viewport,
                 0,
                 {1.0, 1.0, 1.0, opacity},
                 true);

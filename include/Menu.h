@@ -53,6 +53,7 @@ private:
   Playback playback;
   Subtitles subtitles;
   Framerate framerate;
+  Options options;
 
 private:
   void initialize();
@@ -78,6 +79,10 @@ public:
   void SwitchTextRenderingMode();
   void SwitchFPSCounterVisibility();
   void ShowSubtitle(int duration, std::string text);
+  bool addOption(int id, std::string name);
+  bool addSuboption(int parentId, int id, std::string name);
+  bool updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+  void clearOptions();
 };
 
 #endif // _MENU_H_
