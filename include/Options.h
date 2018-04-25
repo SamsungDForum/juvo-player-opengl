@@ -17,6 +17,19 @@
 class Options {
   private:
     std::pair<int, int> viewport;
+    std::pair<int, int> optionRectangleSize;
+    std::pair<int, int> suboptionRectangleSize;
+    std::pair<int, int> position;
+    std::pair<int, int> margin;
+    int frameWidth;
+    std::vector<float> optionColor;
+    std::vector<float> selectedOptionColor;
+    std::vector<float> activeOptionColor;
+    std::vector<float> suboptionColor;
+    std::vector<float> selectedSuboptionColor;
+    std::vector<float> activeSuboptionColor;
+    std::vector<float> frameColor;
+
     const int maxTextLength;
 
     class Suboption {
@@ -38,6 +51,8 @@ class Options {
     int activeSuboptionId;   // currently active suboption
     int selectedOptionId;    // option selected at the moment in the menu
     int selectedSuboptionId; // suboption selected at the moment in the menu
+    float opacity;
+    bool show;
 
     GLuint programObject = GL_INVALID_VALUE;
     GLuint apositionLoc  = GL_INVALID_VALUE;
@@ -51,6 +66,7 @@ class Options {
 
     void initialize();
     void checkShaderCompileError(GLuint shader);
+    void render(std::pair<int, int> position, std::pair<int, int> optionRectangleSize, std::pair<int, int> suboptionRectangleSize, std::pair<int, int> viewport, float opacity, Text &text);
     void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, Text &text, bool submenuSelected = false);
 
   public:
@@ -58,11 +74,13 @@ class Options {
 
     bool addOption(int id, std::string name);
     bool addSuboption(int parentId, int id, std::string name);
-    bool updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+    bool updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
     void clearOptions();
     void render(Text &text);
-    void render(std::pair<int, int> position, std::pair<int, int> rectangleSize, std::pair<int, int> viewport, float opacity, Text &text);
+    void renderIcon(Text &text);
     int getMaxTextLength() { return maxTextLength; }
+    float getOpacity() { return opacity; }
+    void setOpacity(float opacity) { this->opacity = opacity; }
 };
 
 #endif // _OPTIONS_H_

@@ -104,8 +104,10 @@ void Menu::render() {
   }
   { // controls/playback
     playback.render(text);
-    options.render(text);
     subtitles.render(text);
+    options.setOpacity(playback.getOpacity());
+    options.renderIcon(text);
+    options.render(text);
   }
   // render FPS counter
   {
@@ -275,8 +277,8 @@ bool Menu::addSuboption(int parentId, int id, std::string name) {
   return options.addSuboption(parentId, id, name);
 }
 
-bool Menu::updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
-  return options.updateSelection(activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+bool Menu::updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
+  return options.updateSelection(show, activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
 }
 
 void Menu::clearOptions() {

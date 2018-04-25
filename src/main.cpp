@@ -29,7 +29,7 @@ void ShowSubtitle(int duration, char* text, int textLen);
 int OpenGLLibVersion();
 int AddOption(int id, char* text, int textLen);
 int AddSuboption(int parentId, int id, char* text, int textLen);
-int UpdateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
 void ClearOptions();
 #ifdef __cplusplus
 }
@@ -131,8 +131,8 @@ int AddSuboption(int parentId, int id, char* text, int textLen) {
   return menu.addSuboption(parentId, id, std::string(text, textLen)) ? 1 : 0;
 }
 
-int UpdateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
-  return menu.updateSelection(activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
+  return menu.updateSelection(static_cast<bool>(show), activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
 }
 
 void ClearOptions() {

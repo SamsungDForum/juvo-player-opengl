@@ -193,20 +193,6 @@ std::pair<float, float> Text::getTextSize(const std::string &text, const std::pa
   return getTextSize(t, fontId, scale);
 }
 
-
-
-// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
-// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
-// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
-// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
-// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
-// TODO: THIS FUNCTION SHOULD BE REMOVED SINCE WIDTH SCALING HERE IS NOT CONSISTENT WITH OTHER METHODS
-std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, float scale) { // returns text size in range [0.0, 2.0]
-  std::string t = text;
-  breakLines(t, fontId, static_cast<float>(size.first) * scale / 2.0f, scale);
-  return getTextSize(t, fontId, scale);
-}
-
 std::pair<float, float> Text::getTextSize(const std::string &text, int fontId, float scale) {
   std::pair<float, float> position;
   float maxWidth = 0;

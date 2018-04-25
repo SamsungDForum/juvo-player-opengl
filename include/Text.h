@@ -90,7 +90,6 @@ private:
 
   void prepareShaders();
   void checkShaderCompileError(GLuint shader);
-  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, float scale);
   std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
   void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f, bool invertVerticalAdvance = false);
   void breakLines(std::string &text, int fontId, float w, float scale = 1.0f);

@@ -81,7 +81,7 @@ public:
   void ShowSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);
   bool addSuboption(int parentId, int id, std::string name);
-  bool updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+  bool updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
   void clearOptions();
 };
 

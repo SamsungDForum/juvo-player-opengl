@@ -3,11 +3,25 @@
 
 Options::Options(std::pair<int, int> viewport)
   : viewport(viewport),
-    maxTextLength(16),
+    optionRectangleSize({200, 40}),
+    suboptionRectangleSize({500, 40}),
+    position({130, 150}),
+    margin({1, 1}),
+    frameWidth(2),
+    optionColor({0.3f, 0.3f, 0.3f}),
+    selectedOptionColor({0.4f, 0.4f, 0.4f}),
+    activeOptionColor({0.8f, 0.8f, 0.8f}),
+    suboptionColor(optionColor),
+    selectedSuboptionColor(selectedOptionColor),
+    activeSuboptionColor(activeOptionColor),
+    frameColor({1.0f, 1.0f, 1.0f}),
+    maxTextLength(26),
     activeOptionId(-1),
     activeSuboptionId(-1),
     selectedOptionId(-1),
-    selectedSuboptionId(-1) {
+    selectedSuboptionId(-1),
+    opacity(0.0f),
+    show(false) {
     initialize();
 }
 
@@ -43,7 +57,7 @@ void Options::initialize() {
     "    }                                            \n"
     "  }                                              \n"
     "                                                 \n"
-    "  gl_FragColor.a *= u_opacity;                   \n"
+    "  gl_FragColor.a *= u_opacity * 0.75;            \n"
     "}                                                \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -93,7 +107,8 @@ bool Options::addSuboption(int parentId, int id, std::string name) {
   return true;
 }
 
-bool Options::updateSelection(int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
+bool Options::updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
+  this->show = show;
   this->activeOptionId = activeOptionId;
   this->activeSuboptionId = activeSuboptionId;
   this->selectedOptionId = selectedOptionId;
@@ -105,26 +120,32 @@ void Options::clearOptions() {
   options.clear();
 }
 
-void Options::render(Text &text) {
-  std::pair<int, int> rectangleSize {300, 40};
-  render({viewport.first - 2 * rectangleSize.first - 20, 400}, rectangleSize, viewport, 1.0f, text);
+void Options::renderIcon(Text &text) {
+  if(opacity <= 0.0f)
+    return;
+  renderRectangle(position,
+                  optionRectangleSize,
+                  viewport,
+                  selectedOptionColor,
+                  opacity,
+                  "Options",
+                  !show ? frameWidth : 0,
+                  frameColor,
+                  text);
 }
 
-void Options::render(std::pair<int, int> position, std::pair<int, int> rectangleSize, std::pair<int, int> viewport, float opacity, Text &text) {
-  std::pair<int, int> margin {1, 1};
-  int frameWidth = 2;
-  std::vector<float> optionColor = {0.3f, 0.3f, 0.3f};
-  std::vector<float> selectedOptionColor = {0.4f, 0.4f, 0.4f};
-  std::vector<float> activeOptionColor = {0.8f, 0.8f, 0.8f};
-  std::vector<float> suboptionColor = optionColor;
-  std::vector<float> selectedSuboptionColor = selectedOptionColor;
-  std::vector<float> activeSuboptionColor = activeOptionColor;
-  std::vector<float> frameColor = {1.0f, 1.0f, 1.0f};
+void Options::render(Text &text) {
+  if(!show || opacity <= 0.0f)
+    return;
+  std::pair<int, int> position {this->position.first + optionRectangleSize.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
+  render(position, optionRectangleSize, suboptionRectangleSize, viewport, opacity, text);
+}
 
+void Options::render(std::pair<int, int> position, std::pair<int, int> optionRectangleSize, std::pair<int, int> suboptionRectangleSize, std::pair<int, int> viewport, float opacity, Text &text) {
   std::pair<int, int> optionPosition = position;
   for(const std::pair<int, Option>& option : options) {
     renderRectangle(optionPosition,
-                    rectangleSize,
+                    optionRectangleSize,
                     viewport,
                     option.first == activeOptionId ? activeOptionColor : option.first == selectedOptionId ? selectedOptionColor : optionColor,
                     opacity,
@@ -134,10 +155,10 @@ void Options::render(std::pair<int, int> position, std::pair<int, int> rectangle
                     text,
                     option.first == selectedOptionId ? true : false);
     if(option.first == selectedOptionId) {
-      std::pair<int, int> suboptionPosition = {optionPosition.first + rectangleSize.first + margin.first, optionPosition.second};
+      std::pair<int, int> suboptionPosition = {optionPosition.first + optionRectangleSize.first + margin.first, optionPosition.second + (suboptionRectangleSize.second + margin.second) * (option.second.subopt.size() - 1)};
       for(const std::pair<int, Suboption>& suboption : option.second.subopt) {
         renderRectangle(suboptionPosition,
-                        rectangleSize,
+                        suboptionRectangleSize,
                         viewport,
                         suboption.first == activeSuboptionId ? activeSuboptionColor : suboption.first == selectedSuboptionId ? selectedSuboptionColor : suboptionColor,
                         opacity,
@@ -146,10 +167,10 @@ void Options::render(std::pair<int, int> position, std::pair<int, int> rectangle
                         frameColor,
                         text,
                         false);
-        suboptionPosition.second -= rectangleSize.second + margin.second;
+        suboptionPosition.second -= suboptionRectangleSize.second + margin.second;
       }
     }
-    optionPosition.second -= rectangleSize.second + margin.second;
+    optionPosition.second -= optionRectangleSize.second + margin.second;
   }
 }
 
