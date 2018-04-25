@@ -19,10 +19,6 @@ private:
   const std::pair<int, int> viewport;
   Graph graph;
 
-  static unsigned long long lastTotalUser, lastTotalUserLow, lastTotalSys, lastTotalIdle;
-/*  void initPerformanceMetrics();
-  double getCurrentPerformance();*/
-
 public:
   Framerate(std::pair<int, int> viewport);
   void step();
