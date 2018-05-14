@@ -24,13 +24,16 @@ void SetIcon(int id, char* pixels, int w, int h);
 void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen);
 void SetFooter(char* footer, int footerLen);
 void SwitchTextRenderingMode();
-void SwitchFPSCounterVisibility();
 void ShowSubtitle(int duration, char* text, int textLen);
 int OpenGLLibVersion();
 int AddOption(int id, char* text, int textLen);
 int AddSuboption(int parentId, int id, char* text, int textLen);
 int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
 void ClearOptions();
+int AddGraph(char* tag, int tagLen, int minVal, int maxVal, int valuesCount);
+void SetGraphVisibility(int graphId, int visible);
+void UpdateGraphValues(int graphId, int* values, int valuesCount);
+void UpdateGraphValue(int graphId, int value);
 #ifdef __cplusplus
 }
 #endif
@@ -105,11 +108,6 @@ void SwitchTextRenderingMode()
   menu.SwitchTextRenderingMode();
 }
 
-void SwitchFPSCounterVisibility()
-{
-  menu.SwitchFPSCounterVisibility();
-}
-
 void ShowSubtitle(int duration, char* text, int textLen)
 {
   menu.ShowSubtitle(duration, std::string(text, textLen));
@@ -119,7 +117,7 @@ int OpenGLLibVersion() {
 #ifdef VERSION
   return VERSION;
 #else
-  return 0;
+  return 0xDEADBEEF;
 #endif
 }
 
@@ -138,3 +136,20 @@ int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int sel
 void ClearOptions() {
   menu.clearOptions();
 }
+
+int AddGraph(char* tag, int tagLen, int minVal, int maxVal, int valuesCount) {
+  return menu.addGraph(std::string(tag, tagLen), minVal, maxVal, valuesCount);
+}
+
+void SetGraphVisibility(int graphId, int visible) {
+  menu.setGraphVisibility(graphId, static_cast<bool>(visible));
+}
+
+void UpdateGraphValues(int graphId, int* values, int valuesCount) {
+  menu.updateGraphValues(graphId, std::vector<int>(values, values + valuesCount));
+}
+
+void UpdateGraphValue(int graphId, int value) {
+  menu.updateGraphValue(graphId, value);
+}
+

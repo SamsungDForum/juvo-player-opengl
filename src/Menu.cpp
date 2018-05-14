@@ -13,7 +13,7 @@ Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair
     background(viewport, 0.0),
     playback(viewport),
     subtitles(viewport),
-    framerate(viewport),
+    metrics(viewport),
     options(viewport) {
   initialize();
 }
@@ -31,7 +31,7 @@ Menu::Menu(std::pair<int, int> viewport)
     background(viewport, 0.0),
     playback(viewport),
     subtitles(viewport),
-    framerate(viewport),
+    metrics(viewport),
     options(viewport) {
   initialize();
 }
@@ -111,9 +111,7 @@ void Menu::render() {
   }
   // render FPS counter
   {
-    framerate.step();
-    if(fpsCounterVisible)
-      framerate.render(text);
+    metrics.render(text);
   }
 }
 
@@ -259,12 +257,6 @@ void Menu::SwitchTextRenderingMode() {
   text.switchRenderingMode();
 }
 
-void Menu::SwitchFPSCounterVisibility() {
-  fpsCounterVisible = !fpsCounterVisible;
-  _INFO("FPS counter visibility switched to %s.", fpsCounterVisible ? "visible" : "not visible");
-}
-
-
 void Menu::ShowSubtitle(int duration, std::string text) {
   subtitles.showSubtitle(std::chrono::milliseconds(duration), text);
 }
@@ -283,5 +275,21 @@ bool Menu::updateSelection(bool show, int activeOptionId, int activeSuboptionId,
 
 void Menu::clearOptions() {
   options.clearOptions();
+}
+
+int Menu::addGraph(std::string tag, int minVal, int maxVal, int valuesCount) {
+  return metrics.addGraph(tag, minVal, maxVal, valuesCount);
+}
+
+void Menu::setGraphVisibility(int graphId, bool visible) {
+  metrics.setGraphVisibility(graphId, visible);
+}
+
+void Menu::updateGraphValues(int graphId, std::vector<int> values) {
+  metrics.updateGraphValues(graphId, values);
+}
+
+void Menu::updateGraphValue(int graphId, int value) {
+  metrics.updateGraphValue(graphId, value);
 }
 

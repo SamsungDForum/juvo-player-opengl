@@ -37,7 +37,7 @@ SET(SRCS
   src/TileAnimation.cpp
   src/Subtitles.cpp
   src/Graph.cpp
-  src/Framerate.cpp
+  src/Metrics.cpp
   src/Options.cpp
 )
 

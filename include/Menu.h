@@ -19,7 +19,7 @@
 #include "Background.h"
 #include "Playback.h"
 #include "Subtitles.h"
-#include "Framerate.h"
+#include "Metrics.h"
 #include "Options.h"
 
 class Menu {
@@ -32,7 +32,6 @@ private:
   int selectedTile;
   int firstTile;
   float backgroundOpacity;
-  bool fpsCounterVisible;
   std::string footer;
 
   // tiles positioning and animation constants
@@ -52,7 +51,7 @@ private:
   Background background;
   Playback playback;
   Subtitles subtitles;
-  Framerate framerate;
+  Metrics metrics;
   Options options;
 
 private:
@@ -77,12 +76,15 @@ public:
   void SetIcon(int id, char* pixels, std::pair<int, int> size);
   void SetFooter(std::string footer);
   void SwitchTextRenderingMode();
-  void SwitchFPSCounterVisibility();
   void ShowSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);
   bool addSuboption(int parentId, int id, std::string name);
   bool updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
   void clearOptions();
+  int addGraph(std::string tag, int minVal, int maxVal, int valuesCount);
+  void setGraphVisibility(int graphId, bool visible);
+  void updateGraphValues(int graphId, std::vector<int> values);
+  void updateGraphValue(int graphId, int value);
 };
 
 #endif // _MENU_H_
