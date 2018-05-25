@@ -277,7 +277,7 @@ void Menu::clearOptions() {
   options.clearOptions();
 }
 
-int Menu::addGraph(std::string tag, int minVal, int maxVal, int valuesCount) {
+int Menu::addGraph(std::string tag, float minVal, float maxVal, int valuesCount) {
   return metrics.addGraph(tag, minVal, maxVal, valuesCount);
 }
 
@@ -285,11 +285,11 @@ void Menu::setGraphVisibility(int graphId, bool visible) {
   metrics.setGraphVisibility(graphId, visible);
 }
 
-void Menu::updateGraphValues(int graphId, std::vector<int> values) {
+void Menu::updateGraphValues(int graphId, std::vector<float> values) {
   metrics.updateGraphValues(graphId, values);
 }
 
-void Menu::updateGraphValue(int graphId, int value) {
+void Menu::updateGraphValue(int graphId, float value) {
   metrics.updateGraphValue(graphId, value);
 }
 

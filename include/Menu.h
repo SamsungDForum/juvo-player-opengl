@@ -81,10 +81,10 @@ public:
   bool addSuboption(int parentId, int id, std::string name);
   bool updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
   void clearOptions();
-  int addGraph(std::string tag, int minVal, int maxVal, int valuesCount);
+  int addGraph(std::string tag, float minVal, float maxVal, int valuesCount);
   void setGraphVisibility(int graphId, bool visible);
-  void updateGraphValues(int graphId, std::vector<int> values);
-  void updateGraphValue(int graphId, int value);
+  void updateGraphValues(int graphId, std::vector<float> values);
+  void updateGraphValue(int graphId, float value);
 };
 
 #endif // _MENU_H_

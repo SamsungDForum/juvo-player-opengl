@@ -98,6 +98,9 @@ private:
   void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color);
   void renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
   void renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  inline bool validFontId(int fontId) {
+    return fontId >= 0 && static_cast<int>(fonts.size()) <= fontId;
+  }
 
 public:
   Text();

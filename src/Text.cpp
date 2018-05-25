@@ -1,6 +1,8 @@
 #include "Text.h"
 
 void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+  if(validFontId(fontId))
+    return;
   if(!renderingMode)
     renderDirect(text, position, size, viewport, fontId, color, cache);
   else
@@ -180,12 +182,16 @@ int Text::AddFont(char *data, int size, int fontsize) {
 }
 
 float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
+  if(validFontId(fontId))
+    return 1.0;
   if(viewport.second == 0 || fonts[fontId].height == 0)
     return 1.0;
   return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(viewport.second);
 }
 
 std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns text size in range [0.0, 2.0]
+  if(validFontId(fontId))
+    return {0.0f, 0.0f};
   float scale = getScale(size, fontId, viewport);
   float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
   std::string t = text;
@@ -194,6 +200,8 @@ std::pair<float, float> Text::getTextSize(const std::string &text, const std::pa
 }
 
 std::pair<float, float> Text::getTextSize(const std::string &text, int fontId, float scale) {
+  if(validFontId(fontId))
+    return {0.0f, 0.0f};
   std::pair<float, float> position;
   float maxWidth = 0;
   for(std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
@@ -207,6 +215,8 @@ std::pair<float, float> Text::getTextSize(const std::string &text, int fontId, f
 }
 
 void Text::advance(std::pair<float, float> &position, char character, int fontId, float scale, bool invertVerticalAdvance) {
+  if(validFontId(fontId))
+    return;
   if(character < charRange.first || character >= charRange.second)
     return;
   if(character == '\n') {
@@ -218,6 +228,8 @@ void Text::advance(std::pair<float, float> &position, char character, int fontId
 }
 
 void Text::breakLines(std::string &text, int fontId, float w, float scale) {
+  if(validFontId(fontId))
+    return;
   if(w == 0)
     return;
 
@@ -249,6 +261,8 @@ void Text::breakLines(std::string &text, int fontId, float w, float scale) {
 }
 
 void Text::renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+  if(validFontId(fontId))
+    return;
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
@@ -266,6 +280,8 @@ void Text::renderCached(std::string text, std::pair<int, int> position, std::pai
 }
 
 bool Text::removeFromCache(std::string text, int fontId) {
+  if(validFontId(fontId))
+    return false;
   TextKey tk {text, fontId};
   if(generatedTextures.count(tk)) {
     generatedTextures.erase(tk);
@@ -275,6 +291,8 @@ bool Text::removeFromCache(std::string text, int fontId) {
 }
 
 Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool cache) {
+  if(validFontId(fontId))
+    return TextTexture{};
   TextKey tk {text, fontId};
   if(generatedTextures.count(tk))
     return generatedTextures.at(tk);
@@ -523,6 +541,8 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
 }
 
 void Text::renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+  if(validFontId(fontId))
+    return;
   bool alignedToOrigin = false; // TODO: add as a function parameter
 
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
