@@ -38,6 +38,8 @@ EXPORT_API int AddGraph(char* tag, int tagLen, float minVal, float maxVal, int v
 EXPORT_API void SetGraphVisibility(int graphId, int visible);
 EXPORT_API void UpdateGraphValues(int graphId, float* values, int valuesCount);
 EXPORT_API void UpdateGraphValue(int graphId, float value);
+EXPORT_API void UpdateGraphRange(int graphId, float minVal, float maxVal);
+EXPORT_API void SelectAction(int id);
 #ifdef __cplusplus
 }
 #endif
@@ -157,3 +159,11 @@ void UpdateGraphValue(int graphId, float value) {
   menu.updateGraphValue(graphId, value);
 }
 
+void SelectAction(int id) {
+  menu.selectAction(id);
+}
+
+
+void UpdateGraphRange(int graphId, float minVal, float maxVal) {
+  menu.updateGraphRange(graphId, minVal, maxVal);
+}

@@ -38,12 +38,20 @@ private:
     Rewind,
     SkipToEnd,
     SkipToStart,
+    Options,
     LENGTH
+  };
+
+  enum class Action {
+    None = 0,
+    PlaybackControl = 1,
+    OptionsMenu = 2
   };
 
 private:
   GLuint barProgramObject    = GL_INVALID_VALUE;
   GLuint iconProgramObject   = GL_INVALID_VALUE;
+  GLuint bloomProgramObject  = GL_INVALID_VALUE;
   GLuint loaderProgramObject = GL_INVALID_VALUE;
   Animation opacityAnimation;
   Animation progressAnimation;
@@ -55,6 +63,7 @@ private:
   int totalTime;
   std::string displayText;
   float opacity;
+  Action selectedAction = Action::None;
 
   float progress;
   std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
@@ -76,6 +85,11 @@ private:
   GLuint posLoc            = GL_INVALID_VALUE;
   GLuint texLoc            = GL_INVALID_VALUE;
 
+  GLuint colBloomLoc       = GL_INVALID_VALUE;
+  GLuint opacityBloomLoc   = GL_INVALID_VALUE;
+  GLuint posBloomLoc       = GL_INVALID_VALUE;
+  GLuint rectBloomLoc      = GL_INVALID_VALUE;
+
   GLuint posLoaderLoc      = GL_INVALID_VALUE; 
   GLuint paramLoaderLoc    = GL_INVALID_VALUE; 
   GLuint opacityLoaderLoc  = GL_INVALID_VALUE; 
@@ -87,7 +101,7 @@ private:
   void initTexture(int id);
   void checkShaderCompileError(GLuint shader);
   void renderIcons(float opacity);
-  void renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity);
+  void renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom);
   void renderText(Text &text, float opacity);
   void renderProgressBar(float opacity);
   std::string timeToString(int time);
@@ -104,6 +118,7 @@ public:
   void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay);
   void setOpacity(float opacity) { this->opacity = opacity; }
   float getOpacity() { return opacity; }
+  void selectAction(int id);
 
   enum class Shadow {
     None,

@@ -10,6 +10,7 @@ Playback::Playback(std::pair<int, int> viewport)
     totalTime(0),
     displayText("Loading..."),
     opacity(0.0f),
+    selectedAction(Action::None),
     progress(0.0f),
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
@@ -155,6 +156,50 @@ bool Playback::initialize() {
   posLoc = glGetAttribLocation(iconProgramObject, "a_position");
   texLoc = glGetAttribLocation(iconProgramObject, "a_texCoord");
 
+  const GLchar* bloomVShaderTexStr =
+    "attribute vec4 a_position;                        \n"
+    "void main()                                       \n"
+    "{                                                 \n"
+    "  gl_Position = a_position;                       \n"
+    "}                                                 \n";
+
+  const GLchar* bloomFShaderTexStr =
+    "precision mediump float;                           \n"
+    "uniform vec3 u_color;                              \n"
+    "uniform float u_opacity;                           \n"
+    "uniform vec4 u_rect;                               \n"
+    "void main()                                        \n"
+    "{                                                  \n"
+    "  vec2 center = vec2(u_rect[0] + u_rect[2] / 2.0,  \n"
+    "                     u_rect[1] + u_rect[3] / 2.0); \n"
+    "  float r = min(u_rect[2], u_rect[3]);             \n"
+    "  float v = 1.0 - clamp(distance(gl_FragCoord.xy, center), 0.0, r) / (r * 0.5); \n"
+    "  gl_FragColor = vec4(u_color, u_opacity * v);    \n"
+    "}                                                 \n";
+
+  vertexShader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertexShader, 1, &bloomVShaderTexStr, NULL);
+  glCompileShader(vertexShader);
+  checkShaderCompileError(vertexShader);
+
+  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentShader, 1, &bloomFShaderTexStr, NULL);
+  glCompileShader(fragmentShader);
+  checkShaderCompileError(fragmentShader);
+
+  bloomProgramObject = glCreateProgram();
+  glAttachShader(bloomProgramObject, vertexShader);
+  glAttachShader(bloomProgramObject, fragmentShader);
+  glLinkProgram(bloomProgramObject);
+
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+
+  posBloomLoc = glGetAttribLocation(bloomProgramObject, "a_position");
+  colBloomLoc = glGetUniformLocation(bloomProgramObject, "u_color");
+  opacityBloomLoc = glGetUniformLocation(bloomProgramObject, "u_opacity");
+  rectBloomLoc = glGetUniformLocation(bloomProgramObject, "u_rect");
+
   const GLchar* loaderVShaderTexStr =  
     "attribute vec4 a_position;     \n"
     "void main()                    \n"
@@ -270,10 +315,11 @@ void Playback::renderIcons(float opacity) {
       color = {0.5, 0.5, 0.5, 1.0};
       break;
   }
-  renderIcon(icon, position, size, color, opacity);
+  renderIcon(icon, position, size, color, opacity, selectedAction == Action::PlaybackControl);
+  renderIcon(Icon::Options, {position.first, position.second + 75}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
 }
 
-void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity) {
+void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom) {
   if(static_cast<int>(icon) >= static_cast<int>(icons.size()) || icons[static_cast<int>(icon)] == GL_INVALID_VALUE)
     return;
 
@@ -293,6 +339,17 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
                          right,  top,  0.0f
   };
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+
+  if(bloom) {// Bloom of selection
+    glUseProgram(bloomProgramObject);
+    glUniform3f(colBloomLoc, 1.0f, 1.0f, 1.0f);
+    glUniform1f(opacityBloomLoc, static_cast<GLfloat>(opacity));
+    glUniform4f(rectBloomLoc, position.first, position.second, size.first, size.second);
+    glEnableVertexAttribArray(posBloomLoc);
+    glVertexAttribPointer(posBloomLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+    glUseProgram(GL_INVALID_VALUE);
+  }
 
   glUseProgram(iconProgramObject);
 
@@ -547,5 +604,9 @@ void Playback::renderLoader() {
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+}
+
+void Playback::selectAction(int id) {
+  selectedAction = static_cast<Action>(id);
 }
 

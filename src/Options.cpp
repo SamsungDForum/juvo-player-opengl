@@ -5,7 +5,7 @@ Options::Options(std::pair<int, int> viewport)
   : viewport(viewport),
     optionRectangleSize({200, 40}),
     suboptionRectangleSize({500, 40}),
-    position({130, 150}),
+    position({130 + 64, 150}),
     margin({1, 1}),
     frameWidth(2),
     optionColor({0.3f, 0.3f, 0.3f}),
@@ -137,7 +137,8 @@ void Options::renderIcon(Text &text) {
 void Options::render(Text &text) {
   if(!show || opacity <= 0.0f)
     return;
-  std::pair<int, int> position {this->position.first + optionRectangleSize.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
+//  std::pair<int, int> position {this->position.first + optionRectangleSize.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
+  std::pair<int, int> position {this->position.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
   render(position, optionRectangleSize, suboptionRectangleSize, viewport, opacity, text);
 }
 

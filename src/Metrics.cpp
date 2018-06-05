@@ -96,3 +96,10 @@ void Metrics::Framerate::step() {
 }
 
 
+void Metrics::updateGraphRange(int graphId, float minVal, float maxVal) {
+  if(graphId < 1 || graphId > static_cast<int>(traces.size()))
+      return;
+  traces[graphId]->minValue = minVal;
+  traces[graphId]->maxValue = maxVal;
+}
+

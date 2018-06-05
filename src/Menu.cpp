@@ -106,7 +106,7 @@ void Menu::render() {
     playback.render(text);
     subtitles.render(text);
     options.setOpacity(playback.getOpacity());
-    options.renderIcon(text);
+    //options.renderIcon(text);
     options.render(text);
   }
   // render FPS counter
@@ -291,5 +291,13 @@ void Menu::updateGraphValues(int graphId, std::vector<float> values) {
 
 void Menu::updateGraphValue(int graphId, float value) {
   metrics.updateGraphValue(graphId, value);
+}
+
+void Menu::updateGraphRange(int graphId, float minVal, float maxVal) {
+  metrics.updateGraphRange(graphId, minVal, maxVal);
+}
+
+void Menu::selectAction(int id) {
+  playback.selectAction(id);
 }
 

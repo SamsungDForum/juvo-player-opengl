@@ -49,6 +49,7 @@ public:
   void setGraphVisibility(int graphId, bool visible);
   void updateGraphValues(int graphId, std::vector<float> values);
   void updateGraphValue(int graphId, float value);
+  void updateGraphRange(int graphId, float minVal, float maxVal);
 };
 
 #endif // _FRAMERATE_H_
