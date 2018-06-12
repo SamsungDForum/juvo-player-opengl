@@ -14,7 +14,7 @@ Playback::Playback(std::pair<int, int> viewport)
     progress(0.0f),
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
-    progressBarSize({0.7815 * viewport.first, 0.02965 * viewport.second}), // 1500x32
+    progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400x32
     progressBarMarginBottom(0.0927 * viewport.second - progressBarSize.second / 2) // 100-32/2
 {
   initialize();
@@ -297,7 +297,7 @@ void Playback::renderIcons(float opacity) {
   Icon icon = Icon::Play;
   std::vector<float> color = {1.0, 1.0, 1.0, 1.0};
   std::pair<int, int> size = {64, 64};
-  std::pair<int, int> position = {150, 100};
+  std::pair<int, int> position = {200, 100};
   position = {position.first - size.first / 2, position.second - size.second / 2};
   switch(state) {
     case State::Playing:
@@ -316,7 +316,7 @@ void Playback::renderIcons(float opacity) {
       break;
   }
   renderIcon(icon, position, size, color, opacity, selectedAction == Action::PlaybackControl);
-  renderIcon(Icon::Options, {position.first, position.second + 75}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
+  renderIcon(Icon::Options, {position.first - 75, position.second}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
 }
 
 void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom) {
@@ -436,10 +436,10 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 void Playback::renderText(Text &text, float opacity) {
   // render remaining time
   int fontHeight = 24;
-  int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
-  int textLeft = viewport.first - textWidth - ((viewport.first - progressBarSize.first) / 2 - textWidth) / 2 + progressBarSize.second / 2;
+  //int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
+  int textLeft = viewport.first - (viewport.first - progressBarSize.first) / 2 + progressBarSize.second;
   int textDown = progressBarMarginBottom + progressBarSize.second / 2 - fontHeight / 2;
-  text.render(timeToString(totalTime - currentTime),
+  text.render(timeToString(-1 * (totalTime - currentTime)),
               {textLeft, textDown},
               {0, fontHeight},
               viewport,
@@ -567,11 +567,13 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
 }
 
 std::string Playback::timeToString(int time) {
-  time /= 1000;
+  bool negative = time < 0;
+  time = abs(time) / 1000;
   int h = time / 3600;
   int m = (time % 3600) / 60;
   int s = time % 60;
-  return (h ? std::to_string(h) : "") // hours
+  return std::string(negative ? "-" : "")
+       + (h ? std::to_string(h) : "") // hours
        + (h ? ":" : "") // h:m colon
        + (m < 10 ? "0" : "") // m leading 0
        + (std::to_string(m)) // minutes

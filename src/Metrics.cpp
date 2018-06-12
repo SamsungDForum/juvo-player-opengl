@@ -1,20 +1,23 @@
 #include "Metrics.h"
 
 Metrics::Metrics(std::pair<int, int> viewport)
-  : viewport(viewport) {
+  : viewport(viewport),
+    logConsoleVisible(false) {
     traces.push_back(std::make_unique<Framerate>());
 }
 
 void Metrics::render(Text &text) {
-  for(int i = 0, rendered = 0; i < static_cast<int>(traces.size()); ++i) {
+  std::pair<int, int> margin = {4, 10};
+  std::pair<int, int> size = {600, 50};
+  int rendered = 0;
+
+  for(int i = 0; i < static_cast<int>(traces.size()); ++i) {
     if(Framerate *framerate = dynamic_cast<Framerate*>(traces[i].get()))
       framerate->step();
 
     if(!traces[i]->visible)
       continue;
 
-    std::pair<int, int> margin = {4, 10};
-    std::pair<int, int> size = {600, 50};
     std::pair<int, int> position = {viewport.first - (size.first + margin.first),
                                     viewport.second - (size.second + margin.second) * (rendered + 1)};
     graph.render({traces[i]->values.begin(), traces[i]->values.end()},
@@ -33,6 +36,15 @@ void Metrics::render(Text &text) {
                 {1.0, 1.0, 1.0, 1.0},
                 true);
     ++rendered;
+  }
+
+  if(logConsoleVisible) {
+    int bottomMargin = margin.second * 3;
+    std::pair<int, int> position = {viewport.first - (size.first + margin.first),
+                                    bottomMargin};
+    std::pair<int, int> size2 = {size.first,
+                                 viewport.second - margin.second - bottomMargin - (size.second + margin.second) * rendered};
+    logConsole.render(text, viewport, position, size2, 0, 13);
   }
 }
 
@@ -101,5 +113,13 @@ void Metrics::updateGraphRange(int graphId, float minVal, float maxVal) {
       return;
   traces[graphId]->minValue = minVal;
   traces[graphId]->maxValue = maxVal;
+}
+
+void Metrics::setLogConsoleVisibility(bool visible) {
+  logConsoleVisible = visible;
+}
+
+void Metrics::pushLog(std::string log) {
+  logConsole.pushLog(log);
 }
 

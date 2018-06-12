@@ -39,6 +39,7 @@ SET(SRCS
   src/Graph.cpp
   src/Metrics.cpp
   src/Options.cpp
+  src/LogConsole.cpp
 )
 
 INCLUDE(FindPkgConfig)

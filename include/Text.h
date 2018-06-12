@@ -23,6 +23,10 @@
 
 #include "log.h"
 
+// TODO: No longer used textures removal mechanism.
+//       - Manual removal
+//       - Simple GC? gl_texture_id->last_usage_time map?
+
 class Text {
 private:
 

@@ -1,22 +1,22 @@
-#include "Graph.h"
+#include "LogConsole.h"
+#include "log.h"
 
-Graph::Graph()
-  : programObject(GL_INVALID_VALUE),
+LogConsole::LogConsole()
+    : programObject(GL_INVALID_VALUE),
     posALoc(GL_INVALID_VALUE),
     posLoc(GL_INVALID_VALUE),
     sizLoc(GL_INVALID_VALUE),
-    valLoc(GL_INVALID_VALUE),
     colLoc(GL_INVALID_VALUE),
     opaLoc(GL_INVALID_VALUE) {
   initialize();
 }
 
-Graph::~Graph() {
+LogConsole::~LogConsole() {
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
-bool Graph::initialize() {
+void LogConsole::initialize() {
   const GLchar* vShaderTexStr =  
     "attribute vec4 a_position;     \n"
     "void main()                    \n"
@@ -29,30 +29,17 @@ bool Graph::initialize() {
     "                                                                                  \n"
     "#define FG vec4(u_color, 0.75 * u_opacity)                                        \n"
     "#define BG vec4(0.0, 0.0, 0.0, 0.25 * u_opacity)                                  \n"
-    "//#define LOW vec4(1.0, 0.0, 0.0, 0.75 * u_opacity)                               \n"
     "                                                                                  \n"
     "const int VALUES = 100;                                                           \n"
     "                                                                                  \n"
     "uniform vec2 u_position;                                                          \n"
     "uniform vec2 u_size;                                                              \n"
-    "uniform float u_value[VALUES];                                                    \n"
     "uniform vec3 u_color;                                                             \n"
     "uniform float u_opacity;                                                          \n"
     "                                                                                  \n"
     "void main()                                                                       \n"
     "{                                                                                 \n"
-    "  float f = (gl_FragCoord.x - u_position.x) / u_size.x;                           \n" // global x position [0.0,1.0]
-    "  int i = int(f * float(VALUES - 1));                                             \n" // left value index [0, VALUES - 1]
-    "  float k = f * float(VALUES - 1) - float(i);                                     \n" // local x pos (btwn samples) [0.0, 1.0]
-    "  float v = mix(u_value[i], u_value[i + 1], k);                                   \n" // value for current position [0.0, 1.0]
-    "                                                                                  \n"
-    "//gl_FragColor = v * u_size.y >= gl_FragCoord.y - u_position.y ? FG : BG          \n"
-    "  gl_FragColor = mix(BG,                                                          \n"
-    "                     FG, //mix(LOW, FG, clamp(0.0, 1.0, v / 0.3)),                \n"
-    "                     smoothstep(0.0,                                              \n"
-    "                                5.0,                                              \n"
-    "                                v * u_size.y - (gl_FragCoord.y - u_position.y))); \n"
-    "                                                                                  \n"
+    "  gl_FragColor = BG;                                                              \n"
     "                                                                                  \n"
     "  if(gl_FragCoord.y <= u_position.y + 1.0                                         \n"
     "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0                              \n"
@@ -83,23 +70,11 @@ bool Graph::initialize() {
   posALoc = glGetAttribLocation(programObject, "a_position");
   posLoc = glGetUniformLocation(programObject, "u_position");
   sizLoc = glGetUniformLocation(programObject, "u_size");
-  valLoc = glGetUniformLocation(programObject, "u_value");
   colLoc = glGetUniformLocation(programObject, "u_color");
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
-
-  return true;
 }
 
-void Graph::render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size, const std::pair<int, int> &viewport) {
-
-  GLfloat vs[VALUES] = { 0.0f };
-  for(int i = 0; i < VALUES; ++i) {
-    float v = 0.0f;
-    if(i < static_cast<int>(values.size()))
-      v = clamp((values[i] - minMax.first) / (minMax.second - minMax.first), 0.0f, 1.0f);
-    vs[i] = static_cast<GLfloat>(v);
-  }
-
+void LogConsole::render(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
   float down  = static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
   float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
   float left  = static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
@@ -118,7 +93,6 @@ void Graph::render(const std::vector<float> &values, const std::pair<float, floa
 
   glUniform2f(posLoc, static_cast<float>(position.first), static_cast<float>(position.second));
   glUniform2f(sizLoc, static_cast<float>(size.first), static_cast<float>(size.second));
-  glUniform1fv(valLoc, VALUES, static_cast<GLfloat*>(vs));
   glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
 
   glUniform1f(opaLoc, 1.0f);
@@ -129,9 +103,11 @@ void Graph::render(const std::vector<float> &values, const std::pair<float, floa
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glUseProgram(0);
+
+  renderLogs(text, viewport, position, size, fontId, fontSize);
 }
 
-void Graph::checkShaderCompileError(GLuint shader) {
+void LogConsole::checkShaderCompileError(GLuint shader) {
   GLint isCompiled = 0;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
   if(isCompiled == GL_FALSE) {
@@ -144,5 +120,51 @@ void Graph::checkShaderCompileError(GLuint shader) {
 
     glDeleteShader(shader);
   }
+}
+
+void LogConsole::renderLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
+  std::pair<int, int> margin = {4, 10};
+  std::pair<int, int> textSizeLimits = {size.first - 2 * margin.first, fontSize};
+
+  // cleanup
+  std::deque<std::string>::reverse_iterator rit = logs.rbegin();
+  for(int offset = margin.second; rit != logs.rend(); ++rit) {
+    std::pair<float, float> textSize = text.getTextSize(*rit,
+                                                    textSizeLimits,
+                                                    fontId,
+                                                    viewport);
+    textSize = {textSize.first * static_cast<float>(viewport.first) / 2.0f,
+                textSize.second * static_cast<float>(viewport.first) / 2.0f};
+    if(offset + textSize.second + margin.second > size.second)
+      break;
+    offset += textSize.second + margin.second;
+  }
+  if(rit != logs.rend())
+    logs.erase(logs.begin(), ++rit.base());
+
+  // render
+  std::deque<std::string>::iterator deqit = logs.begin();
+  for(int offset = margin.second; deqit != logs.end(); ++deqit) {
+    std::pair<float, float> textSize = text.getTextSize(*deqit,
+                                                    textSizeLimits,
+                                                    fontId,
+                                                    viewport);
+    textSize = {textSize.first * static_cast<float>(viewport.first) / 2.0f,
+                textSize.second * static_cast<float>(viewport.first) / 2.0f};
+    if(offset + textSize.second + margin.second > size.second)
+      break;
+    text.render(*deqit,
+                {position.first + margin.first, position.second + size.second - offset - textSize.second},
+                textSizeLimits,
+                viewport,
+                fontId,
+                {1.0f, 1.0f, 1.0f, 1.0f},
+                true);
+    offset += textSize.second + margin.second;
+  }
+}
+
+void LogConsole::pushLog(std::string log) {
+  logs.push_back(log);
 }
 

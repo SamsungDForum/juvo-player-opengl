@@ -301,3 +301,10 @@ void Menu::selectAction(int id) {
   playback.selectAction(id);
 }
 
+void Menu::setLogConsoleVisibility(bool visible) {
+  metrics.setLogConsoleVisibility(visible);
+}
+
+void Menu::pushLog(std::string log) {
+  metrics.pushLog(log);
+}

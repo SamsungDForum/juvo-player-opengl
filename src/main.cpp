@@ -40,6 +40,8 @@ EXPORT_API void UpdateGraphValues(int graphId, float* values, int valuesCount);
 EXPORT_API void UpdateGraphValue(int graphId, float value);
 EXPORT_API void UpdateGraphRange(int graphId, float minVal, float maxVal);
 EXPORT_API void SelectAction(int id);
+EXPORT_API void SetLogConsoleVisibility(int visible);
+EXPORT_API void PushLog(char* log, int logLen);
 #ifdef __cplusplus
 }
 #endif
@@ -163,7 +165,15 @@ void SelectAction(int id) {
   menu.selectAction(id);
 }
 
-
 void UpdateGraphRange(int graphId, float minVal, float maxVal) {
   menu.updateGraphRange(graphId, minVal, maxVal);
 }
+
+void SetLogConsoleVisibility(int visible) {
+  menu.setLogConsoleVisibility(static_cast<bool>(visible));
+}
+
+void PushLog(char* log, int logLen) {
+  menu.pushLog(std::string(log, logLen));
+}
+

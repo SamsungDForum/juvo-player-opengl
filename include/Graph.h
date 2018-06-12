@@ -21,12 +21,12 @@ private:
   
   const int VALUES = 100;
 
-  GLuint posALoc = GL_INVALID_VALUE;
-  GLuint posLoc = GL_INVALID_VALUE;
-  GLuint sizLoc = GL_INVALID_VALUE;
-  GLuint valLoc = GL_INVALID_VALUE;
-  GLuint colLoc = GL_INVALID_VALUE;
-  GLuint opaLoc = GL_INVALID_VALUE;
+  GLuint posALoc;
+  GLuint posLoc;
+  GLuint sizLoc;
+  GLuint valLoc;
+  GLuint colLoc;
+  GLuint opaLoc;
 
 public:
   Graph();

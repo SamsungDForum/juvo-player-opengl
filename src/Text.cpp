@@ -300,7 +300,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   float scale = 1.0;
   std::pair<float, float> texSize = getTextSize(text, fontId, scale);
 
-  _INFO("Generating texture of size {%f, %f} for text \"%s\"", texSize.first, texSize.second, text.c_str());
+  //_INFO("Generating texture of size {%f, %f} for text \"%s\"", texSize.first, texSize.second, text.c_str());
 
   glActiveTexture(GL_TEXTURE0);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

@@ -9,6 +9,7 @@
 
 #include "Text.h"
 #include "Graph.h"
+#include "LogConsole.h"
 #include "log.h"
 
 class Metrics {
@@ -39,6 +40,8 @@ private:
 
   const std::pair<int, int> viewport;
   Graph graph;
+  LogConsole logConsole;
+  bool logConsoleVisible;
   
   std::vector<std::unique_ptr<Trace>> traces;
 
@@ -50,6 +53,9 @@ public:
   void updateGraphValues(int graphId, std::vector<float> values);
   void updateGraphValue(int graphId, float value);
   void updateGraphRange(int graphId, float minVal, float maxVal);
+
+  void setLogConsoleVisibility(bool visible);
+  void pushLog(std::string log);
 };
 
 #endif // _FRAMERATE_H_

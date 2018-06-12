@@ -87,6 +87,8 @@ public:
   void updateGraphValue(int graphId, float value);
   void updateGraphRange(int graphId, float minVal, float maxVal);
   void selectAction(int id);
+  void setLogConsoleVisibility(bool visible);
+  void pushLog(std::string log);
 };
 
 #endif // _MENU_H_
