@@ -16,11 +16,6 @@
 class Graph {
 private:
   GLuint programObject;
-  bool initialize();
-  inline float clamp(const float v, const float lo, const float hi) { return v < lo ? lo : v > hi ? hi : v; }
-  
-  const int VALUES = 100;
-
   GLuint posALoc;
   GLuint posLoc;
   GLuint sizLoc;
@@ -28,11 +23,16 @@ private:
   GLuint colLoc;
   GLuint opaLoc;
 
+  const int VALUES = 100;
+
+  void initialize();
+  void checkShaderCompileError(GLuint shader);
+  inline float clamp(const float v, const float lo, const float hi) { return v < lo ? lo : v > hi ? hi : v; }
+
 public:
   Graph();
   ~Graph();
   void render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size, const std::pair<int, int> &viewport);
-  void checkShaderCompileError(GLuint shader);
 };
 
 #endif // _GRAPH_H_

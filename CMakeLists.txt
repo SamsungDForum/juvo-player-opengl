@@ -40,6 +40,7 @@ SET(SRCS
   src/Metrics.cpp
   src/Options.cpp
   src/LogConsole.cpp
+  src/ModalWindow.cpp
 )
 
 INCLUDE(FindPkgConfig)

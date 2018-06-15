@@ -113,6 +113,8 @@ public:
   std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
   void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
   bool removeFromCache(std::string text, int fontId);
+  int getFontDefaultSize(int fontId);
+  int getFontDefaultHeight(int fontId);
 
   void switchRenderingMode() {
     renderingMode = !renderingMode;

@@ -16,7 +16,7 @@ Graph::~Graph() {
     glDeleteProgram(programObject);
 }
 
-bool Graph::initialize() {
+void Graph::initialize() {
   const GLchar* vShaderTexStr =  
     "attribute vec4 a_position;     \n"
     "void main()                    \n"
@@ -28,7 +28,7 @@ bool Graph::initialize() {
     "precision highp float;                                                            \n"
     "                                                                                  \n"
     "#define FG vec4(u_color, 0.75 * u_opacity)                                        \n"
-    "#define BG vec4(0.0, 0.0, 0.0, 0.25 * u_opacity)                                  \n"
+    "#define BG vec4(0.0, 0.0, 0.0, 0.75 * u_opacity)                                  \n"
     "//#define LOW vec4(1.0, 0.0, 0.0, 0.75 * u_opacity)                               \n"
     "                                                                                  \n"
     "const int VALUES = 100;                                                           \n"
@@ -86,8 +86,6 @@ bool Graph::initialize() {
   valLoc = glGetUniformLocation(programObject, "u_value");
   colLoc = glGetUniformLocation(programObject, "u_color");
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
-
-  return true;
 }
 
 void Graph::render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size, const std::pair<int, int> &viewport) {

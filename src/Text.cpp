@@ -694,3 +694,14 @@ void Text::checkShaderCompileError(GLuint shader) {
 }
 
 
+int Text::getFontDefaultSize(int fontId) {
+  if(validFontId(fontId))
+    return fonts[fontId].size;
+  return 1;
+}
+
+int Text::getFontDefaultHeight(int fontId) {
+  if(validFontId(fontId))
+    return fonts[fontId].height;
+  return 1;
+}

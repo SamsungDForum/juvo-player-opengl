@@ -109,9 +109,11 @@ void Menu::render() {
     //options.renderIcon(text);
     options.render(text);
   }
-  // render FPS counter
-  {
+  { // render metrics
     metrics.render(text);
+  }
+  { // render modal window
+    modalWindow.render(text, viewport, 0);
   }
 }
 
@@ -307,4 +309,17 @@ void Menu::setLogConsoleVisibility(bool visible) {
 
 void Menu::pushLog(std::string log) {
   metrics.pushLog(log);
+}
+
+
+void Menu::showAlert(std::string title, std::string text) {
+  modalWindow.show(title, text);
+}
+
+void Menu::hideAlert() {
+  modalWindow.hide();
+}
+
+bool Menu::isAlertVisible() {
+  return modalWindow.isVisible();
 }

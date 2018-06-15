@@ -21,6 +21,7 @@
 #include "Subtitles.h"
 #include "Metrics.h"
 #include "Options.h"
+#include "ModalWindow.h"
 
 class Menu {
 private:
@@ -53,6 +54,7 @@ private:
   Subtitles subtitles;
   Metrics metrics;
   Options options;
+  ModalWindow modalWindow;
 
 private:
   void initialize();
@@ -89,6 +91,9 @@ public:
   void selectAction(int id);
   void setLogConsoleVisibility(bool visible);
   void pushLog(std::string log);
+  void showAlert(std::string title, std::string text);
+  void hideAlert();
+  bool isAlertVisible();
 };
 
 #endif // _MENU_H_

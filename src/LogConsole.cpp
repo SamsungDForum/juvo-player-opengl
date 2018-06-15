@@ -7,7 +7,8 @@ LogConsole::LogConsole()
     posLoc(GL_INVALID_VALUE),
     sizLoc(GL_INVALID_VALUE),
     colLoc(GL_INVALID_VALUE),
-    opaLoc(GL_INVALID_VALUE) {
+    opaLoc(GL_INVALID_VALUE),
+    doCleanup(false) {
   initialize();
 }
 
@@ -28,7 +29,7 @@ void LogConsole::initialize() {
     "precision highp float;                                                            \n"
     "                                                                                  \n"
     "#define FG vec4(u_color, 0.75 * u_opacity)                                        \n"
-    "#define BG vec4(0.0, 0.0, 0.0, 0.25 * u_opacity)                                  \n"
+    "#define BG vec4(0.0, 0.0, 0.0, 0.75 * u_opacity)                                   \n"
     "                                                                                  \n"
     "const int VALUES = 100;                                                           \n"
     "                                                                                  \n"
@@ -104,7 +105,60 @@ void LogConsole::render(Text &text, std::pair<int, int> viewport, std::pair<int,
 
   glUseProgram(0);
 
-  renderLogs(text, viewport, position, size, fontId, fontSize);
+  renderText(text, viewport, position, size, fontId, fontSize);
+}
+
+void LogConsole::renderText(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
+  std::pair<int, int> margin = {4, 10};
+  int lineWidth = size.first - 2 * margin.first;
+  cleanupLogs(text, viewport, size, fontId, fontSize, margin, lineWidth);
+  renderLogs(text, viewport, position, size, fontId, fontSize, margin, lineWidth);
+}
+
+int LogConsole::getTextHeight(Text &text, std::string s, int lineWidth, int fontHeight, int fontId, std::pair<int, int> viewport) {
+  return text.getTextSize(s,
+                          {lineWidth, fontHeight},
+                          fontId,
+                          viewport).second
+         * static_cast<float>(viewport.second) / 2.0f;
+}
+
+void LogConsole::cleanupLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
+  if(!doCleanup)
+    return;
+  doCleanup = false;
+
+  std::deque<std::string>::reverse_iterator rit = logs.rbegin();
+  for(int offset = margin.second; rit != logs.rend(); ++rit) {
+    int textHeight = getTextHeight(text, *rit, lineWidth, fontSize, fontId, viewport);
+    if(offset + textHeight + margin.second > size.second)
+      break;
+    offset += textHeight + margin.second;
+  }
+  if(rit != logs.rend())
+    logs.erase(logs.begin(), ++rit.base());
+}
+
+void LogConsole::renderLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
+  std::deque<std::string>::iterator deqit = logs.begin();
+  for(int offset = margin.second; deqit != logs.end(); ++deqit) {
+    int textHeight = getTextHeight(text, *deqit, lineWidth, fontSize, fontId, viewport);
+    if(offset + textHeight + margin.second > size.second)
+      break;
+    text.render(*deqit,
+                {position.first + margin.first, position.second + size.second - offset - fontSize},
+                {lineWidth, fontSize},
+                viewport,
+                fontId,
+                {1.0f, 1.0f, 1.0f, 1.0f},
+                true);
+    offset += textHeight + margin.second;
+  }
+}
+
+void LogConsole::pushLog(std::string log) {
+  logs.push_back(log);
+  doCleanup = true;
 }
 
 void LogConsole::checkShaderCompileError(GLuint shader) {
@@ -120,51 +174,5 @@ void LogConsole::checkShaderCompileError(GLuint shader) {
 
     glDeleteShader(shader);
   }
-}
-
-void LogConsole::renderLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
-  std::pair<int, int> margin = {4, 10};
-  std::pair<int, int> textSizeLimits = {size.first - 2 * margin.first, fontSize};
-
-  // cleanup
-  std::deque<std::string>::reverse_iterator rit = logs.rbegin();
-  for(int offset = margin.second; rit != logs.rend(); ++rit) {
-    std::pair<float, float> textSize = text.getTextSize(*rit,
-                                                    textSizeLimits,
-                                                    fontId,
-                                                    viewport);
-    textSize = {textSize.first * static_cast<float>(viewport.first) / 2.0f,
-                textSize.second * static_cast<float>(viewport.first) / 2.0f};
-    if(offset + textSize.second + margin.second > size.second)
-      break;
-    offset += textSize.second + margin.second;
-  }
-  if(rit != logs.rend())
-    logs.erase(logs.begin(), ++rit.base());
-
-  // render
-  std::deque<std::string>::iterator deqit = logs.begin();
-  for(int offset = margin.second; deqit != logs.end(); ++deqit) {
-    std::pair<float, float> textSize = text.getTextSize(*deqit,
-                                                    textSizeLimits,
-                                                    fontId,
-                                                    viewport);
-    textSize = {textSize.first * static_cast<float>(viewport.first) / 2.0f,
-                textSize.second * static_cast<float>(viewport.first) / 2.0f};
-    if(offset + textSize.second + margin.second > size.second)
-      break;
-    text.render(*deqit,
-                {position.first + margin.first, position.second + size.second - offset - textSize.second},
-                textSizeLimits,
-                viewport,
-                fontId,
-                {1.0f, 1.0f, 1.0f, 1.0f},
-                true);
-    offset += textSize.second + margin.second;
-  }
-}
-
-void LogConsole::pushLog(std::string log) {
-  logs.push_back(log);
 }
 

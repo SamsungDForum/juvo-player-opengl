@@ -1,5 +1,5 @@
-#ifndef _FRAMERATE_H_
-#define _FRAMERATE_H_
+#ifndef _METRICS_H_
+#define _METRICS_H_
 
 #include <deque>
 #include <chrono>
@@ -58,4 +58,4 @@ public:
   void pushLog(std::string log);
 };
 
-#endif // _FRAMERATE_H_
+#endif // _METRICS_H_
