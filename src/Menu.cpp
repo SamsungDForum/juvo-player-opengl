@@ -58,7 +58,7 @@ Menu::~Menu() {
 }
 
 void Menu::render() {
-  glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
   if(loaderEnabled)
@@ -312,8 +312,8 @@ void Menu::pushLog(std::string log) {
 }
 
 
-void Menu::showAlert(std::string title, std::string text) {
-  modalWindow.show(title, text);
+void Menu::showAlert(std::string title, std::string text, std::string button) {
+  modalWindow.show(title, text, button);
 }
 
 void Menu::hideAlert() {

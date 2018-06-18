@@ -91,7 +91,7 @@ public:
   void selectAction(int id);
   void setLogConsoleVisibility(bool visible);
   void pushLog(std::string log);
-  void showAlert(std::string title, std::string text);
+  void showAlert(std::string title, std::string text, std::string button);
   void hideAlert();
   bool isAlertVisible();
 };

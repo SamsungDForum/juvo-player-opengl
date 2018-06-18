@@ -26,8 +26,8 @@ void ModalWindow::initialize() {
   const GLchar* fShaderTexStr =  
     "precision highp float;                                                            \n"
     "                                                                                  \n"
-    "#define FG vec4(u_color, 0.75 * u_opacity)                                        \n"
-    "#define BG vec4(0.0, 0.0, 0.0, 0.75 * u_opacity)                                  \n"
+    "#define FG vec4(u_color, 0.9 * u_opacity)                                        \n"
+    "#define BG vec4(0.0, 0.0, 0.0, 0.9 * u_opacity)                                  \n"
     "                                                                                  \n"
     "const int VALUES = 100;                                                           \n"
     "                                                                                  \n"
@@ -122,7 +122,7 @@ void ModalWindow::render(Text &text, std::pair<int, int> viewport, int fontId) {
     .buttonText = TextParams {
       .fontId = fontId,
       .fontSize = 26,
-      .text = "OK",
+      .text = button,
       .position = {0, 0},
       .size = {1, 1},
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
@@ -187,18 +187,18 @@ void ModalWindow::calculateElementsPositions(Params &params) {
                            (params.window.position.second + params.window.size.second) - params.window.margin.second - params.title.fontSize};
   params.body.position = {params.window.position.first + (params.window.size.first - params.body.size.first) / 2,
                           params.window.position.second + (params.window.size.second + params.body.size.second) / 2 - params.body.fontSize};
-  params.buttonWindow.size = {params.viewport.first / 10,
-                        params.viewport.second / 15};
-  params.buttonWindow.position = {params.window.position.first + (params.window.size.first - params.buttonWindow.size.first) / 2,
-                                  params.window.position.second + params.window.margin.second};
   params.buttonText.size = getTextSize(params.text,
                                        params.buttonText.text,
                                        params.lineWidth,
                                        params.buttonText.fontSize,
                                        params.buttonText.fontId,
                                        params.viewport);
+  params.buttonWindow.size = {params.buttonText.size.first + 4 * params.buttonText.fontSize,
+                              params.buttonText.size.second + 2 * params.buttonText.fontSize};
+  params.buttonWindow.position = {params.window.position.first + (params.window.size.first - params.buttonWindow.size.first) / 2,
+                                  params.window.position.second + params.window.margin.second};
   params.buttonText.position = {params.buttonWindow.position.first + (params.buttonWindow.size.first - params.buttonText.size.first) / 2,
-                                params.buttonWindow.position.second + (params.buttonWindow.size.second - params.buttonText.size.second) / 2};
+                                params.buttonWindow.position.second + (params.buttonWindow.size.second + params.buttonText.size.second) / 2 - params.buttonText.fontSize};
 }
 
 void ModalWindow::renderTitle(Params &params) {
@@ -243,9 +243,10 @@ std::pair<int, int> ModalWindow::getTextSize(Text &text, std::string s, int line
           size.second * static_cast<float>(viewport.second) / 2.0f};
 }
 
-void ModalWindow::show(std::string title, std::string body) {
+void ModalWindow::show(std::string title, std::string body, std::string button) {
   this->title = title;
   this->body = body;
+  this->button = button;
   visible = true;
 }
 

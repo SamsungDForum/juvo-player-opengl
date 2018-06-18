@@ -42,7 +42,7 @@ EXPORT_API void UpdateGraphRange(int graphId, float minVal, float maxVal);
 EXPORT_API void SelectAction(int id);
 EXPORT_API void SetLogConsoleVisibility(int visible);
 EXPORT_API void PushLog(char* log, int logLen);
-EXPORT_API void ShowAlert(char* title, int titleLen, char* text, int textLen);
+EXPORT_API void ShowAlert(char* title, int titleLen, char* body, int bodyLen, char* button, int buttonLen);
 EXPORT_API void HideAlert();
 EXPORT_API int IsAlertVisible();
 #ifdef __cplusplus
@@ -181,8 +181,8 @@ void PushLog(char* log, int logLen) {
 }
 
 
-void ShowAlert(char* title, int titleLen, char* text, int textLen) {
-  menu.showAlert(std::string(title, titleLen), std::string(text, textLen));
+void ShowAlert(char* title, int titleLen, char* text, int textLen, char* button, int buttonLen) {
+  menu.showAlert(std::string(title, titleLen), std::string(text, textLen), std::string(button, buttonLen));
 }
 
 void HideAlert() {

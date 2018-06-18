@@ -9,7 +9,8 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
     renderCached(text, position, size, viewport, fontId, color, cache);
 }
 
-Text::Text() {
+Text::Text()
+  : textureGCTimeout(1000) {
   /*FT_Error error = */FT_Init_FreeType(&ftLibrary);
   prepareShaders();
 }
@@ -277,6 +278,8 @@ void Text::renderCached(std::string text, std::pair<int, int> position, std::pai
 
   if(!cache)
     glDeleteTextures(1, &textTexture.textureId);
+
+  deleteUnusedTextures();
 }
 
 bool Text::removeFromCache(std::string text, int fontId) {
@@ -294,8 +297,10 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   if(validFontId(fontId))
     return TextTexture{};
   TextKey tk {text, fontId};
-  if(generatedTextures.count(tk))
+  if(generatedTextures.count(tk)) {
+    generatedTextures.at(tk).lastUsed = std::chrono::high_resolution_clock::now();
     return generatedTextures.at(tk);
+  }
 
   float scale = 1.0;
   std::pair<float, float> texSize = getTextSize(text, fontId, scale);
@@ -486,9 +491,15 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, 1920, 1080); // TODO: Remove if it's not needed
 
-  TextTexture tt {texture, static_cast<GLuint>(texSize.first), static_cast<GLuint>(texSize.second), static_cast<GLuint>(fontId)};
-  if(cache)
+  TextTexture tt {.textureId = texture,
+                  .width = static_cast<GLuint>(texSize.first),
+                  .height = static_cast<GLuint>(texSize.second),
+                  .fontId = static_cast<GLuint>(fontId),
+                  .lastUsed = std::chrono::high_resolution_clock::now()};
+  if(cache) {
     generatedTextures.insert(std::make_pair(tk, tt));
+    _INFO("Inserting texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
+  }
   return tt;
 }
 
@@ -704,4 +715,19 @@ int Text::getFontDefaultHeight(int fontId) {
   if(validFontId(fontId))
     return fonts[fontId].height;
   return 1;
+}
+
+
+void Text::deleteUnusedTextures() {
+  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+  for(auto it = generatedTextures.cbegin(); it != generatedTextures.cend(); ) {
+    if(std::chrono::duration_cast<std::chrono::duration<double>>(now - it->second.lastUsed) >= textureGCTimeout) {
+      glDeleteTextures(1, &it->second.textureId);
+      generatedTextures.erase(it++);
+      _INFO("Removing texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
+    }
+    else {
+      ++it;
+    }
+  }
 }

@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 #include <cmath>
+#include <chrono>
 
 #ifndef _FT_FREETYPE_
 #define _FT_FREETYPE_
@@ -23,15 +24,12 @@
 
 #include "log.h"
 
-// TODO: No longer used textures removal mechanism.
-//       - Manual removal
-//       - Simple GC? gl_texture_id->last_usage_time map?
-
 class Text {
 private:
 
   const int CHARS = 128;
   const std::pair<int, int> charRange = {0, CHARS};
+  const std::chrono::milliseconds textureGCTimeout = std::chrono::milliseconds(1000);
 
   struct Character {
     GLuint TextureID;
@@ -70,6 +68,7 @@ private:
     GLuint width;
     GLuint height;
     GLuint fontId;
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastUsed;
   };
 
   GLuint programObject;
@@ -105,6 +104,7 @@ private:
   inline bool validFontId(int fontId) {
     return fontId >= 0 && static_cast<int>(fonts.size()) <= fontId;
   }
+  void deleteUnusedTextures();
 
 public:
   Text();

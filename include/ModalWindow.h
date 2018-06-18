@@ -25,6 +25,7 @@ private:
   bool visible;
   std::string title;
   std::string body;
+  std::string button;
 
   class TextParams {
   public:
@@ -70,7 +71,7 @@ private:
 public:
   ModalWindow();
   ~ModalWindow();
-  void show(std::string title, std::string body);
+  void show(std::string title, std::string body, std::string button);
   void hide();
   void render(Text &text, std::pair<int, int> viewport, int fontId);
   bool isVisible();
