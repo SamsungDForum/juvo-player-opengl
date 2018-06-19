@@ -498,7 +498,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
                   .lastUsed = std::chrono::high_resolution_clock::now()};
   if(cache) {
     generatedTextures.insert(std::make_pair(tk, tt));
-    _INFO("Inserting texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
+    //_INFO("Inserting texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
   }
   return tt;
 }
@@ -724,7 +724,7 @@ void Text::deleteUnusedTextures() {
     if(std::chrono::duration_cast<std::chrono::duration<double>>(now - it->second.lastUsed) >= textureGCTimeout) {
       glDeleteTextures(1, &it->second.textureId);
       generatedTextures.erase(it++);
-      _INFO("Removing texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
+      //_INFO("Removing texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
     }
     else {
       ++it;
