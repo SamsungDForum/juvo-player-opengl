@@ -316,7 +316,8 @@ void Playback::renderIcons(float opacity) {
       break;
   }
   renderIcon(icon, position, size, color, opacity, selectedAction == Action::PlaybackControl);
-  renderIcon(Icon::Options, {position.first - 75, position.second}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
+  //renderIcon(Icon::Options, {position.first - 75, position.second}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
+  renderIcon(Icon::Options, {viewport.first - 75, viewport.second - 75}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
 }
 
 void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom) {
