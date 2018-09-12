@@ -551,7 +551,7 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
                           opacityAnimation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut);
   }
 
-  if(currentTime != this->currentTime) {
+  if(currentTime != this->currentTime && totalTime != 0) { // excluding totalTime=0 case because of live content case
     lastUpdate = now;
     progressAnimation = Animation(now,
                           std::min(fromLastUpdate, std::chrono::milliseconds(1000)),
