@@ -26,7 +26,8 @@ private:
     Stopped = 3,
     Playing = 4,
     Paused = 5,
-    Completed = 6
+    Completed = 6,
+    Buffering = 7
   };
 
   enum class Icon {
@@ -106,7 +107,7 @@ private:
   void renderProgressBar(float opacity);
   std::string timeToString(int time);
   void updateProgress();
-  void renderLoader();
+  void renderLoader(float opacity);
   template<typename T> inline T max(T a, T b) { return a > b ? a : b; }
   template<typename T> inline T clamp(T v, T lo, T hi) { return v < lo ? lo : v > hi ? hi : v; }
 

@@ -276,21 +276,21 @@ void Playback::updateProgress() {
     progress = static_cast<float>(currentTime) / static_cast<float>(totalTime);
   }
   else
-    progress = 0.0f;
+    progress = 0.0;
 }
 
 void Playback::render(Text &text) {
   std::vector<double> updated = opacityAnimation.update();
   if(!updated.empty())
     opacity = static_cast<float>(updated[0]);
-  if(opacity <= 0.0)
-    return;
-  updateProgress();
-  renderProgressBar(opacity);
-  renderIcons(opacity);
-  renderText(text, opacity);
-  if(state == State::Preparing || state == State::Idle)
-    renderLoader();
+  if(opacity > 0.0) {
+    updateProgress();
+    renderProgressBar(opacity);
+    renderIcons(opacity);
+    renderText(text, opacity);
+  }
+  if(((state == State::Preparing || state == State::Idle) && opacity > 0.0) || state == State::Buffering)
+    renderLoader(1.0);
 }
 
 void Playback::renderIcons(float opacity) {
@@ -583,7 +583,7 @@ std::string Playback::timeToString(int time) {
        + std::to_string(s); // seconds
 }
 
-void Playback::renderLoader() {
+void Playback::renderLoader(float opacity) {
   int squareWidth = 200;
   float down = static_cast<float>((viewport.second - squareWidth) / 2) / viewport.second * 2.0f - 1.0f;
   float top = static_cast<float>((viewport.second + squareWidth) / 2) / viewport.second * 2.0f - 1.0f;
