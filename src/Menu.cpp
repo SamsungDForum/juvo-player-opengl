@@ -47,8 +47,6 @@ void Menu::initialize() {
   glDisable(GL_STENCIL_TEST);
 
   backgroundOpacity = 1.0;
-  menuEnabled = true;
-  backgroundEnabled = true;
   loaderEnabled = true;
   selectedTile = 0;
   firstTile = 0;
@@ -63,24 +61,20 @@ void Menu::render() {
 
   if(loaderEnabled)
     loader.render(text); // render loader
-  else if(menuEnabled) { // render menu
+  else { // render menu
+    background.render(text); // render background; updates background opacity
     float bgOpacity = background.getOpacity();
-    if(bgOpacity == 1.0)
-      background.setClearColor({}); // set to opaque
-    if(backgroundEnabled) {
-      background.render(text); // render background
-      if(bgOpacity > 0.0) {
-        int fontHeight = 24;
-        int marginBottom = 20;
-        int marginLeft = 100;
-        text.render("Available content list",
-                    {marginLeft, marginFromBottom + tileSize.second + marginBottom},
-                    {0, fontHeight},
-                    viewport,
-                    0,
-                    {1.0, 1.0, 1.0, bgOpacity},
-                    true);
-      }
+    if(bgOpacity > 0.0) { // render "Available content list" text
+      int fontHeight = 24;
+      int marginBottom = 20;
+      int marginLeft = 100;
+      text.render("Available content list",
+                  {marginLeft, marginFromBottom + tileSize.second + marginBottom},
+                  {0, fontHeight},
+                  viewport,
+                  0,
+                  {1.0, 1.0, 1.0, bgOpacity},
+                  true);
     }
     for(size_t i = 0; i < tiles.size(); ++i) // render tiles
       if(static_cast<int>(i) != selectedTile)
@@ -118,6 +112,11 @@ void Menu::render() {
 }
 
 void Menu::ShowMenu(int enable) {
+  for(size_t i = 0; i < tiles.size(); ++i) { // let's make sure position/size parameters aren't going to be animated
+    tiles[i].setPosition(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport));
+    tiles[i].setZoom(static_cast<int>(i) == selectedTile ? zoom : 1.0);
+  }
+
   int animationDelay = playback.getOpacity() > 0.0 ? fadingDurationMilliseconds * 3 / 4 : 0;
   for(size_t i = 0; i < tiles.size(); ++i)
     tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport),
@@ -225,15 +224,7 @@ int Menu::AddFont(char *data, int size) {
 }
 
 void Menu::ShowLoader(bool enabled, int percent) {
-  if(enabled == false) {
-    loaderEnabled = false;
-    background.setClearColor({0.0, 0.0, 0.0});
-    ShowMenu(true);
-  }
-  else if(backgroundEnabled == true) {
-      ShowMenu(false);
-      loaderEnabled = true;
-  }
+  loaderEnabled = enabled;
   loader.setValue(percent);
 }
 
@@ -248,7 +239,7 @@ void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int tota
                   totalTime,
                   text,
                   std::chrono::milliseconds(fadingDurationMilliseconds),
-                  std::chrono::milliseconds(show && menuEnabled ? fadingDurationMilliseconds * 3 / 4 : 0));
+                  std::chrono::milliseconds(show ? fadingDurationMilliseconds * 3 / 4 : 0));
 }
 
 void Menu::SetFooter(std::string footer) {

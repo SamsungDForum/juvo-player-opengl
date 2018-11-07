@@ -28,8 +28,6 @@ private:
   // main Menu objects and variables
   std::vector<Tile> tiles;
   bool loaderEnabled;
-  bool backgroundEnabled;
-  bool menuEnabled;
   int selectedTile;
   int firstTile;
   float backgroundOpacity;
