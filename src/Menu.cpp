@@ -142,8 +142,7 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, std::pair<int, int> tileSi
   return std::make_pair(horizontalPosition, verticalPosition);
 }
 
-int Menu::AddTile(char *pixels, std::pair<int, int> size)
-{
+int Menu::AddTile(char *pixels, std::pair<int, int> size) {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
             getTilePosition(tileNo, tileSize, tilesNumber, viewport),
@@ -160,8 +159,7 @@ int Menu::AddTile(char *pixels, std::pair<int, int> size)
   return tiles.size() - 1;
 }
 
-int Menu::AddTile()
-{
+int Menu::AddTile() {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
             getTilePosition(tileNo, tileSize, tilesNumber, viewport),
@@ -175,8 +173,7 @@ int Menu::AddTile()
   return tiles.size() - 1;
 }
 
-void Menu::SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc)
-{
+void Menu::SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc) {
   if(tileId >= static_cast<int>(tiles.size()))
     return;
   tiles[tileId].setName(name);
@@ -184,15 +181,13 @@ void Menu::SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::
   tiles[tileId].setTexture(pixels, size, GL_RGB);
 }
 
-void Menu::SetTileTexture(int tileNo, char *pixels, std::pair<int, int> size)
-{
+void Menu::SetTileTexture(int tileNo, char *pixels, std::pair<int, int> size) {
   if(tileNo >= static_cast<int>(tiles.size()))
     return;
   tiles[tileNo].setTexture(pixels, size, GL_RGB);
 }
 
-void Menu::SelectTile(int tileNo)
-{
+void Menu::SelectTile(int tileNo) {
   int bounce = (bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? 1 : -1) : 0;
   selectedTile = tileNo;
   bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + tilesNumber.first - 1 >= selectedTile);

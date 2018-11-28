@@ -6,7 +6,8 @@ ModalWindow::ModalWindow()
     posLoc(GL_INVALID_VALUE),
     sizLoc(GL_INVALID_VALUE),
     colLoc(GL_INVALID_VALUE),
-    opaLoc(GL_INVALID_VALUE) {
+    opaLoc(GL_INVALID_VALUE),
+    visible(false) {
   initialize();
 }
 

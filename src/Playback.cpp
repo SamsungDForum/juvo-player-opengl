@@ -15,8 +15,7 @@ Playback::Playback(std::pair<int, int> viewport)
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
     progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400x32
-    progressBarMarginBottom(0.0927 * viewport.second - progressBarSize.second / 2) // 100-32/2
-{
+    progressBarMarginBottom(0.0927 * viewport.second - progressBarSize.second / 2) { // 100-32/2
   initialize();
 }
 

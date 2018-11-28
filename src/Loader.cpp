@@ -3,8 +3,7 @@
 Loader::Loader(std::pair<int, int> viewport)
   : programObject(GL_INVALID_VALUE),
     param(0),
-    viewport(viewport)
-{
+    viewport(viewport) {
   initialize();
 }
 

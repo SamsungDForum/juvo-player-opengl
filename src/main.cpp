@@ -10,12 +10,11 @@
 #define EXPORT_API __attribute__((visibility("default")))
 #endif
 
-static Menu menu({1920, 1080});
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 EXPORT_API void Create();
+EXPORT_API void Terminate();
 EXPORT_API void ShowMenu(int enable);
 EXPORT_API int AddTile();
 EXPORT_API void SetTileData(int tileId, char* pixels, int w, int h, char *name, int nameLen, char *desc, int descLen);
@@ -49,66 +48,76 @@ EXPORT_API int IsAlertVisible();
 }
 #endif
 
+Menu *menu = nullptr;
+
 void Create()
 {
-  return;
+  if(menu != nullptr)
+    delete menu;
+  menu = new Menu({1920, 1080});
+}
+
+void Terminate()
+{
+  if(menu != nullptr)
+    delete menu;
 }
 
 void ShowMenu(int enable)
 {
-  menu.ShowMenu(enable);
+  menu->ShowMenu(enable);
 }
 
 int AddTile()
 {
-  return menu.AddTile();
+  return menu->AddTile();
 }
 
 void SetTileData(int tileId, char* pixels, int w, int h, char *name, int nameLen, char *desc, int descLen)
 {
-  menu.SetTileData(tileId, pixels, {w, h}, std::string(name, nameLen), std::string(desc, descLen));
+  menu->SetTileData(tileId, pixels, {w, h}, std::string(name, nameLen), std::string(desc, descLen));
 }
 
 void SetTileTexture(int tileNo, char *pixels, int width, int height)
 {
-  menu.SetTileTexture(tileNo, pixels, {width, height});
+  menu->SetTileTexture(tileNo, pixels, {width, height});
 }
 
 int AddFont(char *data, int size)
 {
-  return menu.AddFont(data, size);
+  return menu->AddFont(data, size);
 }
 
 void SelectTile(int tileNo)
 {
-  menu.SelectTile(tileNo);
+  menu->SelectTile(tileNo);
 }
 
 void ShowLoader(int enabled, int percent)
 {
-  menu.ShowLoader(enabled, percent);
+  menu->ShowLoader(enabled, percent);
 }
 
 void SetIcon(int id, char* pixels, int w, int h)
 {
-  menu.SetIcon(id, pixels, {w, h});
+  menu->SetIcon(id, pixels, {w, h});
 }
 
 void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen)
 {
-  menu.UpdatePlaybackControls(show, state, currentTime, totalTime, std::string(text, textLen));
+  menu->UpdatePlaybackControls(show, state, currentTime, totalTime, std::string(text, textLen));
 }
 
 void SetFooter(char* footer, int footerLen)
 {
-  menu.SetFooter(std::string(footer, footerLen));
+  menu->SetFooter(std::string(footer, footerLen));
 }
 
 void Draw(void *cDisplay, void *cSurface)
 {
   EGLDisplay *display = reinterpret_cast<void**>(cDisplay);
   EGLSurface *surface = reinterpret_cast<void**>(cSurface);
-  menu.render();
+  menu->render();
   eglSwapBuffers(*display, *surface);
 
   return;
@@ -116,12 +125,12 @@ void Draw(void *cDisplay, void *cSurface)
 
 void SwitchTextRenderingMode()
 {
-  menu.SwitchTextRenderingMode();
+  menu->SwitchTextRenderingMode();
 }
 
 void ShowSubtitle(int duration, char* text, int textLen)
 {
-  menu.ShowSubtitle(duration, std::string(text, textLen));
+  menu->ShowSubtitle(duration, std::string(text, textLen));
 }
 
 int OpenGLLibVersion() {
@@ -133,63 +142,63 @@ int OpenGLLibVersion() {
 }
 
 int AddOption(int id, char* text, int textLen) {
-  return menu.addOption(id, std::string(text, textLen)) ? 1 : 0;
+  return menu->addOption(id, std::string(text, textLen)) ? 1 : 0;
 }
 
 int AddSuboption(int parentId, int id, char* text, int textLen) {
-  return menu.addSuboption(parentId, id, std::string(text, textLen)) ? 1 : 0;
+  return menu->addSuboption(parentId, id, std::string(text, textLen)) ? 1 : 0;
 }
 
 int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
-  return menu.updateSelection(static_cast<bool>(show), activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+  return menu->updateSelection(static_cast<bool>(show), activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
 }
 
 void ClearOptions() {
-  menu.clearOptions();
+  menu->clearOptions();
 }
 
 int AddGraph(char* tag, int tagLen, float minVal, float maxVal, int valuesCount) {
-  return menu.addGraph(std::string(tag, tagLen), minVal, maxVal, valuesCount);
+  return menu->addGraph(std::string(tag, tagLen), minVal, maxVal, valuesCount);
 }
 
 void SetGraphVisibility(int graphId, int visible) {
-  menu.setGraphVisibility(graphId, static_cast<bool>(visible));
+  menu->setGraphVisibility(graphId, static_cast<bool>(visible));
 }
 
 void UpdateGraphValues(int graphId, float* values, int valuesCount) {
-  menu.updateGraphValues(graphId, std::vector<float>(values, values + valuesCount));
+  menu->updateGraphValues(graphId, std::vector<float>(values, values + valuesCount));
 }
 
 void UpdateGraphValue(int graphId, float value) {
-  menu.updateGraphValue(graphId, value);
+  menu->updateGraphValue(graphId, value);
 }
 
 void SelectAction(int id) {
-  menu.selectAction(id);
+  menu->selectAction(id);
 }
 
 void UpdateGraphRange(int graphId, float minVal, float maxVal) {
-  menu.updateGraphRange(graphId, minVal, maxVal);
+  menu->updateGraphRange(graphId, minVal, maxVal);
 }
 
 void SetLogConsoleVisibility(int visible) {
-  menu.setLogConsoleVisibility(static_cast<bool>(visible));
+  menu->setLogConsoleVisibility(static_cast<bool>(visible));
 }
 
 void PushLog(char* log, int logLen) {
-  menu.pushLog(std::string(log, logLen));
+  menu->pushLog(std::string(log, logLen));
 }
 
 
 void ShowAlert(char* title, int titleLen, char* text, int textLen, char* button, int buttonLen) {
-  menu.showAlert(std::string(title, titleLen), std::string(text, textLen), std::string(button, buttonLen));
+  menu->showAlert(std::string(title, titleLen), std::string(text, textLen), std::string(button, buttonLen));
 }
 
 void HideAlert() {
-  menu.hideAlert();
+  menu->hideAlert();
 }
 
 int IsAlertVisible() {
-  return static_cast<int>(menu.isAlertVisible());
+  return static_cast<int>(menu->isAlertVisible());
 }
 
