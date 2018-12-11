@@ -14,8 +14,8 @@ Playback::Playback(std::pair<int, int> viewport)
     progress(0.0f),
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
-    progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400x32
-    progressBarMarginBottom(0.0927 * viewport.second - progressBarSize.second / 2) { // 100-32/2
+    progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400 x 32
+    progressBarMarginBottom(0.0927 * viewport.second - progressBarSize.second / 2) { // 100 - 32 / 2
   initialize();
 }
 
@@ -28,11 +28,11 @@ Playback::~Playback() {
 
 bool Playback::initialize() {
   const GLchar* barVShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "void main()                    \n"
-    "{                              \n"
-    "   gl_Position = a_position;   \n"
-    "}                              \n";
+    "attribute vec4 a_position;   \n"
+    "void main()                  \n"
+    "{                            \n"
+    "   gl_Position = a_position; \n"
+    "}                            \n";
 
   const GLchar* barFShaderTexStr =  
     "precision mediump float; // highp is not supported                               \n"
@@ -110,14 +110,14 @@ bool Playback::initialize() {
   marginBarLoc = glGetUniformLocation(barProgramObject, "u_margin");
 
   const GLchar* iconVShaderTexStr =
-    "attribute vec4 a_position;                        \n"
-    "attribute vec2 a_texCoord;                        \n"
-    "varying vec2 v_texCoord;                          \n"
-    "void main()                                       \n"
-    "{                                                 \n"
-    "  v_texCoord = a_texCoord;                        \n"
-    "  gl_Position = a_position;                       \n"
-    "}                                                 \n";
+    "attribute vec4 a_position;  \n"
+    "attribute vec2 a_texCoord;  \n"
+    "varying vec2 v_texCoord;    \n"
+    "void main()                 \n"
+    "{                           \n"
+    "  v_texCoord = a_texCoord;  \n"
+    "  gl_Position = a_position; \n"
+    "}                           \n";
 
   const GLchar* iconFShaderTexStr =
     "precision mediump float;                          \n"
@@ -156,25 +156,25 @@ bool Playback::initialize() {
   texLoc = glGetAttribLocation(iconProgramObject, "a_texCoord");
 
   const GLchar* bloomVShaderTexStr =
-    "attribute vec4 a_position;                        \n"
-    "void main()                                       \n"
-    "{                                                 \n"
-    "  gl_Position = a_position;                       \n"
-    "}                                                 \n";
+    "attribute vec4 a_position;  \n"
+    "void main()                 \n"
+    "{                           \n"
+    "  gl_Position = a_position; \n"
+    "}                           \n";
 
   const GLchar* bloomFShaderTexStr =
-    "precision mediump float;                           \n"
-    "uniform vec3 u_color;                              \n"
-    "uniform float u_opacity;                           \n"
-    "uniform vec4 u_rect;                               \n"
-    "void main()                                        \n"
-    "{                                                  \n"
-    "  vec2 center = vec2(u_rect[0] + u_rect[2] / 2.0,  \n"
-    "                     u_rect[1] + u_rect[3] / 2.0); \n"
-    "  float r = min(u_rect[2], u_rect[3]);             \n"
+    "precision mediump float;                                                        \n"
+    "uniform vec3 u_color;                                                           \n"
+    "uniform float u_opacity;                                                        \n"
+    "uniform vec4 u_rect;                                                            \n"
+    "void main()                                                                     \n"
+    "{                                                                               \n"
+    "  vec2 center = vec2(u_rect[0] + u_rect[2] / 2.0,                               \n"
+    "                     u_rect[1] + u_rect[3] / 2.0);                              \n"
+    "  float r = min(u_rect[2], u_rect[3]);                                          \n"
     "  float v = 1.0 - clamp(distance(gl_FragCoord.xy, center), 0.0, r) / (r * 0.5); \n"
-    "  gl_FragColor = vec4(u_color, u_opacity * v);    \n"
-    "}                                                 \n";
+    "  gl_FragColor = vec4(u_color, u_opacity * v);                                  \n"
+    "}                                                                               \n";
 
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &bloomVShaderTexStr, NULL);
@@ -200,43 +200,43 @@ bool Playback::initialize() {
   rectBloomLoc = glGetUniformLocation(bloomProgramObject, "u_rect");
 
   const GLchar* loaderVShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "void main()                    \n"
-    "{                              \n"
-    "   gl_Position = a_position;   \n"
-    "}                              \n";
+    "attribute vec4 a_position;   \n"
+    "void main()                  \n"
+    "{                            \n"
+    "   gl_Position = a_position; \n"
+    "}                            \n";
 
   const GLchar* loaderFShaderTexStr =  
-    "precision mediump float; // highp is not supported                               \n"
-    "                                                                                 \n"
-    "#define SMOOTH(r) (mix(1.0, 0.0, smoothstep(0.9, 1.0, r)))                       \n"
-    "#define M_PI 3.14159265359                                                       \n"
-    "                                                                                 \n"
-    "uniform float u_param;                                                           \n"
-    "uniform float u_opacity;                                                         \n"
-    "uniform vec2 u_viewport;                                                         \n"
-    "uniform vec2 u_size;                                                             \n"
-    "                                                                                 \n"
-    "float ring(vec2 uv, vec2 center, float r1, float r2, float param)                \n"
-    "{                                                                                \n"
-    "  vec2 d = uv - center;                                                          \n"
-    "  float r = sqrt(dot(d, d));                                                     \n"
-    "  d = normalize(d);                                                              \n"
-    "  float t = -atan(d.y, d.x);                                                     \n"
-    "  t = mod(-param + 0.5 * (1.0 + t / M_PI), 1.0);                                 \n"
-    "  t -= max(t - 1.0 + 1e-2, 0.0) * 1e2; // antialiasing                           \n"
-    "  return t * (SMOOTH(r / r2) - SMOOTH(r / r1));                                  \n"
-    "}                                                                                \n"
-    "                                                                                 \n"
-    "void main()                                                                      \n"
-    "{                                                                                \n"
-    "  float r = ring(gl_FragCoord.xy,                                                \n"
-    "                 vec2(u_viewport.x / 2.0, u_viewport.y / 2.0),                   \n"
-    "                 u_size.y / 2.0 * 0.666,                                         \n"
-    "                 u_size.y / 2.0,                                                 \n"
-    "                 u_param);                                                       \n"
-    "  gl_FragColor = vec4(r * u_opacity);                                            \n"
-    "}                                                                                \n";
+    "precision mediump float; // highp is not supported                \n"
+    "                                                                  \n"
+    "#define SMOOTH(r) (mix(1.0, 0.0, smoothstep(0.9, 1.0, r)))        \n"
+    "#define M_PI 3.14159265359                                        \n"
+    "                                                                  \n"
+    "uniform float u_param;                                            \n"
+    "uniform float u_opacity;                                          \n"
+    "uniform vec2 u_viewport;                                          \n"
+    "uniform vec2 u_size;                                              \n"
+    "                                                                  \n"
+    "float ring(vec2 uv, vec2 center, float r1, float r2, float param) \n"
+    "{                                                                 \n"
+    "  vec2 d = uv - center;                                           \n"
+    "  float r = sqrt(dot(d, d));                                      \n"
+    "  d = normalize(d);                                               \n"
+    "  float t = -atan(d.y, d.x);                                      \n"
+    "  t = mod(-param + 0.5 * (1.0 + t / M_PI), 1.0);                  \n"
+    "  t -= max(t - 1.0 + 1e-2, 0.0) * 1e2; // antialiasing            \n"
+    "  return t * (SMOOTH(r / r2) - SMOOTH(r / r1));                   \n"
+    "}                                                                 \n"
+    "                                                                  \n"
+    "void main()                                                       \n"
+    "{                                                                 \n"
+    "  float r = ring(gl_FragCoord.xy,                                 \n"
+    "                 vec2(u_viewport.x / 2.0, u_viewport.y / 2.0),    \n"
+    "                 u_size.y / 2.0 * 0.666,                          \n"
+    "                 u_size.y / 2.0,                                  \n"
+    "                 u_param);                                        \n"
+    "  gl_FragColor = vec4(r * u_opacity);                             \n"
+    "}                                                                 \n";
 
   vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &loaderVShaderTexStr, NULL);
@@ -315,7 +315,6 @@ void Playback::renderIcons(float opacity) {
       break;
   }
   renderIcon(icon, position, size, color, opacity, selectedAction == Action::PlaybackControl);
-  //renderIcon(Icon::Options, {position.first - 75, position.second}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
   renderIcon(Icon::Options, {viewport.first - 75, viewport.second - 75}, size, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu);
 }
 
@@ -340,7 +339,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
   };
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
-  if(bloom) {// Bloom of selection
+  if(bloom) { // Bloom of selection
     glUseProgram(bloomProgramObject);
     glUniform3f(colBloomLoc, 1.0f, 1.0f, 1.0f);
     glUniform1f(opacityBloomLoc, static_cast<GLfloat>(opacity));
@@ -436,7 +435,6 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 void Playback::renderText(Text &text, float opacity) {
   // render remaining time
   int fontHeight = 24;
-  //int textWidth = text.getTextSize("00:00:00", {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
   int textLeft = viewport.first - (viewport.first - progressBarSize.first) / 2 + progressBarSize.second;
   int textDown = progressBarMarginBottom + progressBarSize.second / 2 - fontHeight / 2;
   text.render(timeToString(-1 * (totalTime - currentTime)),
@@ -445,21 +443,9 @@ void Playback::renderText(Text &text, float opacity) {
               viewport,
               0,
               {1.0, 1.0, 1.0, opacity},
-              true); // TODO(g.skowinski): Decide on caching
+              true); // caching
 
-  //render current time
-/*  fontHeight = 24;
-  textLeft = ((viewport.first - progressBarSize.first) / 2 + progressBarSize.first * progress) + 2;
-  textDown = progressBarMarginBottom + progressBarSize.second + 4;
-  text.render(timeToString(currentTime),
-              {textLeft, textDown},
-              {0, fontHeight},
-              viewport,
-              0,
-              {1.0, 1.0, 1.0, opacity},
-              true);*/
-
-  //render title
+  // render title
   fontHeight = 48;
   textLeft = 100;
   textDown = viewport.second - fontHeight - 100;
@@ -542,7 +528,7 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
   std::chrono::milliseconds fromLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate);
   if(static_cast<bool>(show) != enabled) {
     enabled = static_cast<bool>(show);
-    opacityAnimation = Animation(now, //std::chrono::high_resolution_clock::now(),
+    opacityAnimation = Animation(now,
                           animationDuration,
                           animationDelay,
                           {static_cast<double>(opacity)},
@@ -550,7 +536,7 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
                           opacityAnimation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut);
   }
 
-  if(currentTime != this->currentTime && totalTime != 0) { // excluding totalTime=0 case because of live content case
+  if(currentTime != this->currentTime && totalTime != 0) { // excluding totalTime=0 because of live content case
     lastUpdate = now;
     progressAnimation = Animation(now,
                           std::min(fromLastUpdate, std::chrono::milliseconds(1000)),

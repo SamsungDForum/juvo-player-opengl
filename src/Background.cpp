@@ -29,15 +29,15 @@ Background::~Background() {
 
 void Background::initGL() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "attribute vec2 a_texCoord;     \n"
-    "varying vec2 v_texCoord;       \n"
-    "                               \n"
-    "void main()                    \n"
-    "{                              \n"
-    "  v_texCoord = a_texCoord;     \n"
-    "  gl_Position = a_position;    \n"
-    "}                              \n";
+    "attribute vec4 a_position;  \n"
+    "attribute vec2 a_texCoord;  \n"
+    "varying vec2 v_texCoord;    \n"
+    "                            \n"
+    "void main()                 \n"
+    "{                           \n"
+    "  v_texCoord = a_texCoord;  \n"
+    "  gl_Position = a_position; \n"
+    "}                           \n";
  
   const GLchar* fShaderTexStr =  
     "precision mediump float;                                                                            \n"
@@ -157,7 +157,7 @@ void Background::render(Text &text) {
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
-    int topText = viewport.second - fontHeight - 200 - textLineOffset; // TODO(g.skowinski): Double title line causes more offset!!! Repair!!!
+    int topText = viewport.second - fontHeight - 200 - textLineOffset;
     text.render(description,
                 {leftText, topText},
                 {viewport.first - 2 * leftText, fontHeight},

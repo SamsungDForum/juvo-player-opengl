@@ -43,7 +43,7 @@ private:
     std::string text;
     int fontId;
     bool operator==(const TextKey& other) const { return text == other.text && fontId == other.fontId; }
-    std::size_t operator()(const TextKey& k) const { return std::hash<std::string>()(k.text) + std::hash<int>()(k.fontId); } // hash function
+    std::size_t operator()(const TextKey& k) const { return std::hash<std::string>()(k.text) + std::hash<int>()(k.fontId); }
   };
 
   struct Font {

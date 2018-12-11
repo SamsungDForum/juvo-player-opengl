@@ -27,38 +27,38 @@ Options::Options(std::pair<int, int> viewport)
 
 void Options::initialize() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "void main()                    \n"
-    "{                              \n"
-    "   gl_Position = a_position;   \n"
-    "}                              \n";
+    "attribute vec4 a_position;   \n"
+    "void main()                  \n"
+    "{                            \n"
+    "   gl_Position = a_position; \n"
+    "}                            \n";
 
   const GLchar* fShaderTexStr =  
-    "precision mediump float;                         \n"
-    "uniform vec2 u_size;                             \n"
-    "uniform vec2 u_position;                         \n"
-    "uniform vec3 u_color;                            \n"
-    "uniform float u_opacity;                         \n"
-    "uniform float u_frameWidth;                      \n"
-    "uniform vec3 u_frameColor;                       \n"
-    "uniform int u_submenuSelected;                   \n"
-    "                                                 \n"
-    "void main()                                      \n"
-    "{                                                \n"
-    "  gl_FragColor = vec4(u_color, 1.0);             \n"
-    "                                                 \n"
-    "  if(u_frameWidth > 0.0) {                       \n"
-    "    vec2 pos = gl_FragCoord.xy - u_position.xy;  \n"
-    "    if(pos.x <= u_frameWidth ||                  \n"
-    "       pos.x >= u_size.x - u_frameWidth ||       \n"
-    "       pos.y <= u_frameWidth ||                  \n"
-    "       pos.y >= u_size.y - u_frameWidth) {       \n"
-    "      gl_FragColor.rgb = u_frameColor.rgb;       \n"
-    "    }                                            \n"
-    "  }                                              \n"
-    "                                                 \n"
-    "  gl_FragColor.a *= u_opacity * 0.75;            \n"
-    "}                                                \n";
+    "precision mediump float;                        \n"
+    "uniform vec2 u_size;                            \n"
+    "uniform vec2 u_position;                        \n"
+    "uniform vec3 u_color;                           \n"
+    "uniform float u_opacity;                        \n"
+    "uniform float u_frameWidth;                     \n"
+    "uniform vec3 u_frameColor;                      \n"
+    "uniform int u_submenuSelected;                  \n"
+    "                                                \n"
+    "void main()                                     \n"
+    "{                                               \n"
+    "  gl_FragColor = vec4(u_color, 1.0);            \n"
+    "                                                \n"
+    "  if(u_frameWidth > 0.0) {                      \n"
+    "    vec2 pos = gl_FragCoord.xy - u_position.xy; \n"
+    "    if(pos.x <= u_frameWidth ||                 \n"
+    "       pos.x >= u_size.x - u_frameWidth ||      \n"
+    "       pos.y <= u_frameWidth ||                 \n"
+    "       pos.y >= u_size.y - u_frameWidth) {      \n"
+    "      gl_FragColor.rgb = u_frameColor.rgb;      \n"
+    "    }                                           \n"
+    "  }                                             \n"
+    "                                                \n"
+    "  gl_FragColor.a *= u_opacity * 0.75;           \n"
+    "}                                               \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
@@ -137,7 +137,6 @@ void Options::renderIcon(Text &text) {
 void Options::render(Text &text) {
   if(!show || opacity <= 0.0f)
     return;
-//  std::pair<int, int> position {this->position.first + optionRectangleSize.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
   std::pair<int, int> position {this->position.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
   render(position, optionRectangleSize, suboptionRectangleSize, viewport, opacity, text);
 }

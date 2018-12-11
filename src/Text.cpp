@@ -11,7 +11,7 @@ void Text::render(std::string text, std::pair<int, int> position, std::pair<int,
 
 Text::Text()
   : textureGCTimeout(1000) {
-  /*FT_Error error = */FT_Init_FreeType(&ftLibrary);
+  /*FT_Error error = */FT_Init_FreeType(&ftLibrary); // TODO(g.skowinski): Handle error
   prepareShaders();
 }
 
@@ -26,14 +26,14 @@ Text::~Text() {
 void Text::prepareShaders() {
 
   const GLchar* vShaderTexStr =
-    "attribute vec4 a_position;    \n"
-    "attribute vec2 a_texCoord;    \n"
-    "varying vec2 v_texCoord;      \n"
-    "void main()                   \n"
-    "{                             \n"
-    "  v_texCoord = a_texCoord;    \n"
-    "  gl_Position = a_position;   \n"
-    "}                             \n";
+    "attribute vec4 a_position;  \n"
+    "attribute vec2 a_texCoord;  \n"
+    "varying vec2 v_texCoord;    \n"
+    "void main()                 \n"
+    "{                           \n"
+    "  v_texCoord = a_texCoord;  \n"
+    "  gl_Position = a_position; \n"
+    "}                           \n";
 
   const GLchar* fShaderTexStr =
     "precision mediump float;                                              \n"
@@ -73,25 +73,26 @@ void Text::prepareShaders() {
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
 
   const GLchar* vShaderTexStr2 =
-    "attribute vec4 a_position;    \n"
-    "attribute vec2 a_texCoord;    \n"
-    "varying vec2 v_texCoord;      \n"
-    "void main()                   \n"
-    "{                             \n"
-    "  v_texCoord = a_texCoord;    \n"
-    "  gl_Position = a_position;   \n"
-    "}                             \n";
+    "attribute vec4 a_position;  \n"
+    "attribute vec2 a_texCoord;  \n"
+    "varying vec2 v_texCoord;    \n"
+    "void main()                 \n"
+    "{                           \n"
+    "  v_texCoord = a_texCoord;  \n"
+    "  gl_Position = a_position; \n"
+    "}                           \n";
 
   const GLchar* fShaderTexStr2 =
-    "precision mediump float;      \n"
-    "uniform vec3 u_color;         \n"
-    "varying vec2 v_texCoord;      \n"
-    "uniform sampler2D s_texture;  \n"
-    "uniform float u_opacity;      \n"
-    "void main()                   \n"
-    "{                             \n"
-    "  gl_FragColor = texture2D(s_texture, v_texCoord) * vec4(u_color, u_opacity); \n"
-    "}                             \n";
+    "precision mediump float;                          \n"
+    "uniform vec3 u_color;                             \n"
+    "varying vec2 v_texCoord;                          \n"
+    "uniform sampler2D s_texture;                      \n"
+    "uniform float u_opacity;                          \n"
+    "void main()                                       \n"
+    "{                                                 \n"
+    "  gl_FragColor = texture2D(s_texture, v_texCoord) \n"
+    "                 * vec4(u_color, u_opacity);      \n"
+    "}                                                 \n";
 
   GLuint vertexShader2 = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader2, 1, &vShaderTexStr2, NULL);
@@ -357,7 +358,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
                                            -static_cast<float>(fonts[fontId].max_descend)};
 
     glUseProgram(programObject);
-    glViewport(0, 0, texSize.first, texSize.second); // TODO: Remove if it's not needed
+    glViewport(0, 0, texSize.first, texSize.second);
 
     std::pair<float, float> pos = {0.0f, 0.0f};
     std::string::const_iterator c;
@@ -487,19 +488,16 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
 
   glDeleteRenderbuffers(1, &depthRenderbuffer);
   glDeleteFramebuffers(1, &framebuffer);
-  //glDeleteTextures(1, &texture);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, 1920, 1080); // TODO: Remove if it's not needed
+  glViewport(0, 0, 1920, 1080); // restore previous viewport
 
   TextTexture tt {.textureId = texture,
                   .width = static_cast<GLuint>(texSize.first),
                   .height = static_cast<GLuint>(texSize.second),
                   .fontId = static_cast<GLuint>(fontId),
                   .lastUsed = std::chrono::high_resolution_clock::now()};
-  if(cache) {
+  if(cache)
     generatedTextures.insert(std::make_pair(tk, tt));
-    //_INFO("Inserting texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
-  }
   return tt;
 }
 
@@ -554,7 +552,7 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
 void Text::renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
   if(validFontId(fontId))
     return;
-  bool alignedToOrigin = false; // TODO: add as a function parameter
+  bool alignedToOrigin = false; // can be used as a function parameter
 
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
@@ -700,7 +698,7 @@ void Text::checkShaderCompileError(GLuint shader) {
     glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
     _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
 
-    glDeleteShader(shader); // Don't leak the shader.
+    glDeleteShader(shader); // Don't leak.
   }
 }
 
@@ -724,7 +722,6 @@ void Text::deleteUnusedTextures() {
     if(std::chrono::duration_cast<std::chrono::duration<double>>(now - it->second.lastUsed) >= textureGCTimeout) {
       glDeleteTextures(1, &it->second.textureId);
       generatedTextures.erase(it++);
-      //_INFO("Removing texture. generatedTextures.size=%d", static_cast<int>(generatedTextures.size()));
     }
     else {
       ++it;

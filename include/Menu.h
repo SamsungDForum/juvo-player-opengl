@@ -43,7 +43,6 @@ private:
   const int fadingDurationMilliseconds;
   const bool bouncing;
 
-
   // UI helper objects
   Text text;
   Loader loader;

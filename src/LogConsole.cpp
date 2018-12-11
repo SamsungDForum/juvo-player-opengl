@@ -19,36 +19,36 @@ LogConsole::~LogConsole() {
 
 void LogConsole::initialize() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "void main()                    \n"
-    "{                              \n"
-    "   gl_Position = a_position;   \n"
-    "}                              \n";
+    "attribute vec4 a_position;   \n"
+    "void main()                  \n"
+    "{                            \n"
+    "   gl_Position = a_position; \n"
+    "}                            \n";
 
   const GLchar* fShaderTexStr =  
-    "precision highp float;                                                            \n"
-    "                                                                                  \n"
-    "#define FG vec4(u_color, 0.75 * u_opacity)                                        \n"
-    "#define BG vec4(0.0, 0.0, 0.0, 0.75 * u_opacity)                                   \n"
-    "                                                                                  \n"
-    "const int VALUES = 100;                                                           \n"
-    "                                                                                  \n"
-    "uniform vec2 u_position;                                                          \n"
-    "uniform vec2 u_size;                                                              \n"
-    "uniform vec3 u_color;                                                             \n"
-    "uniform float u_opacity;                                                          \n"
-    "                                                                                  \n"
-    "void main()                                                                       \n"
-    "{                                                                                 \n"
-    "  gl_FragColor = BG;                                                              \n"
-    "                                                                                  \n"
-    "  if(gl_FragCoord.y <= u_position.y + 1.0                                         \n"
-    "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0                              \n"
-    "  || gl_FragCoord.x <= u_position.x + 1.0                                         \n"
-    "  || gl_FragCoord.x >= u_position.x + u_size.x - 1.0                              \n"
-    "  )                                                                               \n"
-    "    gl_FragColor = vec4(u_color, 0.75 * u_opacity);                               \n"
-    "}                                                                                 \n";
+    "precision highp float;                               \n"
+    "                                                     \n"
+    "#define FG vec4(u_color, 0.75 * u_opacity)           \n"
+    "#define BG vec4(0.0, 0.0, 0.0, 0.75 * u_opacity)     \n"
+    "                                                     \n"
+    "const int VALUES = 100;                              \n"
+    "                                                     \n"
+    "uniform vec2 u_position;                             \n"
+    "uniform vec2 u_size;                                 \n"
+    "uniform vec3 u_color;                                \n"
+    "uniform float u_opacity;                             \n"
+    "                                                     \n"
+    "void main()                                          \n"
+    "{                                                    \n"
+    "  gl_FragColor = BG;                                 \n"
+    "                                                     \n"
+    "  if(gl_FragCoord.y <= u_position.y + 1.0            \n"
+    "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0 \n"
+    "  || gl_FragCoord.x <= u_position.x + 1.0            \n"
+    "  || gl_FragCoord.x >= u_position.x + u_size.x - 1.0 \n"
+    "  )                                                  \n"
+    "    gl_FragColor = vec4(u_color, 0.75 * u_opacity);  \n"
+    "}                                                    \n";
 
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);

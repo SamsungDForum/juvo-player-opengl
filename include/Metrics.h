@@ -25,7 +25,7 @@ private:
     std::deque<float> values;
     bool visible;
     Trace(int id, std::string tag, float minValue, float maxValue, int valueMaxCount);
-    virtual ~Trace() = default; // make it polymorphic
+    virtual ~Trace() = default;
   };
 
   class Framerate : public Trace {

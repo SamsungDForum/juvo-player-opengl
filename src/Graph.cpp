@@ -18,11 +18,11 @@ Graph::~Graph() {
 
 void Graph::initialize() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;     \n"
-    "void main()                    \n"
-    "{                              \n"
-    "   gl_Position = a_position;   \n"
-    "}                              \n";
+    "attribute vec4 a_position;   \n"
+    "void main()                  \n"
+    "{                            \n"
+    "   gl_Position = a_position; \n"
+    "}                            \n";
 
   const GLchar* fShaderTexStr =  
     "precision highp float;                                                            \n"

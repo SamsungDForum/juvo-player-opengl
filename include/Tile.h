@@ -50,7 +50,6 @@ public:
   ~Tile();
   Tile(Tile &) = delete; // no copy constructor
   Tile(const Tile &) = delete; // no copy constructor
-  //Tile(Tile &&) = default; // default move constructor
   Tile& operator=(Tile&&) = delete;
   Tile(Tile &&other);
 

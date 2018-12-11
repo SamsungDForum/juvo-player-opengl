@@ -39,7 +39,7 @@ Menu::Menu(std::pair<int, int> viewport)
 void Menu::initialize() {
   glViewport(0, 0, viewport.first, viewport.second);
 
-  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
   glEnable(GL_BLEND);
 
   glDisable(GL_DEPTH_TEST);
@@ -100,7 +100,6 @@ void Menu::render() {
     playback.render(text);
     subtitles.render(text);
     options.setOpacity(playback.getOpacity());
-    //options.renderIcon(text);
     options.render(text);
   }
   { // render metrics

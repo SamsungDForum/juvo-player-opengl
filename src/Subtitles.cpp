@@ -26,25 +26,22 @@ void Subtitles::render(Text &text) {
   int textWidth = viewport.first - 2 * margin.first;
 
   std::pair<float, float> textSize = text.getTextSize(subtitle,
-    {textWidth, fontHeight}, // size
-    0, // fontId
-    viewport); // viewport
+    {textWidth, fontHeight},
+    0,
+    viewport);
     textSize.first *= viewport.first / 2.0f;
     textSize.second *= viewport.second / 2.0f;
 
-  text.render(subtitle, // text string
-    {(viewport.first - textSize.first) / 2, margin.second + textSize.second - fontHeight}, // position
-    {textWidth, fontHeight}, // size
-    viewport, // viewport
-    0, // fontId, TODO(g.skowinski): get non-default it
-    {1.0, 1.0, 1.0, 1.0}, // color
-    true); // TODO(g.skowinski): Decide on caching
+  text.render(subtitle,
+    {(viewport.first - textSize.first) / 2, margin.second + textSize.second - fontHeight},
+    {textWidth, fontHeight},
+    viewport,
+    0,
+    {1.0, 1.0, 1.0, 1.0},
+    true);
 }
 
 void Subtitles::showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle) {
-/*  if(this->subtitle != "" && this->subtitle != subtitle) {
-    text.removeFromCache(this->subtitle, 0); // TODO: use non-default id
-  }*/ // TODO: No text object here to call; fix it
   this->subtitle = subtitle;
   this->duration = duration;
   this->start = std::chrono::high_resolution_clock::now();

@@ -83,7 +83,6 @@ void TileAnimation::update(std::pair<int, int> &position, float &zoom, std::pair
 
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
-  //if(time_span.count() <= 0) {
   if(now - animationStart < animationDelay) {
     position = sourcePosition;
     zoom = sourceZoom;
@@ -99,7 +98,7 @@ void TileAnimation::update(std::pair<int, int> &position, float &zoom, std::pair
     case Easing::BounceLeft:
     case Easing::BounceRight:
       position.first = targetPosition.first + doEasing(fraction, positionEasingType);
-      position.second = targetPosition.second;// + doEasing(fraction, positionEasingType);
+      position.second = targetPosition.second;
       break;
     default:
       position.first = sourcePosition.first + (targetPosition.first - sourcePosition.first) * doEasing(fraction, positionEasingType);
