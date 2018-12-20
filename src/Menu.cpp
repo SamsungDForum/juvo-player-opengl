@@ -172,18 +172,18 @@ int Menu::AddTile() {
   return tiles.size() - 1;
 }
 
-void Menu::SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc) {
-  if(tileId >= static_cast<int>(tiles.size()))
+void Menu::SetTileData(TileData tileData) {
+  if(tileData.tileId >= static_cast<int>(tiles.size()))
     return;
-  tiles[tileId].setName(name);
-  tiles[tileId].setDescription(desc);
-  tiles[tileId].setTexture(pixels, size, GL_RGB);
+  tiles[tileData.tileId].setName(tileData.name);
+  tiles[tileData.tileId].setDescription(tileData.desc);
+  tiles[tileData.tileId].setTexture(tileData.pixels, tileData.size, GL_RGB);
 }
 
-void Menu::SetTileTexture(int tileNo, char *pixels, std::pair<int, int> size) {
-  if(tileNo >= static_cast<int>(tiles.size()))
+void Menu::SetTileTexture(ImageData imageData) {
+  if(imageData.id >= static_cast<int>(tiles.size()))
     return;
-  tiles[tileNo].setTexture(pixels, size, GL_RGB);
+  tiles[imageData.id].setTexture(imageData.pixels, imageData.size, GL_RGB);
 }
 
 void Menu::SelectTile(int tileNo) {
@@ -222,20 +222,20 @@ void Menu::ShowLoader(bool enabled, int percent) {
   loader.setValue(percent);
 }
 
-void Menu::SetIcon(int id, char* pixels, std::pair<int, int> size) {
-  playback.setIcon(id, pixels, size, GL_RGBA);
+void Menu::SetIcon(ImageData imageData) {
+  playback.setIcon(imageData.id, imageData.pixels, imageData.size, GL_RGBA);
 }
 
-void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text, bool buffering, float bufferingPercent) {
-  playback.update(show,
-                  state,
-                  currentTime,
-                  totalTime,
-                  text,
+void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
+  playback.update(playbackData.show,
+                  playbackData.state,
+                  playbackData.currentTime,
+                  playbackData.totalTime,
+                  playbackData.text,
                   std::chrono::milliseconds(fadingDurationMilliseconds),
-                  std::chrono::milliseconds(show ? fadingDurationMilliseconds * 3 / 4 : 0),
-                  buffering,
-                  bufferingPercent);
+                  std::chrono::milliseconds(playbackData.show ? fadingDurationMilliseconds * 3 / 4 : 0),
+                  playbackData.buffering,
+                  playbackData.bufferingPercent);
 }
 
 void Menu::SetFooter(std::string footer) {
@@ -258,16 +258,23 @@ bool Menu::addSuboption(int parentId, int id, std::string name) {
   return options.addSuboption(parentId, id, name);
 }
 
-bool Menu::updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
-  return options.updateSelection(show, activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+bool Menu::updateSelection(SelectionData selectionData) {
+  return options.updateSelection(selectionData.show,
+                                 selectionData.activeOptionId,
+                                 selectionData.activeSubOptionId,
+                                 selectionData.selectedOptionId,
+                                 selectionData.selectedSubOptionId);
 }
 
 void Menu::clearOptions() {
   options.clearOptions();
 }
 
-int Menu::addGraph(std::string tag, float minVal, float maxVal, int valuesCount) {
-  return metrics.addGraph(tag, minVal, maxVal, valuesCount);
+int Menu::addGraph(GraphData graphData) {
+  return metrics.addGraph(graphData.tag,
+                          graphData.minVal,
+                          graphData.maxVal,
+                          graphData.valuesCount);
 }
 
 void Menu::setGraphVisibility(int graphId, bool visible) {
@@ -299,8 +306,8 @@ void Menu::pushLog(std::string log) {
 }
 
 
-void Menu::showAlert(std::string title, std::string text, std::string button) {
-  modalWindow.show(title, text, button);
+void Menu::showAlert(AlertData alertData) {
+  modalWindow.show(alertData.title, alertData.body, alertData.button);
 }
 
 void Menu::hideAlert() {

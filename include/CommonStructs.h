@@ -1,16 +1,16 @@
 #ifndef _COMMON_STRUCTS_H_
 #define _COMMON_STRUCTS_H_
 
+#include <string>
+#include <utility>
+
 struct TileData
 {
   int tileId;
   char* pixels;
-  int width;
-  int height;
-  char* name;
-  int nameLen;
-  char* desc;
-  int descLen;
+  std::pair<int, int> size;
+  std::string name;
+  std::string desc;
 };
 
 struct PlaybackData
@@ -19,16 +19,14 @@ struct PlaybackData
 	int state;
 	int currentTime;
 	int totalTime;
-	char* text;
-	int textLen;
+  std::string text;
 	int buffering;
 	int bufferingPercent;
 };
 
 struct GraphData
 {
-  char* tag;
-  int tagLen;
+  std::string tag;
   float minVal;
   float maxVal;
   int valuesCount;
@@ -36,20 +34,16 @@ struct GraphData
 
 struct AlertData
 {
-  char* title;
-  int titleLen;
-  char* body;
-  int bodyLen;
-  char* button;
-  int buttonLen;
+  std::string title;
+  std::string body;
+  std::string button;
 };
 
 struct ImageData
 {
 	int id;
 	char* pixels;
-	int width;
-	int height;
+  std::pair<int, int> size;
 };
 
 struct SelectionData

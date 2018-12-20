@@ -13,6 +13,7 @@
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
 
+#include "CommonStructs.h"
 #include "Tile.h"
 #include "Text.h"
 #include "Loader.h"
@@ -66,21 +67,21 @@ public:
   void render();
   void ShowMenu(int enable);
   int AddTile();
-  void SetTileTexture(int tileNo, char *pixels, std::pair<int, int> size);
+  void SetTileTexture(ImageData imageData);
   void SelectTile(int tileNo);
   int AddFont(char *data, int size);
   void ShowLoader(bool enabled, int percent);
-  void SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc);
-  void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text, bool buffering, float bufferingPercent);
-  void SetIcon(int id, char* pixels, std::pair<int, int> size);
+  void SetTileData(TileData tileData);
+  void UpdatePlaybackControls(PlaybackData playbackData);
+  void SetIcon(ImageData imageData);
   void SetFooter(std::string footer);
   void SwitchTextRenderingMode();
   void ShowSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);
   bool addSuboption(int parentId, int id, std::string name);
-  bool updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+  bool updateSelection(SelectionData selectionData);
   void clearOptions();
-  int addGraph(std::string tag, float minVal, float maxVal, int valuesCount);
+  int addGraph(GraphData graphData);
   void setGraphVisibility(int graphId, bool visible);
   void updateGraphValues(int graphId, std::vector<float> values);
   void updateGraphValue(int graphId, float value);
@@ -88,7 +89,7 @@ public:
   void selectAction(int id);
   void setLogConsoleVisibility(bool visible);
   void pushLog(std::string log);
-  void showAlert(std::string title, std::string text, std::string button);
+  void showAlert(AlertData alertData);
   void hideAlert();
   bool isAlertVisible();
 };

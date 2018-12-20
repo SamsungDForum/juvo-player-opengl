@@ -557,8 +557,8 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
   this->totalTime = max<int>(0, totalTime);
   this->currentTime = clamp<int>(currentTime, 0, totalTime);
   displayText = text;
-	this->buffering = buffering;
-	this->bufferingPercent = bufferingPercent;
+  this->buffering = buffering;
+  this->bufferingPercent = bufferingPercent;
 }
 
 std::string Playback::timeToString(int time) {

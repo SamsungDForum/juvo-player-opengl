@@ -2,6 +2,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
+#include "ExternStructs.h"
 #include "CommonStructs.h"
 #include "Menu.h"
 #include "log.h"
@@ -18,23 +19,23 @@ EXPORT_API void Create();
 EXPORT_API void Terminate();
 EXPORT_API void ShowMenu(int enable);
 EXPORT_API int AddTile();
-EXPORT_API void SetTileData(TileData tileData);
-EXPORT_API void SetTileTexture(ImageData image);
+EXPORT_API void SetTileData(TileExternData tileExternData);
+EXPORT_API void SetTileTexture(ImageExternData image);
 EXPORT_API void SelectTile(int tileNo);
 EXPORT_API void Draw(void *cDisplay, void *cSurface);
 EXPORT_API int AddFont(char *data, int size);
 EXPORT_API void ShowLoader(int enabled, int percent);
-EXPORT_API void SetIcon(ImageData image);
-EXPORT_API void UpdatePlaybackControls(PlaybackData playbackData);
+EXPORT_API void SetIcon(ImageExternData image);
+EXPORT_API void UpdatePlaybackControls(PlaybackExternData playbackExternData);
 EXPORT_API void SetFooter(char* footer, int footerLen);
 EXPORT_API void SwitchTextRenderingMode();
 EXPORT_API void ShowSubtitle(int duration, char* text, int textLen);
 EXPORT_API int OpenGLLibVersion();
 EXPORT_API int AddOption(int id, char* text, int textLen);
 EXPORT_API int AddSuboption(int parentId, int id, char* text, int textLen);
-EXPORT_API int UpdateSelection(SelectionData selectionData);
+EXPORT_API int UpdateSelection(SelectionExternData selectionExternData);
 EXPORT_API void ClearOptions();
-EXPORT_API int AddGraph(GraphData graphData);
+EXPORT_API int AddGraph(GraphExternData graphExternData);
 EXPORT_API void SetGraphVisibility(int graphId, int visible);
 EXPORT_API void UpdateGraphValues(int graphId, float* values, int valuesCount);
 EXPORT_API void UpdateGraphValue(int graphId, float value);
@@ -42,7 +43,7 @@ EXPORT_API void UpdateGraphRange(int graphId, float minVal, float maxVal);
 EXPORT_API void SelectAction(int id);
 EXPORT_API void SetLogConsoleVisibility(int visible);
 EXPORT_API void PushLog(char* log, int logLen);
-EXPORT_API void ShowAlert(AlertData alertData);
+EXPORT_API void ShowAlert(AlertExternData alertExternData);
 EXPORT_API void HideAlert();
 EXPORT_API int IsAlertVisible();
 #ifdef __cplusplus
@@ -74,20 +75,22 @@ int AddTile()
   return menu->AddTile();
 }
 
-void SetTileData(TileData tileData)
+void SetTileData(TileExternData tileExternData)
 {
-  menu->SetTileData(tileData.tileId,
-                    tileData.pixels,
-                    {tileData.width, tileData.height},
-                    std::string(tileData.name, tileData.nameLen),
-                    std::string(tileData.desc, tileData.descLen));
+  menu->SetTileData(TileData {
+      tileExternData.tileId,
+      tileExternData.pixels,
+      {tileExternData.width, tileExternData.height},
+      std::string(tileExternData.name, tileExternData.nameLen),
+      std::string(tileExternData.desc, tileExternData.descLen)});
 }
 
-void SetTileTexture(ImageData image)
+void SetTileTexture(ImageExternData image)
 {
-  menu->SetTileTexture(image.id,
-                       image.pixels,
-                       {image.width, image.height});
+  menu->SetTileTexture(ImageData {
+      image.id,
+      image.pixels,
+      {image.width, image.height}});
 }
 
 int AddFont(char *data, int size)
@@ -105,22 +108,24 @@ void ShowLoader(int enabled, int percent)
   menu->ShowLoader(enabled, percent);
 }
 
-void SetIcon(ImageData image)
+void SetIcon(ImageExternData image)
 {
-  menu->SetIcon(image.id,
-                image.pixels,
-                {image.width, image.height});
+  menu->SetIcon(ImageData {
+      image.id,
+      image.pixels,
+      {image.width, image.height}});
 }
 
-void UpdatePlaybackControls(PlaybackData playbackData)
+void UpdatePlaybackControls(PlaybackExternData playbackExternData)
 {
-  menu->UpdatePlaybackControls(playbackData.show,
-                               playbackData.state,
-                               playbackData.currentTime,
-                               playbackData.totalTime,
-                               std::string(playbackData.text, playbackData.textLen),
-                               static_cast<bool>(playbackData.buffering),
-															 playbackData.bufferingPercent);
+  menu->UpdatePlaybackControls(PlaybackData {
+      playbackExternData.show,
+      playbackExternData.state,
+      playbackExternData.currentTime,
+      playbackExternData.totalTime,
+      std::string(playbackExternData.text, playbackExternData.textLen),
+      static_cast<bool>(playbackExternData.buffering),
+			playbackExternData.bufferingPercent});
 }
 
 void SetFooter(char* footer, int footerLen)
@@ -164,23 +169,25 @@ int AddSuboption(int parentId, int id, char* text, int textLen) {
   return menu->addSuboption(parentId, id, std::string(text, textLen)) ? 1 : 0;
 }
 
-int UpdateSelection(SelectionData selectionData) {
-  return menu->updateSelection(static_cast<bool>(selectionData.show),
-                               selectionData.activeOptionId,
-                               selectionData.activeSubOptionId,
-                               selectionData.selectedOptionId,
-                               selectionData.selectedSubOptionId);
+int UpdateSelection(SelectionExternData selectionExternData) {
+  return menu->updateSelection(SelectionData {
+      static_cast<bool>(selectionExternData.show),
+      selectionExternData.activeOptionId,
+      selectionExternData.activeSubOptionId,
+      selectionExternData.selectedOptionId,
+      selectionExternData.selectedSubOptionId});
 }
 
 void ClearOptions() {
   menu->clearOptions();
 }
 
-int AddGraph(GraphData graphData) {
-  return menu->addGraph(std::string(graphData.tag, graphData.tagLen),
-                        graphData.minVal,
-                        graphData.maxVal,
-                        graphData.valuesCount);
+int AddGraph(GraphExternData graphExternData) {
+  return menu->addGraph(GraphData {
+      std::string(graphExternData.tag, graphExternData.tagLen),
+      graphExternData.minVal,
+      graphExternData.maxVal,
+      graphExternData.valuesCount});
 }
 void SetGraphVisibility(int graphId, int visible) {
   menu->setGraphVisibility(graphId, static_cast<bool>(visible));
@@ -211,10 +218,11 @@ void PushLog(char* log, int logLen) {
 }
 
 
-void ShowAlert(AlertData alertData) {
-  menu->showAlert(std::string(alertData.title, alertData.titleLen),
-                  std::string(alertData.body, alertData.bodyLen),
-                  std::string(alertData.button, alertData.buttonLen));
+void ShowAlert(AlertExternData alertExternData) {
+  menu->showAlert(AlertData {
+      std::string(alertExternData.title, alertExternData.titleLen),
+      std::string(alertExternData.body, alertExternData.bodyLen),
+      std::string(alertExternData.button, alertExternData.buttonLen)});
 }
 
 void HideAlert() {
