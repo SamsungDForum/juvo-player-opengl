@@ -226,14 +226,16 @@ void Menu::SetIcon(int id, char* pixels, std::pair<int, int> size) {
   playback.setIcon(id, pixels, size, GL_RGBA);
 }
 
-void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text) {
+void Menu::UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text, bool buffering, float bufferingPercent) {
   playback.update(show,
                   state,
                   currentTime,
                   totalTime,
                   text,
                   std::chrono::milliseconds(fadingDurationMilliseconds),
-                  std::chrono::milliseconds(show ? fadingDurationMilliseconds * 3 / 4 : 0));
+                  std::chrono::milliseconds(show ? fadingDurationMilliseconds * 3 / 4 : 0),
+                  buffering,
+                  bufferingPercent);
 }
 
 void Menu::SetFooter(std::string footer) {

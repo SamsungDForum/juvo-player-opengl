@@ -12,6 +12,8 @@ Playback::Playback(std::pair<int, int> viewport)
     opacity(0.0f),
     selectedAction(Action::None),
     progress(0.0f),
+		buffering(false),
+    bufferingPercent(0.0f),
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
     progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400 x 32
@@ -288,7 +290,7 @@ void Playback::render(Text &text) {
     renderIcons(opacity);
     renderText(text, opacity);
   }
-  if(((state == State::Preparing || state == State::Idle) && opacity > 0.0) || state == State::Buffering)
+  if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering))
     renderLoader(1.0);
 }
 
@@ -304,8 +306,13 @@ void Playback::renderIcons(float opacity) {
       color = {1.0, 1.0, 1.0, 1.0};
       break;
     case State::Paused:
+      icon = Icon::Play;
+      if(buffering)
+        color = {0.5, 0.5, 0.5, 1.0};
+      else
+        color = {1.0, 1.0, 1.0, 1.0};
+      break;
     case State::Prepared:
-    case State::Stopped:
       icon = Icon::Play;
       color = {1.0, 1.0, 1.0, 1.0};
       break;
@@ -522,7 +529,7 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
   glFlush();
 }
 
-void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay) {
+void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent) {
   updateProgress();
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::milliseconds fromLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate);
@@ -550,6 +557,8 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
   this->totalTime = max<int>(0, totalTime);
   this->currentTime = clamp<int>(currentTime, 0, totalTime);
   displayText = text;
+	this->buffering = buffering;
+	this->bufferingPercent = bufferingPercent;
 }
 
 std::string Playback::timeToString(int time) {

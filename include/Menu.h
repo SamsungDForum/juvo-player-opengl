@@ -71,7 +71,7 @@ public:
   int AddFont(char *data, int size);
   void ShowLoader(bool enabled, int percent);
   void SetTileData(int tileId, char* pixels, std::pair<int, int> size, std::string name, std::string desc);
-  void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text);
+  void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, std::string text, bool buffering, float bufferingPercent);
   void SetIcon(int id, char* pixels, std::pair<int, int> size);
   void SetFooter(std::string footer);
   void SwitchTextRenderingMode();

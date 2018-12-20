@@ -2,6 +2,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
+#include "CommonStructs.h"
 #include "Menu.h"
 #include "log.h"
 #include "version.h"
@@ -17,23 +18,23 @@ EXPORT_API void Create();
 EXPORT_API void Terminate();
 EXPORT_API void ShowMenu(int enable);
 EXPORT_API int AddTile();
-EXPORT_API void SetTileData(int tileId, char* pixels, int w, int h, char *name, int nameLen, char *desc, int descLen);
-EXPORT_API void SetTileTexture(int tileNo, char *pixels, int width, int height);
+EXPORT_API void SetTileData(TileData tileData);
+EXPORT_API void SetTileTexture(ImageData image);
 EXPORT_API void SelectTile(int tileNo);
 EXPORT_API void Draw(void *cDisplay, void *cSurface);
 EXPORT_API int AddFont(char *data, int size);
 EXPORT_API void ShowLoader(int enabled, int percent);
-EXPORT_API void SetIcon(int id, char* pixels, int w, int h);
-EXPORT_API void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen);
+EXPORT_API void SetIcon(ImageData image);
+EXPORT_API void UpdatePlaybackControls(PlaybackData playbackData);
 EXPORT_API void SetFooter(char* footer, int footerLen);
 EXPORT_API void SwitchTextRenderingMode();
 EXPORT_API void ShowSubtitle(int duration, char* text, int textLen);
 EXPORT_API int OpenGLLibVersion();
 EXPORT_API int AddOption(int id, char* text, int textLen);
 EXPORT_API int AddSuboption(int parentId, int id, char* text, int textLen);
-EXPORT_API int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
+EXPORT_API int UpdateSelection(SelectionData selectionData);
 EXPORT_API void ClearOptions();
-EXPORT_API int AddGraph(char* tag, int tagLen, float minVal, float maxVal, int valuesCount);
+EXPORT_API int AddGraph(GraphData graphData);
 EXPORT_API void SetGraphVisibility(int graphId, int visible);
 EXPORT_API void UpdateGraphValues(int graphId, float* values, int valuesCount);
 EXPORT_API void UpdateGraphValue(int graphId, float value);
@@ -41,7 +42,7 @@ EXPORT_API void UpdateGraphRange(int graphId, float minVal, float maxVal);
 EXPORT_API void SelectAction(int id);
 EXPORT_API void SetLogConsoleVisibility(int visible);
 EXPORT_API void PushLog(char* log, int logLen);
-EXPORT_API void ShowAlert(char* title, int titleLen, char* body, int bodyLen, char* button, int buttonLen);
+EXPORT_API void ShowAlert(AlertData alertData);
 EXPORT_API void HideAlert();
 EXPORT_API int IsAlertVisible();
 #ifdef __cplusplus
@@ -73,14 +74,20 @@ int AddTile()
   return menu->AddTile();
 }
 
-void SetTileData(int tileId, char* pixels, int w, int h, char *name, int nameLen, char *desc, int descLen)
+void SetTileData(TileData tileData)
 {
-  menu->SetTileData(tileId, pixels, {w, h}, std::string(name, nameLen), std::string(desc, descLen));
+  menu->SetTileData(tileData.tileId,
+                    tileData.pixels,
+                    {tileData.width, tileData.height},
+                    std::string(tileData.name, tileData.nameLen),
+                    std::string(tileData.desc, tileData.descLen));
 }
 
-void SetTileTexture(int tileNo, char *pixels, int width, int height)
+void SetTileTexture(ImageData image)
 {
-  menu->SetTileTexture(tileNo, pixels, {width, height});
+  menu->SetTileTexture(image.id,
+                       image.pixels,
+                       {image.width, image.height});
 }
 
 int AddFont(char *data, int size)
@@ -98,14 +105,22 @@ void ShowLoader(int enabled, int percent)
   menu->ShowLoader(enabled, percent);
 }
 
-void SetIcon(int id, char* pixels, int w, int h)
+void SetIcon(ImageData image)
 {
-  menu->SetIcon(id, pixels, {w, h});
+  menu->SetIcon(image.id,
+                image.pixels,
+                {image.width, image.height});
 }
 
-void UpdatePlaybackControls(int show, int state, int currentTime, int totalTime, char* text, int textLen)
+void UpdatePlaybackControls(PlaybackData playbackData)
 {
-  menu->UpdatePlaybackControls(show, state, currentTime, totalTime, std::string(text, textLen));
+  menu->UpdatePlaybackControls(playbackData.show,
+                               playbackData.state,
+                               playbackData.currentTime,
+                               playbackData.totalTime,
+                               std::string(playbackData.text, playbackData.textLen),
+                               static_cast<bool>(playbackData.buffering),
+															 playbackData.bufferingPercent);
 }
 
 void SetFooter(char* footer, int footerLen)
@@ -149,18 +164,24 @@ int AddSuboption(int parentId, int id, char* text, int textLen) {
   return menu->addSuboption(parentId, id, std::string(text, textLen)) ? 1 : 0;
 }
 
-int UpdateSelection(int show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId) {
-  return menu->updateSelection(static_cast<bool>(show), activeOptionId, activeSuboptionId, selectedOptionId, selectedSuboptionId);
+int UpdateSelection(SelectionData selectionData) {
+  return menu->updateSelection(static_cast<bool>(selectionData.show),
+                               selectionData.activeOptionId,
+                               selectionData.activeSubOptionId,
+                               selectionData.selectedOptionId,
+                               selectionData.selectedSubOptionId);
 }
 
 void ClearOptions() {
   menu->clearOptions();
 }
 
-int AddGraph(char* tag, int tagLen, float minVal, float maxVal, int valuesCount) {
-  return menu->addGraph(std::string(tag, tagLen), minVal, maxVal, valuesCount);
+int AddGraph(GraphData graphData) {
+  return menu->addGraph(std::string(graphData.tag, graphData.tagLen),
+                        graphData.minVal,
+                        graphData.maxVal,
+                        graphData.valuesCount);
 }
-
 void SetGraphVisibility(int graphId, int visible) {
   menu->setGraphVisibility(graphId, static_cast<bool>(visible));
 }
@@ -190,8 +211,10 @@ void PushLog(char* log, int logLen) {
 }
 
 
-void ShowAlert(char* title, int titleLen, char* text, int textLen, char* button, int buttonLen) {
-  menu->showAlert(std::string(title, titleLen), std::string(text, textLen), std::string(button, buttonLen));
+void ShowAlert(AlertData alertData) {
+  menu->showAlert(std::string(alertData.title, alertData.titleLen),
+                  std::string(alertData.body, alertData.bodyLen),
+                  std::string(alertData.button, alertData.buttonLen));
 }
 
 void HideAlert() {
