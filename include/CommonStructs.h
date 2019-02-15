@@ -22,6 +22,7 @@ struct PlaybackData
   std::string text;
 	int buffering;
 	int bufferingPercent;
+	bool seeking;
 };
 
 struct GraphData

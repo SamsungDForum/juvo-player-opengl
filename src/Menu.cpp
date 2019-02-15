@@ -235,7 +235,8 @@ void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
                   std::chrono::milliseconds(fadingDurationMilliseconds),
                   std::chrono::milliseconds(playbackData.show ? fadingDurationMilliseconds * 3 / 4 : 0),
                   playbackData.buffering,
-                  playbackData.bufferingPercent);
+                  playbackData.bufferingPercent,
+				  playbackData.seeking);
 }
 
 void Menu::SetFooter(std::string footer) {

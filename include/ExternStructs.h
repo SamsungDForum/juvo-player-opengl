@@ -23,6 +23,7 @@ struct PlaybackExternData
 	int textLen;
 	int buffering;
 	int bufferingPercent;
+	bool seeking;
 };
 
 struct GraphExternData
