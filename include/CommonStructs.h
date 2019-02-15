@@ -15,14 +15,14 @@ struct TileData
 
 struct PlaybackData
 {
-	int show;
-	int state;
-	int currentTime;
-	int totalTime;
+  int show;
+  int state;
+  int currentTime;
+  int totalTime;
   std::string text;
-	int buffering;
-	int bufferingPercent;
-	bool seeking;
+  int buffering;
+  int bufferingPercent;
+  bool seeking;
 };
 
 struct GraphData
@@ -42,8 +42,8 @@ struct AlertData
 
 struct ImageData
 {
-	int id;
-	char* pixels;
+  int id;
+  char* pixels;
   std::pair<int, int> size;
 };
 
