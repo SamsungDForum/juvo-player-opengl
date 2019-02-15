@@ -290,7 +290,7 @@ void Playback::render(Text &text) {
     renderIcons(opacity);
     renderText(text, opacity);
   }
-  if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering) || (state == State::Paused && seeking))
+  if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering) || seeking)
     renderLoader(1.0);
 }
 
