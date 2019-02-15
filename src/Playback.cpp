@@ -12,8 +12,9 @@ Playback::Playback(std::pair<int, int> viewport)
     opacity(0.0f),
     selectedAction(Action::None),
     progress(0.0f),
-		buffering(false),
+    buffering(false),
     bufferingPercent(0.0f),
+    seeking(false),
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
     progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400 x 32
@@ -290,7 +291,7 @@ void Playback::render(Text &text) {
     renderIcons(opacity);
     renderText(text, opacity);
   }
-  if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering))
+  if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering) || seeking)
     renderLoader(1.0);
 }
 
@@ -529,7 +530,7 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
   glFlush();
 }
 
-void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent) {
+void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking) {
   updateProgress();
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::milliseconds fromLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate);
@@ -559,6 +560,7 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
   displayText = text;
   this->buffering = buffering;
   this->bufferingPercent = bufferingPercent;
+  this->seeking = seeking;
 }
 
 std::string Playback::timeToString(int time) {

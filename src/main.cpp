@@ -125,7 +125,8 @@ void UpdatePlaybackControls(PlaybackExternData playbackExternData)
       playbackExternData.totalTime,
       std::string(playbackExternData.text, playbackExternData.textLen),
       static_cast<bool>(playbackExternData.buffering),
-			playbackExternData.bufferingPercent});
+      playbackExternData.bufferingPercent,
+      playbackExternData.seeking});
 }
 
 void SetFooter(char* footer, int footerLen)

@@ -62,8 +62,9 @@ private:
   Action selectedAction = Action::None;
 
   float progress;
-	bool buffering;
+  bool buffering;
   float bufferingPercent;
+  bool seeking;
   std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
 
   std::pair<int, int> viewport;
@@ -113,7 +114,7 @@ public:
   ~Playback();
   void setIcon(int id, char* pixels, std::pair<int, int> size, GLuint format);
   void render(Text &text);
-  void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent);
+  void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking);
   void setOpacity(float opacity) { this->opacity = opacity; }
   float getOpacity() { return opacity; }
   void selectAction(int id);
