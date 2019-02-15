@@ -12,7 +12,7 @@ Playback::Playback(std::pair<int, int> viewport)
     opacity(0.0f),
     selectedAction(Action::None),
     progress(0.0f),
-    buffering(false),    
+    buffering(false),
     bufferingPercent(0.0f),
     seeking(false),
     lastUpdate(std::chrono::high_resolution_clock::now()),
