@@ -62,8 +62,8 @@ private:
   Action selectedAction = Action::None;
 
   float progress;
-	bool buffering;
-	bool seeking;
+  bool buffering;
+  bool seeking;
   float bufferingPercent;
   std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
 

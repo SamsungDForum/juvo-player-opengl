@@ -15,15 +15,15 @@ struct TileExternData
 
 struct PlaybackExternData
 {
-	int show;
-	int state;
-	int currentTime;
-	int totalTime;
-	char* text;
-	int textLen;
-	int buffering;
-	int bufferingPercent;
-	bool seeking;
+  int show;
+  int state;
+  int currentTime;
+  int totalTime;
+  char* text;
+  int textLen;
+  int buffering;
+  int bufferingPercent;
+  int seeking;
 };
 
 struct GraphExternData
@@ -47,10 +47,10 @@ struct AlertExternData
 
 struct ImageExternData
 {
-	int id;
-	char* pixels;
-	int width;
-	int height;
+  int id;
+  char* pixels;
+  int width;
+  int height;
 };
 
 struct SelectionExternData
