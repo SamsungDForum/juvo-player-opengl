@@ -12,9 +12,9 @@ Playback::Playback(std::pair<int, int> viewport)
     opacity(0.0f),
     selectedAction(Action::None),
     progress(0.0f),
-    buffering(false),
-    seeking(false),
+    buffering(false),    
     bufferingPercent(0.0f),
+    seeking(false),
     lastUpdate(std::chrono::high_resolution_clock::now()),
     viewport(viewport),
     progressBarSize({0.72917 * viewport.first, 0.02965 * viewport.second}), // 1400 x 32
