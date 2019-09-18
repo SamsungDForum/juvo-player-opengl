@@ -10,6 +10,7 @@ BuildRequires: cmake
 BuildRequires:  pkgconfig(gles20)
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(freetype2)
 
 %description
 OpenGLES Sample
