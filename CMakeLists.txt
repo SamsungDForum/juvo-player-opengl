@@ -14,7 +14,7 @@
 #
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-PROJECT(gles_sample C CXX)
+PROJECT(gles C CXX)
 
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 
@@ -45,6 +45,7 @@ SET(SRCS
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED
+  freetype2
   gles20
   egl
   dlog)
@@ -54,7 +55,7 @@ FOREACH(flag ${PKGS_CFLAGS})
 ENDFOREACH(flag)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -fpermissive")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -std=c++17 -Iinclude/freetype-2.9/include -Iinclude")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -std=c++17 -Iinclude")
 
 ADD_LIBRARY (${PROJECT_NAME} SHARED ${SRCS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PKGS_LDFLAGS})
