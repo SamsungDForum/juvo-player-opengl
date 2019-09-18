@@ -1,4 +1,4 @@
-Name:      gles_sample
+Name:      gles
 Version:   0.0.1
 Release:   1
 License:   To be filled
@@ -37,4 +37,4 @@ mkdir -p %{buildroot}%{_includedir}
 %files
 %manifest %{name}.manifest
 %defattr(-, root, root, -)
-%{_libdir}/libgles_sample.so
+%{_libdir}/libgles.so

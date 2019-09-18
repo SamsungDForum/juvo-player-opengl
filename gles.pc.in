@@ -7,5 +7,5 @@ Name: GLAPP
 Description: GLAPP
 Version: @VERSION@
 Requires:
-Libs: -L${libdir} -lgles_sample
+Libs: -L${libdir} -lgles
 Cflags: -I${includedir}
