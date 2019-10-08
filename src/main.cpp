@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
 #include "ExternStructs.h"
@@ -22,7 +21,7 @@ EXPORT_API int AddTile();
 EXPORT_API void SetTileData(TileExternData tileExternData);
 EXPORT_API void SetTileTexture(ImageExternData image);
 EXPORT_API void SelectTile(int tileNo);
-EXPORT_API void Draw(void *cDisplay, void *cSurface);
+EXPORT_API void Draw();
 EXPORT_API int AddFont(char *data, int size);
 EXPORT_API void ShowLoader(int enabled, int percent);
 EXPORT_API void SetIcon(ImageExternData image);
@@ -134,14 +133,9 @@ void SetFooter(char* footer, int footerLen)
   menu->SetFooter(std::string(footer, footerLen));
 }
 
-void Draw(void *cDisplay, void *cSurface)
+void Draw()
 {
-  EGLDisplay *display = reinterpret_cast<void**>(cDisplay);
-  EGLSurface *surface = reinterpret_cast<void**>(cSurface);
   menu->render();
-  eglSwapBuffers(*display, *surface);
-
-  return;
 }
 
 void SwitchTextRenderingMode()

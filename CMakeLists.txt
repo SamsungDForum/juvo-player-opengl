@@ -47,7 +47,6 @@ INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED
   freetype2
   gles20
-  egl
   dlog)
 
 FOREACH(flag ${PKGS_CFLAGS})
