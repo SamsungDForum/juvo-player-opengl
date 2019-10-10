@@ -1,5 +1,7 @@
+#include <cassert>
 #include <cstdio>
 #include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include "ExternStructs.h"
 #include "CommonStructs.h"
@@ -51,6 +53,33 @@ EXPORT_API int IsAlertVisible();
 
 Menu *menu = nullptr;
 
+namespace {
+  enum class Format
+  {
+    Rgba,
+    Bgra,
+    Rgb,
+    Unknown
+  };
+
+  GLuint ConvertFormat(int format)
+  {
+    switch (static_cast<Format>(format)) {
+      case Format::Rgba:
+        return GL_RGBA;
+      case Format::Bgra:
+#ifndef GL_BGRA_EXT
+#error "GL_BGRA_EXT is not defined"
+#endif
+        return GL_BGRA_EXT;
+      case Format::Rgb:
+        return GL_RGB;
+      default:
+        assert(nullptr);
+    }
+  }
+}
+
 void Create()
 {
   if(menu != nullptr)
@@ -81,7 +110,8 @@ void SetTileData(TileExternData tileExternData)
       tileExternData.pixels,
       {tileExternData.width, tileExternData.height},
       std::string(tileExternData.name, tileExternData.nameLen),
-      std::string(tileExternData.desc, tileExternData.descLen)});
+      std::string(tileExternData.desc, tileExternData.descLen),
+      ConvertFormat(tileExternData.format)});
 }
 
 void SetTileTexture(ImageExternData image)
@@ -89,7 +119,8 @@ void SetTileTexture(ImageExternData image)
   menu->SetTileTexture(ImageData {
       image.id,
       image.pixels,
-      {image.width, image.height}});
+      {image.width, image.height},
+      ConvertFormat(image.format)});
 }
 
 int AddFont(char *data, int size)
@@ -112,7 +143,8 @@ void SetIcon(ImageExternData image)
   menu->SetIcon(ImageData {
       image.id,
       image.pixels,
-      {image.width, image.height}});
+      {image.width, image.height},
+      ConvertFormat(image.format)});
 }
 
 void UpdatePlaybackControls(PlaybackExternData playbackExternData)
