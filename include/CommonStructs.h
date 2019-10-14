@@ -1,6 +1,7 @@
 #ifndef _COMMON_STRUCTS_H_
 #define _COMMON_STRUCTS_H_
 
+#include <GLES2/gl2.h>
 #include <string>
 #include <utility>
 
@@ -11,6 +12,7 @@ struct TileData
   std::pair<int, int> size;
   std::string name;
   std::string desc;
+  GLuint format;
 };
 
 struct PlaybackData
@@ -45,6 +47,7 @@ struct ImageData
   int id;
   char* pixels;
   std::pair<int, int> size;
+  GLuint format;
 };
 
 struct SelectionData

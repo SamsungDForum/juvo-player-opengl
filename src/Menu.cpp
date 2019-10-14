@@ -177,13 +177,13 @@ void Menu::SetTileData(TileData tileData) {
     return;
   tiles[tileData.tileId].setName(tileData.name);
   tiles[tileData.tileId].setDescription(tileData.desc);
-  tiles[tileData.tileId].setTexture(tileData.pixels, tileData.size, GL_RGB);
+  tiles[tileData.tileId].setTexture(tileData.pixels, tileData.size, tileData.format);
 }
 
 void Menu::SetTileTexture(ImageData imageData) {
   if(imageData.id >= static_cast<int>(tiles.size()))
     return;
-  tiles[imageData.id].setTexture(imageData.pixels, imageData.size, GL_RGB);
+  tiles[imageData.id].setTexture(imageData.pixels, imageData.size, imageData.format);
 }
 
 void Menu::SelectTile(int tileNo) {
@@ -223,7 +223,7 @@ void Menu::ShowLoader(bool enabled, int percent) {
 }
 
 void Menu::SetIcon(ImageData imageData) {
-  playback.setIcon(imageData.id, imageData.pixels, imageData.size, GL_RGBA);
+  playback.setIcon(imageData.id, imageData.pixels, imageData.size, imageData.format);
 }
 
 void Menu::UpdatePlaybackControls(PlaybackData playbackData) {

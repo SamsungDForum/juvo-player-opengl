@@ -8,7 +8,6 @@ Source0:   %{name}-%{version}.tar.gz
 BuildRequires: cmake
 
 BuildRequires:  pkgconfig(gles20)
-BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(freetype2)
 

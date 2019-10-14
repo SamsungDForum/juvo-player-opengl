@@ -11,6 +11,7 @@ struct TileExternData
   int nameLen;
   char* desc;
   int descLen;
+  int format;
 };
 
 struct PlaybackExternData
@@ -51,6 +52,7 @@ struct ImageExternData
   char* pixels;
   int width;
   int height;
+  int format;
 };
 
 struct SelectionExternData

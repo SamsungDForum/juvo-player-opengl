@@ -1,6 +1,7 @@
+#include <cassert>
 #include <cstdio>
-#include <EGL/egl.h>
 #include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include "ExternStructs.h"
 #include "CommonStructs.h"
@@ -22,7 +23,7 @@ EXPORT_API int AddTile();
 EXPORT_API void SetTileData(TileExternData tileExternData);
 EXPORT_API void SetTileTexture(ImageExternData image);
 EXPORT_API void SelectTile(int tileNo);
-EXPORT_API void Draw(void *cDisplay, void *cSurface);
+EXPORT_API void Draw();
 EXPORT_API int AddFont(char *data, int size);
 EXPORT_API void ShowLoader(int enabled, int percent);
 EXPORT_API void SetIcon(ImageExternData image);
@@ -51,6 +52,33 @@ EXPORT_API int IsAlertVisible();
 #endif
 
 Menu *menu = nullptr;
+
+namespace {
+  enum class Format
+  {
+    Rgba,
+    Bgra,
+    Rgb,
+    Unknown
+  };
+
+  GLuint ConvertFormat(int format)
+  {
+    switch (static_cast<Format>(format)) {
+      case Format::Rgba:
+        return GL_RGBA;
+      case Format::Bgra:
+#ifndef GL_BGRA_EXT
+#error "GL_BGRA_EXT is not defined"
+#endif
+        return GL_BGRA_EXT;
+      case Format::Rgb:
+        return GL_RGB;
+      default:
+        assert(nullptr);
+    }
+  }
+}
 
 void Create()
 {
@@ -82,7 +110,8 @@ void SetTileData(TileExternData tileExternData)
       tileExternData.pixels,
       {tileExternData.width, tileExternData.height},
       std::string(tileExternData.name, tileExternData.nameLen),
-      std::string(tileExternData.desc, tileExternData.descLen)});
+      std::string(tileExternData.desc, tileExternData.descLen),
+      ConvertFormat(tileExternData.format)});
 }
 
 void SetTileTexture(ImageExternData image)
@@ -90,7 +119,8 @@ void SetTileTexture(ImageExternData image)
   menu->SetTileTexture(ImageData {
       image.id,
       image.pixels,
-      {image.width, image.height}});
+      {image.width, image.height},
+      ConvertFormat(image.format)});
 }
 
 int AddFont(char *data, int size)
@@ -113,7 +143,8 @@ void SetIcon(ImageExternData image)
   menu->SetIcon(ImageData {
       image.id,
       image.pixels,
-      {image.width, image.height}});
+      {image.width, image.height},
+      ConvertFormat(image.format)});
 }
 
 void UpdatePlaybackControls(PlaybackExternData playbackExternData)
@@ -134,14 +165,9 @@ void SetFooter(char* footer, int footerLen)
   menu->SetFooter(std::string(footer, footerLen));
 }
 
-void Draw(void *cDisplay, void *cSurface)
+void Draw()
 {
-  EGLDisplay *display = reinterpret_cast<void**>(cDisplay);
-  EGLSurface *surface = reinterpret_cast<void**>(cSurface);
   menu->render();
-  eglSwapBuffers(*display, *surface);
-
-  return;
 }
 
 void SwitchTextRenderingMode()
