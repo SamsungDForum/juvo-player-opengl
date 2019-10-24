@@ -15,7 +15,6 @@
 
 class Options {
   private:
-    std::pair<int, int> viewport;
     std::pair<int, int> optionRectangleSize;
     std::pair<int, int> suboptionRectangleSize;
     std::pair<int, int> position;
@@ -54,29 +53,27 @@ class Options {
     bool show;
 
     GLuint programObject = GL_INVALID_VALUE;
-    GLuint apositionLoc  = GL_INVALID_VALUE;
+    GLuint positionALoc  = GL_INVALID_VALUE;
     GLuint positionLoc   = GL_INVALID_VALUE;
     GLuint sizeLoc       = GL_INVALID_VALUE;
     GLuint colorLoc      = GL_INVALID_VALUE;
     GLuint opacityLoc    = GL_INVALID_VALUE;
     GLuint frameWidthLoc = GL_INVALID_VALUE;
     GLuint frameColorLoc = GL_INVALID_VALUE;
-    GLuint submenuSelectedLoc     = GL_INVALID_VALUE;
 
     void initialize();
-    void checkShaderCompileError(GLuint shader);
-    void render(std::pair<int, int> position, std::pair<int, int> optionRectangleSize, std::pair<int, int> suboptionRectangleSize, std::pair<int, int> viewport, float opacity, Text &text);
-    void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, Text &text, bool submenuSelected = false);
+    void render(std::pair<int, int> position, std::pair<int, int> optionRectangleSize, std::pair<int, int> suboptionRectangleSize, float opacity);
+    void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected = false);
 
   public:
-    Options(std::pair<int, int> viewport);
+    Options();
 
     bool addOption(int id, std::string name);
     bool addSuboption(int parentId, int id, std::string name);
     bool updateSelection(bool show, int activeOptionId, int activeSuboptionId, int selectedOptionId, int selectedSuboptionId);
     void clearOptions();
-    void render(Text &text);
-    void renderIcon(Text &text);
+    void render();
+    void renderIcon();
     int getMaxTextLength() { return maxTextLength; }
     float getOpacity() { return opacity; }
     void setOpacity(float opacity) { this->opacity = opacity; }

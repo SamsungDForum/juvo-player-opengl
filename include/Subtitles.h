@@ -8,7 +8,6 @@
 
 class Subtitles {
 private:
-  std::pair<int, int> viewport;
   std::chrono::time_point<std::chrono::high_resolution_clock> start;
   std::chrono::milliseconds duration;
   std::string subtitle;
@@ -16,9 +15,8 @@ private:
   bool showForOneFrame;
 
 public:
-  Subtitles(std::pair<int, int> viewport);
-  void setViewport(const std::pair<int, int> &viewport);
-  void render(Text &text);
+  Subtitles();
+  void render();
   void showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle); // duration == 0 means "show it just for next frame"
 };
 

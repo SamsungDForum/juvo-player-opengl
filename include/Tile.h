@@ -16,11 +16,8 @@
 class Tile {
 private:
   int id;
-  GLuint programObject = GL_INVALID_VALUE;
-  GLuint textureFormat = GL_INVALID_VALUE;
   std::pair<int, int> position;
   std::pair<int, int> size;
-  std::pair<int, int> viewport;
   float zoom;
   float opacity;
   std::string name;
@@ -28,23 +25,25 @@ private:
 
   TileAnimation animation;
   GLuint textureId = GL_INVALID_VALUE;
+  GLuint textureFormat = GL_INVALID_VALUE;
 
-  GLuint tileSizeLoc     = GL_INVALID_VALUE;
-  GLuint tilePositionLoc = GL_INVALID_VALUE;
-  GLuint frameColorLoc   = GL_INVALID_VALUE;
-  GLuint frameWidthLoc   = GL_INVALID_VALUE;
-  GLuint samplerLoc      = GL_INVALID_VALUE;
-  GLuint posLoc          = GL_INVALID_VALUE;
-  GLuint texLoc          = GL_INVALID_VALUE;
-  GLuint opacityLoc      = GL_INVALID_VALUE;
+  static int staticTileObjectCount;
+  static GLuint programObject;
+  static GLuint tileSizeLoc;
+  static GLuint tilePositionLoc;
+  static GLuint frameColorLoc;
+  static GLuint frameWidthLoc;
+  static GLuint samplerLoc;
+  static GLuint posLoc;
+  static GLuint texLoc;
+  static GLuint opacityLoc;
 
   void initTexture();
   void initGL();
-  void checkShaderCompileError(GLuint shader);
 
 public:
-  Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat);
-  Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, float zoom, float opacity, std::string name, std::string description);
+  Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat);
+  Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, float zoom, float opacity, std::string name, std::string description);
   Tile(int tileId);
   ~Tile();
   Tile(Tile &) = delete; // no copy constructor
@@ -52,7 +51,7 @@ public:
   Tile& operator=(Tile&&) = delete;
   Tile(Tile &&other);
 
-  void render(Text &text);
+  void render();
   void setTexture(char *pixels, std::pair<int, int> size, GLuint format);
   void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce = 0);
 
@@ -72,8 +71,6 @@ public:
   std::string getName() { return name; }
   std::string getDescription() { return description; }
   void setDescription(const std::string &description) { this->description = description; }
-  void setViewportSize(const std::pair<int, int> &viewport) { this->viewport = viewport; }
-  void setViewportSize(int viewportWidth, int viewportHeight) { viewport.first = viewportWidth; viewport.second = viewportHeight; }
   int getTextureId() { return textureId; }
   void setZoom(float zoom) { this->zoom = zoom; }
   void setOpacity(float opacity) { this->opacity = opacity; }

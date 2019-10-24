@@ -24,8 +24,19 @@
 #include "log.h"
 
 class Text {
-private:
 
+private:
+  Text();
+  ~Text();
+  Text(const Text&) = delete;
+  Text& operator=(const Text&) = delete;
+public:
+  static Text& instance() {
+    static Text text;
+    return text;
+  }
+
+private:
   const int CHARS = 128;
   const std::pair<int, int> charRange = {0, CHARS};
   const std::chrono::milliseconds textureGCTimeout = std::chrono::milliseconds(1000);
@@ -91,26 +102,23 @@ private:
   std::unordered_map<TextKey, TextTexture, TextKey> generatedTextures;
 
   void prepareShaders();
-  void checkShaderCompileError(GLuint shader);
   std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
   void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f, bool invertVerticalAdvance = false);
   void breakLines(std::string &text, int fontId, float w, float scale = 1.0f);
-  float getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport);
+  float getScale(const std::pair<int, int> &size, int fontId, std::pair<int, int> viewport);
   TextTexture getTextTexture(const std::string &text, int fontId, bool cache);
-  void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color);
-  void renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
-  void renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color);
+  void renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache);
+  void renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache);
   inline bool validFontId(int fontId) {
     return fontId >= 0 && static_cast<int>(fonts.size()) <= fontId;
   }
   void deleteUnusedTextures();
 
 public:
-  Text();
-  ~Text();
   int AddFont(char *data, int size, int fontsize);
-  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId, const std::pair<int, int> &viewport);
-  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache);
+  std::pair<float, float> getTextSize(const std::string &text, const std::pair<int, int> &size, int fondId);
+  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache);
   bool removeFromCache(std::string text, int fontId);
   int getFontDefaultSize(int fontId);
   int getFontDefaultHeight(int fontId);

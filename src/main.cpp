@@ -84,7 +84,7 @@ void Create()
 {
   if(menu != nullptr)
     delete menu;
-  menu = new Menu({1920, 1080});
+  menu = new Menu();
 }
 
 void Terminate()

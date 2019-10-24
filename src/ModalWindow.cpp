@@ -1,4 +1,6 @@
 #include "ModalWindow.h"
+#include "ProgramBuilder.h"
+#include "Settings.h"
 
 ModalWindow::ModalWindow()
     : programObject(GL_INVALID_VALUE),
@@ -18,54 +20,14 @@ ModalWindow::~ModalWindow() {
 
 void ModalWindow::initialize() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;   \n"
-    "void main()                  \n"
-    "{                            \n"
-    "   gl_Position = a_position; \n"
-    "}                            \n";
+#include "shaders/modalWindow.vert"
+;
 
-  const GLchar* fShaderTexStr =  
-    "precision highp float;                               \n"
-    "                                                     \n"
-    "#define FG vec4(u_color, 0.9 * u_opacity)            \n"
-    "#define BG vec4(0.0, 0.0, 0.0, 0.9 * u_opacity)      \n"
-    "                                                     \n"
-    "const int VALUES = 100;                              \n"
-    "                                                     \n"
-    "uniform vec2 u_position;                             \n"
-    "uniform vec2 u_size;                                 \n"
-    "uniform vec3 u_color;                                \n"
-    "uniform float u_opacity;                             \n"
-    "                                                     \n"
-    "void main()                                          \n"
-    "{                                                    \n"
-    "  gl_FragColor = BG;                                 \n"
-    "                                                     \n"
-    "  if(gl_FragCoord.y <= u_position.y + 1.0            \n"
-    "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0 \n"
-    "  || gl_FragCoord.x <= u_position.x + 1.0            \n"
-    "  || gl_FragCoord.x >= u_position.x + u_size.x - 1.0 \n"
-    "  )                                                  \n"
-    "    gl_FragColor = vec4(u_color, 0.75 * u_opacity);  \n"
-    "}                                                    \n";
+  const GLchar* fShaderTexStr = 
+#include "shaders/modalWindow.frag"
+;
 
-  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
-  glCompileShader(vertexShader);
-  checkShaderCompileError(vertexShader);
-
-  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fShaderTexStr, NULL);
-  glCompileShader(fragmentShader);
-  checkShaderCompileError(fragmentShader);
-
-  programObject = glCreateProgram();
-  glAttachShader(programObject, vertexShader);
-  glAttachShader(programObject, fragmentShader);
-  glLinkProgram(programObject);
-
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
+  programObject = ProgramBuilder::buildProgram(vShaderTexStr, fShaderTexStr);
 
   posALoc = glGetAttribLocation(programObject, "a_position");
   posLoc = glGetUniformLocation(programObject, "u_position");
@@ -74,41 +36,41 @@ void ModalWindow::initialize() {
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
 }
 
-void ModalWindow::render(Text &text, std::pair<int, int> viewport, int fontId) {
+void ModalWindow::render(int fontId) { // TODO: remove fontId arg?
   if(!visible)
     return;
 
-  int windowWidth = viewport.first / 2;
+  renderRectangle(position, size);
+  renderContent();
+}
+
+void ModalWindow::calculateParams() {
+  int windowWidth = Settings::viewport.first / 2;
   std::pair<int,int> margin = {10, 10};
-
   std::pair<int, int> size = {windowWidth,
-                              viewport.second / 2.5};
-  std::pair<int, int> position = {(viewport.first - size.first) / 2,
-                                  (viewport.second - size.second) / 2};
-
-  renderRectangle(position, size, viewport);
+                              Settings::viewport.second / 2.5};
+  std::pair<int, int> position = {(Settings::viewport.first - size.first) / 2,
+                                  (Settings::viewport.second - size.second) / 2};
 
   Params params {
-    .text = text,
     .title = TextParams {
-      .fontId = fontId,
+      .fontId = 0, // TODO: get font id?
       .fontSize = 52,
       .text = title,
-      .position = {0, 0},
-      .size = {1, 1},
+      .position = {0, 0}, // TODO: remove?
+      .size = {1, 1}, // TODO: remove?
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     },
     .body = TextParams {
-      .fontId = fontId,
+      .fontId = 0, // TODO: get font id?
       .fontSize = 26,
-      .text = body,
-      .position = {0, 0},
-      .size = {1, 1},
+      .text = body, // TODO: remove?
+      .position = {0, 0}, // TODO: remove?
+      .size = {1, 1}, // TODO: remove?
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     },
     .lineWidth = size.first - 2 * margin.first,
 
-    .viewport = viewport,
     .window = WindowParams {
       .position = position,
       .size = size,
@@ -116,29 +78,28 @@ void ModalWindow::render(Text &text, std::pair<int, int> viewport, int fontId) {
     },
 
     .buttonWindow = WindowParams {
-      .position = {0, 0},
-      .size = {1, 1},
+      .position = {0, 0}, // TODO: remove?
+      .size = {1, 1}, // TODO: remove?
       .margin = {0, 0}
     },
     .buttonText = TextParams {
-      .fontId = fontId,
+      .fontId = 0, // TODO: get font id?
       .fontSize = 26,
       .text = button,
-      .position = {0, 0},
-      .size = {1, 1},
+      .position = {0, 0}, // TODO: remove?
+      .size = {1, 1}, // TODO: remove?
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     }
   };
 
-  calculateElementsPositions(params);
-  renderContent(params);
+  calculateElementsPositions();
 }
 
-void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport) {
-  float down  = static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
+void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, int> size) {
+  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -147,53 +108,43 @@ void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, i
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
   glUseProgram(programObject);
-
   glEnableVertexAttribArray(posALoc);
   glVertexAttribPointer(posALoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
   glUniform2f(posLoc, static_cast<float>(position.first), static_cast<float>(position.second));
   glUniform2f(sizLoc, static_cast<float>(size.first), static_cast<float>(size.second));
   glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
-
   glUniform1f(opaLoc, 1.0f);
-
-  glEnable(GL_BLEND);
-  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-  glUseProgram(0);
+  glDisableVertexAttribArray(posALoc);
+  glUseProgram(GL_INVALID_VALUE);
 }
 
-void ModalWindow::renderContent(Params &params) {
-  renderTitle(params);
-  renderBody(params);
-  renderButton(params);
+void ModalWindow::renderContent() {
+  renderTitle();
+  renderBody();
+  renderButton();
 }
 
-void ModalWindow::calculateElementsPositions(Params &params) {
-  params.title.size = getTextSize(params.text,
-                                  params.title.text,
+void ModalWindow::calculateElementsPositions() {
+  params.title.size = getTextSize(params.title.text,
                                   params.lineWidth,
                                   params.title.fontSize,
-                                  params.title.fontId,
-                                  params.viewport);
-  params.body.size = getTextSize(params.text,
-                                 params.body.text,
+                                  params.title.fontId);
+  params.body.size = getTextSize(params.body.text,
                                  params.lineWidth,
                                  params.body.fontSize,
-                                 params.body.fontId,
-                                 params.viewport);
+                                 params.body.fontId);
   params.title.position = {params.window.position.first + (params.window.size.first - params.title.size.first) / 2,
                            (params.window.position.second + params.window.size.second) - params.window.margin.second - params.title.fontSize};
   params.body.position = {params.window.position.first + (params.window.size.first - params.body.size.first) / 2,
                           params.window.position.second + (params.window.size.second + params.body.size.second) / 2 - params.body.fontSize};
-  params.buttonText.size = getTextSize(params.text,
-                                       params.buttonText.text,
+  params.buttonText.size = getTextSize(params.buttonText.text,
                                        params.lineWidth,
                                        params.buttonText.fontSize,
-                                       params.buttonText.fontId,
-                                       params.viewport);
+                                       params.buttonText.fontId);
   params.buttonWindow.size = {params.buttonText.size.first + 4 * params.buttonText.fontSize,
                               params.buttonText.size.second + 2 * params.buttonText.fontSize};
   params.buttonWindow.position = {params.window.position.first + (params.window.size.first - params.buttonWindow.size.first) / 2,
@@ -202,46 +153,41 @@ void ModalWindow::calculateElementsPositions(Params &params) {
                                 params.buttonWindow.position.second + (params.buttonWindow.size.second + params.buttonText.size.second) / 2 - params.buttonText.fontSize};
 }
 
-void ModalWindow::renderTitle(Params &params) {
-  params.text.render(params.title.text,
+void ModalWindow::renderTitle() {
+  Text::instance().render(params.title.text,
                      params.title.position,
                      {params.lineWidth, params.title.fontSize},
-                     params.viewport,
                      params.title.fontId,
                      params.title.color,
                      true);
 }
 
-void ModalWindow::renderBody(Params &params) {
-  params.text.render(params.body.text,
+void ModalWindow::renderBody() {
+  Text::instance().render(params.body.text,
                      params.body.position,
                      {params.lineWidth, params.body.fontSize},
-                     params.viewport,
                      params.body.fontId,
                      params.body.color,
                      true);
 }
 
-void ModalWindow::renderButton(Params &params) {
+void ModalWindow::renderButton() {
   renderRectangle(params.buttonWindow.position,
-                  params.buttonWindow.size,
-                  params.viewport);
-  params.text.render(params.buttonText.text,
+                  params.buttonWindow.size);
+  Text::instance().render(params.buttonText.text,
                      params.buttonText.position,
                      {params.lineWidth, params.buttonText.fontSize},
-                     params.viewport,
                      params.buttonText.fontId,
                      params.buttonText.color,
                      true);
 }
 
-std::pair<int, int> ModalWindow::getTextSize(Text &text, std::string s, int lineWidth, int fontHeight, int fontId, std::pair<int, int> viewport) {
-  std::pair<float, float> size = text.getTextSize(s,
+std::pair<int, int> ModalWindow::getTextSize(std::string s, int lineWidth, int fontHeight, int fontId) {
+  std::pair<float, float> size = Text::instance().getTextSize(s,
                                                   {lineWidth, fontHeight},
-                                                  fontId,
-                                                  viewport);
-  return {size.first * static_cast<float>(viewport.first) / 2.0f,
-          size.second * static_cast<float>(viewport.second) / 2.0f};
+                                                  fontId);
+  return {size.first * static_cast<float>(Settings::viewport.first) / 2.0f,
+          size.second * static_cast<float>(Settings::viewport.second) / 2.0f};
 }
 
 void ModalWindow::show(std::string title, std::string body, std::string button) {
@@ -249,6 +195,7 @@ void ModalWindow::show(std::string title, std::string body, std::string button) 
   this->body = body;
   this->button = button;
   visible = true;
+  calculateParams();
 }
 
 void ModalWindow::hide() {
@@ -257,20 +204,5 @@ void ModalWindow::hide() {
 
 bool ModalWindow::isVisible() {
   return visible;
-}
-
-void ModalWindow::checkShaderCompileError(GLuint shader) {
-  GLint isCompiled = 0;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-  if(isCompiled == GL_FALSE) {
-    GLint maxLength = 0;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-    std::vector<GLchar> errorLog(maxLength);
-    glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
-    _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
-
-    glDeleteShader(shader);
-  }
 }
 

@@ -25,13 +25,12 @@ private:
   const int VALUES = 100;
 
   void initialize();
-  void checkShaderCompileError(GLuint shader);
   inline float clamp(const float v, const float lo, const float hi) { return v < lo ? lo : v > hi ? hi : v; }
 
 public:
   Graph();
   ~Graph();
-  void render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size, const std::pair<int, int> &viewport);
+  void render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size);
 };
 
 #endif // _GRAPH_H_

@@ -19,7 +19,6 @@ class Background {
 private:
   GLuint programObject = GL_INVALID_VALUE;
   GLuint textureFormat = GL_INVALID_VALUE;
-  std::pair<int, int> viewport;
   float opacity;
   float black;
   Tile *sourceTile;
@@ -34,16 +33,15 @@ private:
   GLuint viewportLoc = GL_INVALID_VALUE;
 
   void initGL();
-  void checkShaderCompileError(GLuint shader);
+  void renderText();
 
 public:
   Background();
-  Background(std::pair<int, int> viewport, float opacity);
+  Background(float opacity);
   ~Background();
-  void render(Text &text);
+  void render();
   void setOpacity(float opacity);
   void setBlack(float black);
-  void setViewport(std::pair<int, int> viewport);
   void setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay);
   void setClearColor(std::vector<float> color);
   float getOpacity();

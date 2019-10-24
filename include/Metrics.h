@@ -38,7 +38,6 @@ private:
   };
   const int framerateId = 0;
 
-  const std::pair<int, int> viewport;
   Graph graph;
   LogConsole logConsole;
   bool logConsoleVisible;
@@ -46,8 +45,8 @@ private:
   std::vector<std::unique_ptr<Trace>> traces;
 
 public:
-  Metrics(std::pair<int, int> viewport);
-  void render(Text &text);
+  Metrics();
+  void render();
   int addGraph(std::string tag, float minVal, float maxVal, int valuesMaxCount);
   void setGraphVisibility(int graphId, bool visible);
   void updateGraphValues(int graphId, std::vector<float> values);

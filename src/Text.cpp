@@ -1,12 +1,14 @@
 #include "Text.h"
+#include "ProgramBuilder.h"
+#include "Settings.h"
 
-void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache) {
   if(validFontId(fontId))
     return;
   if(!renderingMode)
-    renderDirect(text, position, size, viewport, fontId, color, cache);
+    renderDirect(text, position, size, fontId, color, cache);
   else
-    renderCached(text, position, size, viewport, fontId, color, cache);
+    renderCached(text, position, size, fontId, color, cache);
 }
 
 Text::Text()
@@ -26,14 +28,8 @@ Text::~Text() {
 void Text::prepareShaders() {
 
   const GLchar* vShaderTexStr =
-    "attribute vec4 a_position;  \n"
-    "attribute vec2 a_texCoord;  \n"
-    "varying vec2 v_texCoord;    \n"
-    "void main()                 \n"
-    "{                           \n"
-    "  v_texCoord = a_texCoord;  \n"
-    "  gl_Position = a_position; \n"
-    "}                           \n";
+#include "shaders/textRenderer.vert"
+;
 
   const GLchar* fShaderTexStr =
     "precision mediump float;                                              \n"
@@ -48,39 +44,13 @@ void Text::prepareShaders() {
     "                 * vec4(u_color, 1.0);                                \n"
     "}                                                                     \n";
 
-  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
-  glCompileShader(vertexShader);
-  checkShaderCompileError(vertexShader);
-
-  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fShaderTexStr, NULL);
-  glCompileShader(fragmentShader);
-  checkShaderCompileError(fragmentShader);
-
-  programObject = glCreateProgram();
-  glAttachShader(programObject, vertexShader);
-  glAttachShader(programObject, fragmentShader);
-  glLinkProgram(programObject);
-
-  glDeleteShader(fragmentShader);
-  glDeleteShader(vertexShader);
+  programObject = ProgramBuilder::buildProgram(vShaderTexStr, fShaderTexStr);
 
   samplerLoc = glGetUniformLocation(programObject, "s_texture");
   colLoc = glGetUniformLocation(programObject, "u_color");
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
   posLoc = glGetAttribLocation(programObject, "a_position");
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
-
-  const GLchar* vShaderTexStr2 =
-    "attribute vec4 a_position;  \n"
-    "attribute vec2 a_texCoord;  \n"
-    "varying vec2 v_texCoord;    \n"
-    "void main()                 \n"
-    "{                           \n"
-    "  v_texCoord = a_texCoord;  \n"
-    "  gl_Position = a_position; \n"
-    "}                           \n";
 
   const GLchar* fShaderTexStr2 =
     "precision mediump float;                          \n"
@@ -94,23 +64,7 @@ void Text::prepareShaders() {
     "                 * vec4(u_color, u_opacity);      \n"
     "}                                                 \n";
 
-  GLuint vertexShader2 = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader2, 1, &vShaderTexStr2, NULL);
-  glCompileShader(vertexShader2);
-  checkShaderCompileError(vertexShader2);
-
-  GLuint fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader2, 1, &fShaderTexStr2, NULL);
-  glCompileShader(fragmentShader2);
-  checkShaderCompileError(fragmentShader2);
-
-  programObject2 = glCreateProgram();
-  glAttachShader(programObject2, vertexShader2);
-  glAttachShader(programObject2, fragmentShader2);
-  glLinkProgram(programObject2);
-
-  glDeleteShader(vertexShader2);
-  glDeleteShader(fragmentShader2);
+  programObject2 = ProgramBuilder::buildProgram(vShaderTexStr, fShaderTexStr2);
 
   samplerLoc2 = glGetUniformLocation(programObject2, "s_texture");
   colLoc2 = glGetUniformLocation(programObject2, "u_color");
@@ -183,19 +137,19 @@ int Text::AddFont(char *data, int size, int fontsize) {
   return fonts.size() - 1;
 }
 
-float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
+float Text::getScale(const std::pair<int, int> &size, int fontId, std::pair<int, int> viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
   if(validFontId(fontId))
     return 1.0;
-  if(viewport.second == 0 || fonts[fontId].height == 0)
+  if(Settings::viewport.second == 0 || fonts[fontId].height == 0)
     return 1.0;
-  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(viewport.second);
+  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(Settings::viewport.second);
 }
 
-std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns text size in range [0.0, 2.0]
+std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId) { // returns text size in range [0.0, 2.0]
   if(validFontId(fontId))
     return {0.0f, 0.0f};
-  float scale = getScale(size, fontId, viewport);
-  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
+  float scale = getScale(size, fontId, Settings::viewport);
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::viewport.first) - fonts[fontId].max_bearingx * scale;
   std::string t = text;
   breakLines(t, fontId, textMaxWidth, scale); 
   return getTextSize(t, fontId, scale);
@@ -262,20 +216,20 @@ void Text::breakLines(std::string &text, int fontId, float w, float scale) {
   }
 }
 
-void Text::renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+void Text::renderCached(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache) {
   if(validFontId(fontId))
     return;
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
-  float scale = getScale(size, fontId, viewport);
-  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
+  float scale = getScale(size, fontId, Settings::viewport);
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::viewport.first) - fonts[fontId].max_bearingx * scale;
   if(size.first > 0)
     breakLines(text, fontId, textMaxWidth, scale);
 
   TextTexture textTexture = getTextTexture(text, fontId, cache);
 
-  renderTextTexture(textTexture, position, size, viewport, color);
+  renderTextTexture(textTexture, position, size, color);
 
   if(!cache)
     glDeleteTextures(1, &textTexture.textureId);
@@ -489,7 +443,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   glDeleteRenderbuffers(1, &depthRenderbuffer);
   glDeleteFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, 1920, 1080); // restore previous viewport
+  glViewport(0, 0, Settings::viewport.first, Settings::viewport.second); // restore previous viewport
 
   TextTexture tt {.textureId = texture,
                   .width = static_cast<GLuint>(texSize.first),
@@ -501,15 +455,15 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   return tt;
 }
 
-void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, std::vector<float> color) {
+void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color) {
   if(textTexture.textureId == GL_INVALID_VALUE) {
     _INFO("INVALID TEXT TEXTURE");
     return;
   }
 
-  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f,
-                                         static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f};
-  float scale = getScale(size, textTexture.fontId, viewport);
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f,
+                                         static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f};
+  float scale = getScale(size, textTexture.fontId, Settings::viewport);
   float lineHeight = -fonts[textTexture.fontId].height * scale;
 
   float left = startingPos.first;
@@ -549,7 +503,7 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
   glUseProgram(0);
 }
 
-void Text::renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, std::pair<int, int> viewport, int fontId, std::vector<float> color, bool cache) {
+void Text::renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache) {
   if(validFontId(fontId))
     return;
   bool alignedToOrigin = false; // can be used as a function parameter
@@ -557,14 +511,14 @@ void Text::renderDirect(std::string text, std::pair<int, int> position, std::pai
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
-  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f,
-                                         static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f};
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f,
+                                         static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f};
 
-  float scale = getScale(size, fontId, viewport);
+  float scale = getScale(size, fontId, Settings::viewport);
   startingPos.first += fonts[fontId].max_bearingx * scale;
   startingPos.second += (alignedToOrigin ? 0 : fonts[fontId].max_descend) * scale;
 
-  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(viewport.first) - fonts[fontId].max_bearingx * scale;
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::viewport.first) - fonts[fontId].max_bearingx * scale;
   if(size.first > 0)
     breakLines(text, fontId, textMaxWidth, scale);
 
@@ -605,7 +559,7 @@ void Text::renderDirect(std::string text, std::pair<int, int> position, std::pai
       glUniform1i(samplerLoc, 0);
 
       if(shadowMode != Shadow::None) {
-        float aspectRatio = static_cast<float>(viewport.second) / static_cast<float>(viewport.first);
+        float aspectRatio = static_cast<float>(Settings::viewport.second) / static_cast<float>(Settings::viewport.first);
         std::pair<float, float> outlineOffset = {2.0 * scale * aspectRatio, 2.0 * scale};
 
 
@@ -687,22 +641,6 @@ void Text::renderDirect(std::string text, std::pair<int, int> position, std::pai
   glUseProgram(0);
 }
 
-void Text::checkShaderCompileError(GLuint shader) {
-  GLint isCompiled = 0;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-  if(isCompiled == GL_FALSE) {
-    GLint maxLength = 0;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-    std::vector<GLchar> errorLog(maxLength);
-    glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
-    _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
-
-    glDeleteShader(shader); // Don't leak.
-  }
-}
-
-
 int Text::getFontDefaultSize(int fontId) {
   if(validFontId(fontId))
     return fonts[fontId].size;
@@ -714,7 +652,6 @@ int Text::getFontDefaultHeight(int fontId) {
     return fonts[fontId].height;
   return 1;
 }
-
 
 void Text::deleteUnusedTextures() {
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
