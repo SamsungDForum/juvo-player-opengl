@@ -55,19 +55,19 @@ void ModalWindow::calculateParams() {
 
   Params params {
     .title = TextParams {
-      .fontId = 0, // TODO: get font id?
+      .fontId = 0,
       .fontSize = 52,
       .text = title,
-      .position = {0, 0}, // TODO: remove?
-      .size = {1, 1}, // TODO: remove?
+      .position = {0, 0},
+      .size = {1, 1},
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     },
     .body = TextParams {
-      .fontId = 0, // TODO: get font id?
+      .fontId = 0,
       .fontSize = 26,
-      .text = body, // TODO: remove?
-      .position = {0, 0}, // TODO: remove?
-      .size = {1, 1}, // TODO: remove?
+      .text = body,
+      .position = {0, 0},
+      .size = {1, 1},
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     },
     .lineWidth = size.first - 2 * margin.first,
@@ -79,16 +79,16 @@ void ModalWindow::calculateParams() {
     },
 
     .buttonWindow = WindowParams {
-      .position = {0, 0}, // TODO: remove?
-      .size = {1, 1}, // TODO: remove?
+      .position = {0, 0},
+      .size = {1, 1},
       .margin = {0, 0}
     },
     .buttonText = TextParams {
-      .fontId = 0, // TODO: get font id?
+      .fontId = 0,
       .fontSize = 26,
       .text = button,
-      .position = {0, 0}, // TODO: remove?
-      .size = {1, 1}, // TODO: remove?
+      .position = {0, 0},
+      .size = {1, 1},
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     }
   };
