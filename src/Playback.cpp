@@ -19,11 +19,12 @@ Playback::Playback()
     bufferingPercent(0.0f),
     seeking(false),
     lastUpdate(std::chrono::high_resolution_clock::now()),
-    progressBarSize({0.72917 * Settings::instance().viewport.first, 0.02965 * Settings::instance().viewport.second}), // 1400 x 32
-    progressBarMarginBottom(0.0927 * Settings::instance().viewport.second - progressBarSize.second / 2), // 100 - 32 / 2
+    progressUiLineLevel(100),
+    progressBarSizePx({1400.0f, 20.0f}),
+    progressBarSize({progressBarSizePx.first / 1920.0f * Settings::instance().viewport.first, progressBarSizePx.second / 1080.0f * Settings::instance().viewport.second}),
+    progressBarMarginBottom(progressUiLineLevel / 1080.0f * Settings::instance().viewport.second - progressBarSize.second / 2.0f),
     dotScale(1.5f),
-    iconSize({64, 64}),
-    progressUiLineLevel(100) {
+    iconSize({64, 64}) {
   initialize();
 }
 
@@ -182,7 +183,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
     glUniform3f(colIconLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opacityIconLoc, static_cast<GLfloat>(opacity));
   glUniform3f(shadowColIconLoc, 0.0f, 0.0f, 0.0f);
-  glUniform2f(shadowOffIconLoc, -1.0f / size.first, 1.0f / size.second);
+  glUniform2f(shadowOffIconLoc, -1.0f / size.first, -1.0f / size.second);
 
   if(color.size() >= 3)
     glUniform3f(colBloomIconLoc, color[0], color[1], color[2]);

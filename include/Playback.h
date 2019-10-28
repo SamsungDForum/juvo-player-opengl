@@ -64,11 +64,12 @@ private:
   bool seeking;
   std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
 
+  const int progressUiLineLevel = 100;
+  std::pair<float, float> progressBarSizePx;
   std::pair<int, int> progressBarSize;
   const int progressBarMarginBottom;
   const float dotScale;
   std::pair<int, int> iconSize;
-  const int progressUiLineLevel = 100;
 
   GLuint posBarLoc         = GL_INVALID_VALUE; 
   GLuint paramBarLoc       = GL_INVALID_VALUE; 
