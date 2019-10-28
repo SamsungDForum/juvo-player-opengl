@@ -5,16 +5,26 @@
 #include <chrono>
 
 class Settings {
+private:
+  Settings();
+  ~Settings() = default;
+  Settings(const Settings&) = delete;
+  Settings& operator=(const Settings&) = delete;
 public:
-  static std::pair<int, int> viewport;
-  static const std::pair<int, int> tileSize;
-  static const std::pair<int, int> tilesArrangement;
-  static const float marginFromBottom;
-  static const float zoom;
-  static const std::chrono::milliseconds fadingDuration;
-  static const std::chrono::milliseconds animationDuration;
-  static const bool bouncing;
-  static const float sideMargin;
+  static Settings& instance() {
+    static Settings settings;
+    return settings;
+  }
+
+  std::pair<int, int> viewport;
+  const std::pair<int, int> tileSize;
+  const std::pair<int, int> tilesArrangement;
+  const float marginFromBottom;
+  const float zoom;
+  const std::chrono::milliseconds fadingDuration;
+  const std::chrono::milliseconds animationDuration;
+  const bool bouncing;
+  const float sideMargin;
 };
 
 #endif // _SETTINGS_H_

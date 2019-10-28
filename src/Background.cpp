@@ -1,6 +1,9 @@
 #include "Background.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Text.h"
+
+#include <string>
 
 Background::Background()
   : programObject(GL_INVALID_VALUE),
@@ -73,7 +76,7 @@ void Background::render() {
   if(!updated.empty())
     black = animation.update()[0];
   glUniform1f(blackLoc, static_cast<GLfloat>(black));
-  glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::viewport.first), static_cast<GLfloat>(Settings::viewport.second));
+  glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.first), static_cast<GLfloat>(Settings::instance().viewport.second));
 
   glBindTexture(GL_TEXTURE_2D, textureId);
   glUniform1i(samplerLoc, 0);
@@ -99,27 +102,27 @@ void Background::renderText() {
   if(!name.empty()) {
     int fontHeight = 52;
     int leftText = 100;
-    int topText = Settings::viewport.second - fontHeight - 200;
+    int topText = Settings::instance().viewport.second - fontHeight - 200;
     Text::instance().render(name,
                 {leftText, topText},
-                {Settings::viewport.first - 2 * leftText, fontHeight},
+                {Settings::instance().viewport.first - 2 * leftText, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, opacity},
                 true);
 
     textLineOffset = Text::instance().getTextSize(name,
-                                      {Settings::viewport.first - 2 * leftText, fontHeight},
+                                      {Settings::instance().viewport.first - 2 * leftText, fontHeight},
                                       0
-                     ).second * static_cast<float>(Settings::viewport.first) / 2.0f;
+                     ).second * static_cast<float>(Settings::instance().viewport.first) / 2.0f;
   }
   std::string description = sourceTile != nullptr ? sourceTile->getDescription() : "";
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
-    int topText = Settings::viewport.second - fontHeight - 200 - textLineOffset;
+    int topText = Settings::instance().viewport.second - fontHeight - 200 - textLineOffset;
     Text::instance().render(description,
                 {leftText, topText},
-                {Settings::viewport.first - 2 * leftText, fontHeight},
+                {Settings::instance().viewport.first - 2 * leftText, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, opacity},
                 true);

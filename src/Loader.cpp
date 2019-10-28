@@ -1,6 +1,7 @@
 #include "Loader.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Text.h"
 
 Loader::Loader()
   : programObject(GL_INVALID_VALUE),
@@ -49,12 +50,12 @@ void Loader::render() {
   std::chrono::duration<float, std::milli> timespan = now - time;
 
   std::pair<int, int> size = {1074, 70};
-  std::pair<int, int> position = {(Settings::viewport.first - size.first) / 2, (Settings::viewport.second - size.second) / 2};
+  std::pair<int, int> position = {(Settings::instance().viewport.first - size.first) / 2, (Settings::instance().viewport.second - size.second) / 2};
 
-  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
+  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
 
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
@@ -80,7 +81,7 @@ void Loader::render() {
   glUniform1f(paramLoc, paramArg);
 
   glUniform1f(opacityLoc, 1.0f);
-  glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::viewport.first), static_cast<GLfloat>(Settings::viewport.second));
+  glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.first), static_cast<GLfloat>(Settings::instance().viewport.second));
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
@@ -92,8 +93,8 @@ void Loader::render() {
 
 void Loader::renderText(float t) {
   int fontHeight = 48;
-  int textLeft = (Settings::viewport.first - Text::instance().getTextSize("Loading... 0%", {0, fontHeight}, 0).first * Settings::viewport.first / 2.0) / 2;
-  int textDown = Settings::viewport.second / 2 - 100;
+  int textLeft = (Settings::instance().viewport.first - Text::instance().getTextSize("Loading... 0%", {0, fontHeight}, 0).first * Settings::instance().viewport.first / 2.0) / 2;
+  int textDown = Settings::instance().viewport.second / 2 - 100;
   float d = (int)t > 0 && ((int)t + 1) % 2 == 0 ? t - (int)t : 0; // fract(t) if t is odd, otherwise 0
   float a = (cos(d * 20 / M_PI) + 1.0) / 2.0;
   Text::instance().render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"),
@@ -104,8 +105,8 @@ void Loader::renderText(float t) {
               true);
 
   fontHeight *= 1.5;
-  textLeft = (Settings::viewport.first - Text::instance().getTextSize("JuvoPlayer", {0, fontHeight}, 0).first * Settings::viewport.first / 2.0) / 2;
-  textDown = Settings::viewport.second / 2 + 100;
+  textLeft = (Settings::instance().viewport.first - Text::instance().getTextSize("JuvoPlayer", {0, fontHeight}, 0).first * Settings::instance().viewport.first / 2.0) / 2;
+  textDown = Settings::instance().viewport.second / 2 + 100;
 
   Text::instance().render("JuvoPlayer",
               {textLeft, textDown},

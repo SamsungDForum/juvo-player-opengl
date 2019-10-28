@@ -1,5 +1,6 @@
 #include "Metrics.h"
 #include "Settings.h"
+#include "Text.h"
 
 Metrics::Metrics()
   : logConsoleVisible(false) {
@@ -18,8 +19,8 @@ void Metrics::render() {
     if(!traces[i]->visible)
       continue;
 
-    std::pair<int, int> position = {Settings::viewport.first - (size.first + margin.first),
-                                    Settings::viewport.second - (size.second + margin.second) * (rendered + 1)};
+    std::pair<int, int> position = {Settings::instance().viewport.first - (size.first + margin.first),
+                                    Settings::instance().viewport.second - (size.second + margin.second) * (rendered + 1)};
     graph.render({traces[i]->values.begin(), traces[i]->values.end()},
                  {traces[i]->minValue, traces[i]->maxValue},
                  position,
@@ -28,7 +29,7 @@ void Metrics::render() {
     int fontHeight = 26;
     std::pair<int, int> textMargin = {size.first, margin.second + size.second};
     Text::instance().render(traces[i]->tag + std::string(": ") + std::to_string(static_cast<int>(traces[i]->currentValue)) + std::string("/") + std::to_string(static_cast<int>(traces[i]->maxValue)),
-                {Settings::viewport.first - textMargin.first, Settings::viewport.second - textMargin.second - (size.second + margin.second) * rendered},
+                {Settings::instance().viewport.first - textMargin.first, Settings::instance().viewport.second - textMargin.second - (size.second + margin.second) * rendered},
                 {0, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, 1.0},
@@ -38,10 +39,10 @@ void Metrics::render() {
 
   if(logConsoleVisible) {
     int bottomMargin = margin.second * 3;
-    std::pair<int, int> position = {Settings::viewport.first - (size.first + margin.first),
+    std::pair<int, int> position = {Settings::instance().viewport.first - (size.first + margin.first),
                                     bottomMargin};
     std::pair<int, int> size2 = {size.first,
-                                 Settings::viewport.second - margin.second - bottomMargin - (size.second + margin.second) * rendered};
+                                 Settings::instance().viewport.second - margin.second - bottomMargin - (size.second + margin.second) * rendered};
     logConsole.render(position, size2, 0, 13);
   }
 }

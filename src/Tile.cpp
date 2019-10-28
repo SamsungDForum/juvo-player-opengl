@@ -1,6 +1,7 @@
 #include "Tile.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Text.h"
 
 int Tile::staticTileObjectCount = 0;
 GLuint Tile::programObject = GL_INVALID_VALUE;
@@ -158,10 +159,10 @@ void Tile::render() {
   float rightPx = (position.first + size.first) + (size.first / 2.0) * (zoom - 1.0);
   float downPx = position.second - (size.second / 2.0) * (zoom - 1.0);
   float topPx = (position.second + size.second) + (size.second / 2.0) * (zoom - 1.0);
-  float left = (leftPx / Settings::viewport.first) * 2.0 - 1.0;
-  float right = (rightPx / Settings::viewport.first) * 2.0 - 1.0;
-  float down = (downPx / Settings::viewport.second) * 2.0 - 1.0;
-  float top = (topPx / Settings::viewport.second) * 2.0 - 1.0;
+  float left = (leftPx / Settings::instance().viewport.first) * 2.0 - 1.0;
+  float right = (rightPx / Settings::instance().viewport.first) * 2.0 - 1.0;
+  float down = (downPx / Settings::instance().viewport.second) * 2.0 - 1.0;
+  float top = (topPx / Settings::instance().viewport.second) * 2.0 - 1.0;
 
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,

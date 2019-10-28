@@ -7,7 +7,6 @@
 #include <string>
 #include <memory>
 
-#include "Text.h"
 #include "Graph.h"
 #include "LogConsole.h"
 #include "log.h"

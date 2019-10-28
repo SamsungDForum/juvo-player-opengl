@@ -1,16 +1,16 @@
 #ifndef _MODALWINDOW_H_
 #define _MODALWINDOW_H_
 
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "log.h"
+
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
-
-#include <string>
-#include <utility>
-
-#include "Text.h"
-#include "log.h"
 
 class ModalWindow {
 private:

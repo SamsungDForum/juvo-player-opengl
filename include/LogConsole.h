@@ -10,8 +10,6 @@
 #include <utility>
 #include <deque>
 
-#include "Text.h"
-
 class LogConsole {
 private:
 

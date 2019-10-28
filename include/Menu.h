@@ -1,20 +1,15 @@
 #ifndef _MENU_H_
 #define _MENU_H_
 
-#include <cmath>
 #include <chrono>
 #include <cstdlib> // malloc
 #include <cstring> // memcpy
 #include <vector>
-
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
+#include <string>
+#include <utility>
 
 #include "CommonStructs.h"
 #include "Tile.h"
-#include "Text.h"
 #include "Loader.h"
 #include "Background.h"
 #include "Playback.h"

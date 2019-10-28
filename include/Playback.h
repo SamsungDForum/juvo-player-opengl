@@ -2,18 +2,17 @@
 #define _PLAYBACK_H_
 
 #include <chrono>
-#include <ctime>
 #include <vector>
 #include <utility>
+#include <string>
+
+#include "Animation.h"
+#include "log.h"
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
-
-#include "Text.h"
-#include "log.h"
-#include "Animation.h"
 
 class Playback {
 private:

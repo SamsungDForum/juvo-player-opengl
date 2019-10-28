@@ -1,9 +1,8 @@
 #ifndef _BACKGROUND_H_
 #define _BACKGROUND_H_
 
-#include <string>
 #include <chrono>
-#include <utility>
+#include <vector>
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
@@ -11,8 +10,6 @@
 #endif // _INCLUDE_GLES_
 
 #include "Tile.h"
-#include "Text.h"
-#include "log.h"
 #include "Animation.h"
 
 class Background {

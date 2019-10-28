@@ -1,6 +1,7 @@
 #include "ModalWindow.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Text.h"
 
 ModalWindow::ModalWindow()
     : programObject(GL_INVALID_VALUE),
@@ -45,12 +46,12 @@ void ModalWindow::render(int fontId) { // TODO: remove fontId arg?
 }
 
 void ModalWindow::calculateParams() {
-  int windowWidth = Settings::viewport.first / 2;
+  int windowWidth = Settings::instance().viewport.first / 2;
   std::pair<int,int> margin = {10, 10};
   std::pair<int, int> size = {windowWidth,
-                              Settings::viewport.second / 2.5};
-  std::pair<int, int> position = {(Settings::viewport.first - size.first) / 2,
-                                  (Settings::viewport.second - size.second) / 2};
+                              Settings::instance().viewport.second / 2.5};
+  std::pair<int, int> position = {(Settings::instance().viewport.first - size.first) / 2,
+                                  (Settings::instance().viewport.second - size.second) / 2};
 
   Params params {
     .title = TextParams {
@@ -96,10 +97,10 @@ void ModalWindow::calculateParams() {
 }
 
 void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, int> size) {
-  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
+  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -186,8 +187,8 @@ std::pair<int, int> ModalWindow::getTextSize(std::string s, int lineWidth, int f
   std::pair<float, float> size = Text::instance().getTextSize(s,
                                                   {lineWidth, fontHeight},
                                                   fontId);
-  return {size.first * static_cast<float>(Settings::viewport.first) / 2.0f,
-          size.second * static_cast<float>(Settings::viewport.second) / 2.0f};
+  return {size.first * static_cast<float>(Settings::instance().viewport.first) / 2.0f,
+          size.second * static_cast<float>(Settings::instance().viewport.second) / 2.0f};
 }
 
 void ModalWindow::show(std::string title, std::string body, std::string button) {

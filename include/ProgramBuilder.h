@@ -6,7 +6,7 @@
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
 
-#include "log.h"
+#include "log.h" // TODO: LogConsole? Everywhere?
 
 class ProgramBuilder {
 public:

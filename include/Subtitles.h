@@ -4,8 +4,6 @@
 #include <chrono>
 #include <string>
 
-#include "Text.h"
-
 class Subtitles {
 private:
   std::chrono::time_point<std::chrono::high_resolution_clock> start;

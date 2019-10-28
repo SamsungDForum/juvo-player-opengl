@@ -1,6 +1,7 @@
 #include "LogConsole.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Text.h"
 #include "log.h"
 
 LogConsole::LogConsole()
@@ -37,10 +38,10 @@ void LogConsole::initialize() {
 }
 
 void LogConsole::render(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
-  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f;
+  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
 
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
@@ -76,7 +77,7 @@ int LogConsole::getTextHeight(std::string s, int lineWidth, int fontHeight, int 
   return Text::instance().getTextSize(s,
                           {lineWidth, fontHeight},
                           fontId).second
-         * static_cast<float>(Settings::viewport.second) / 2.0f;
+         * static_cast<float>(Settings::instance().viewport.second) / 2.0f;
 }
 
 void LogConsole::renderLogs(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {

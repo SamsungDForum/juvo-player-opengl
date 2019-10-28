@@ -140,16 +140,16 @@ int Text::AddFont(char *data, int size, int fontsize) {
 float Text::getScale(const std::pair<int, int> &size, int fontId, std::pair<int, int> viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
   if(validFontId(fontId))
     return 1.0;
-  if(Settings::viewport.second == 0 || fonts[fontId].height == 0)
+  if(Settings::instance().viewport.second == 0 || fonts[fontId].height == 0)
     return 1.0;
-  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(Settings::viewport.second);
+  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(Settings::instance().viewport.second);
 }
 
 std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId) { // returns text size in range [0.0, 2.0]
   if(validFontId(fontId))
     return {0.0f, 0.0f};
-  float scale = getScale(size, fontId, Settings::viewport);
-  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::viewport.first) - fonts[fontId].max_bearingx * scale;
+  float scale = getScale(size, fontId, Settings::instance().viewport);
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::instance().viewport.first) - fonts[fontId].max_bearingx * scale;
   std::string t = text;
   breakLines(t, fontId, textMaxWidth, scale); 
   return getTextSize(t, fontId, scale);
@@ -222,8 +222,8 @@ void Text::renderCached(std::string text, std::pair<int, int> position, std::pai
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
-  float scale = getScale(size, fontId, Settings::viewport);
-  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::viewport.first) - fonts[fontId].max_bearingx * scale;
+  float scale = getScale(size, fontId, Settings::instance().viewport);
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::instance().viewport.first) - fonts[fontId].max_bearingx * scale;
   if(size.first > 0)
     breakLines(text, fontId, textMaxWidth, scale);
 
@@ -443,7 +443,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   glDeleteRenderbuffers(1, &depthRenderbuffer);
   glDeleteFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, Settings::viewport.first, Settings::viewport.second); // restore previous viewport
+  glViewport(0, 0, Settings::instance().viewport.first, Settings::instance().viewport.second); // restore previous viewport
 
   TextTexture tt {.textureId = texture,
                   .width = static_cast<GLuint>(texSize.first),
@@ -461,9 +461,9 @@ void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> positi
     return;
   }
 
-  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f,
-                                         static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f};
-  float scale = getScale(size, textTexture.fontId, Settings::viewport);
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f,
+                                         static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f};
+  float scale = getScale(size, textTexture.fontId, Settings::instance().viewport);
   float lineHeight = -fonts[textTexture.fontId].height * scale;
 
   float left = startingPos.first;
@@ -511,14 +511,14 @@ void Text::renderDirect(std::string text, std::pair<int, int> position, std::pai
   if(color.size() >= 4 && color[3] == 0.0f) // if the text is fully transparent, we don't have to render it
     return;
 
-  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(Settings::viewport.first) * 2.0f - 1.0f,
-                                         static_cast<float>(position.second) / static_cast<float>(Settings::viewport.second) * 2.0f - 1.0f};
+  std::pair<float, float> startingPos = {static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f,
+                                         static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f};
 
-  float scale = getScale(size, fontId, Settings::viewport);
+  float scale = getScale(size, fontId, Settings::instance().viewport);
   startingPos.first += fonts[fontId].max_bearingx * scale;
   startingPos.second += (alignedToOrigin ? 0 : fonts[fontId].max_descend) * scale;
 
-  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::viewport.first) - fonts[fontId].max_bearingx * scale;
+  float textMaxWidth = size.first <= 0 ? 0 : 2.0 * static_cast<float>(size.first) / static_cast<float>(Settings::instance().viewport.first) - fonts[fontId].max_bearingx * scale;
   if(size.first > 0)
     breakLines(text, fontId, textMaxWidth, scale);
 
@@ -559,7 +559,7 @@ void Text::renderDirect(std::string text, std::pair<int, int> position, std::pai
       glUniform1i(samplerLoc, 0);
 
       if(shadowMode != Shadow::None) {
-        float aspectRatio = static_cast<float>(Settings::viewport.second) / static_cast<float>(Settings::viewport.first);
+        float aspectRatio = static_cast<float>(Settings::instance().viewport.second) / static_cast<float>(Settings::instance().viewport.first);
         std::pair<float, float> outlineOffset = {2.0 * scale * aspectRatio, 2.0 * scale};
 
 

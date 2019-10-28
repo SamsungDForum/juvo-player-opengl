@@ -1,6 +1,7 @@
 #include "Options.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Text.h"
 
 Options::Options()
   : optionRectangleSize({200, 40}),
@@ -126,10 +127,10 @@ void Options::render(std::pair<int, int> position, std::pair<int, int> optionRec
 }
 
 void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected) {
-  float down = static_cast<float>(position.second) / Settings::viewport.second * 2.0f - 1.0f;
-  float top = static_cast<float>(position.second + size.second) / Settings::viewport.second * 2.0f - 1.0f;
-  float left = static_cast<float>(position.first) / Settings::viewport.first * 2.0f - 1.0f;
-  float right = static_cast<float>(position.first + size.first) / Settings::viewport.first * 2.0f - 1.0f;
+  float down = static_cast<float>(position.second) / Settings::instance().viewport.second * 2.0f - 1.0f;
+  float top = static_cast<float>(position.second + size.second) / Settings::instance().viewport.second * 2.0f - 1.0f;
+  float left = static_cast<float>(position.first) / Settings::instance().viewport.first * 2.0f - 1.0f;
+  float right = static_cast<float>(position.first + size.first) / Settings::instance().viewport.first * 2.0f - 1.0f;
   GLfloat vertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,

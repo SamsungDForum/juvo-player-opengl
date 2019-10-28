@@ -1,6 +1,7 @@
 #include "ProgramBuilder.h"
 
 #include <vector>
+#include <string>
 
 GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader) {
   // compile shaders

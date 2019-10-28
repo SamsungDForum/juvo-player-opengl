@@ -1,9 +1,9 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
-#include <cmath>
 #include <vector>
 #include <string>
+#include <utility>
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_

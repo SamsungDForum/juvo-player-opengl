@@ -3,6 +3,7 @@
 
 #include <string>
 #include <chrono>
+#include <utility>
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
@@ -10,7 +11,6 @@
 #endif // _INCLUDE_GLES_
 
 #include "TileAnimation.h"
-#include "Text.h"
 #include "log.h"
 
 class Tile {
