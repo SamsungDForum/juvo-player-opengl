@@ -103,7 +103,7 @@ private:
   std::pair<float, float> getTextSize(const std::string &text, int fontId, float scale);
   void advance(std::pair<float, float> &position, char character, int fontId, float scale = 1.0f, bool invertVerticalAdvance = false);
   void breakLines(std::string &text, int fontId, float w, float scale = 1.0f);
-  float getScale(const std::pair<int, int> &size, int fontId, std::pair<int, int> viewport);
+  float getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport);
   TextTexture getTextTexture(const std::string &text, int fontId, bool cache);
   void renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color);
   void renderDirect(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache);

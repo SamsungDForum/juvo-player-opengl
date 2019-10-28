@@ -138,12 +138,12 @@ int Text::AddFont(char *data, int size, int fontsize) {
   return fonts.size() - 1;
 }
 
-float Text::getScale(const std::pair<int, int> &size, int fontId, std::pair<int, int> viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
+float Text::getScale(const std::pair<int, int> &size, int fontId, const std::pair<int, int> &viewport) { // returns scale value for resizing from viewport px size (e.g. 1920x1080) to [0.0, 2.0] OGL size based on base and requested font height
   if(validFontId(fontId))
     return 1.0;
-  if(Settings::instance().viewport.second == 0 || fonts[fontId].height == 0)
+  if(viewport.second == 0 || fonts[fontId].height == 0)
     return 1.0;
-  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(Settings::instance().viewport.second);
+  return 2.0f * (static_cast<float>(size.second) / static_cast<float>(fonts[fontId].height)) / static_cast<float>(viewport.second);
 }
 
 std::pair<float, float> Text::getTextSize(const std::string &text, const std::pair<int, int> &size, int fontId) { // returns text size in range [0.0, 2.0]

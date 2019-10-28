@@ -49,7 +49,7 @@ void Loader::render() {
   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float, std::milli> timespan = now - time;
 
-  std::pair<int, int> size = {1074, 70};
+  std::pair<int, int> size = {1440, 486};
   std::pair<int, int> position = {(Settings::instance().viewport.first - size.first) / 2, (Settings::instance().viewport.second - size.second) / 2};
 
   float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
