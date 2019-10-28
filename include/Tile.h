@@ -11,7 +11,6 @@
 #endif // _INCLUDE_GLES_
 
 #include "TileAnimation.h"
-#include "log.h"
 
 class Tile {
 private:

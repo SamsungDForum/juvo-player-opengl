@@ -43,7 +43,7 @@ void Metrics::render() {
                                     bottomMargin};
     std::pair<int, int> size2 = {size.first,
                                  Settings::instance().viewport.second - margin.second - bottomMargin - (size.second + margin.second) * rendered};
-    logConsole.render(position, size2, 0, 13);
+    LogConsole::instance().render(position, size2, 0, 13);
   }
 }
 
@@ -119,6 +119,6 @@ void Metrics::setLogConsoleVisibility(bool visible) {
 }
 
 void Metrics::pushLog(std::string log) {
-  logConsole.pushLog(log);
+  LogConsole::instance().pushLog(log);
 }
 

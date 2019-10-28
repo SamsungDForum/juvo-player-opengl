@@ -98,6 +98,21 @@ void LogConsole::renderLogs(std::pair<int, int> position, std::pair<int, int> si
   logs.erase(logs.begin(), logs.end() - i);
 }
 
+void LogConsole::log(std::string log, LogLevel logLevel) {
+  switch(logLevel) {
+    case LogLevel::Error:
+      _ERR("%s", log.c_str());
+      break;
+    case LogLevel::Debug:
+      _DBG("%s", log.c_str());
+      break;
+    case LogLevel::Info:
+      _INFO("%s", log.c_str());
+      break;
+  }
+  pushLog(log);
+}
+
 void LogConsole::pushLog(std::string log) {
   logs.push_back(log);
 }

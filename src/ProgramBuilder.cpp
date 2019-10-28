@@ -1,4 +1,5 @@
 #include "ProgramBuilder.h"
+#include "LogConsole.h"
 
 #include <vector>
 #include <string>
@@ -32,7 +33,7 @@ GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader
     glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
     glDeleteProgram(program);
 
-    _ERR("%s", (std::string(infoLog.begin(), infoLog.end()).c_str()));
+    LogConsole::instance().log(std::string(infoLog.begin(), infoLog.end()).c_str(), LogConsole::LogLevel::Error);
     return GL_INVALID_VALUE;
   }
   return program;
@@ -53,7 +54,7 @@ GLuint ProgramBuilder::loadShader(const GLenum type, const GLchar* source) {
     glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
     glDeleteShader(shader);
 
-    _ERR("%s", (std::string(infoLog.begin(), infoLog.end()).c_str()));
+    LogConsole::instance().log(std::string(infoLog.begin(), infoLog.end()).c_str(), LogConsole::LogLevel::Error);
     return GL_INVALID_VALUE;
   }
   return shader;

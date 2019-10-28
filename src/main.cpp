@@ -6,7 +6,6 @@
 #include "ExternStructs.h"
 #include "CommonStructs.h"
 #include "Menu.h"
-#include "log.h"
 #include "version.h"
 
 #ifndef EXPORT_API

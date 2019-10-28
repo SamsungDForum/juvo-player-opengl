@@ -21,8 +21,6 @@
 #include FT_FREETYPE_H
 #endif // _FT_FREETYPE_
 
-#include "log.h"
-
 class Text {
 
 private:
@@ -123,10 +121,7 @@ public:
   int getFontDefaultSize(int fontId);
   int getFontDefaultHeight(int fontId);
 
-  void switchRenderingMode() {
-    renderingMode = !renderingMode;
-    _INFO("Text rendering mode switched to %s.", renderingMode ? "cached" : "direct");
-  }
+  void switchRenderingMode();
 
   enum class Shadow {
     None,

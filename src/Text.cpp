@@ -1,6 +1,7 @@
 #include "Text.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "LogConsole.h"
 
 void Text::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color, bool cache) {
   if(validFontId(fontId))
@@ -260,8 +261,6 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
   float scale = 1.0;
   std::pair<float, float> texSize = getTextSize(text, fontId, scale);
 
-  //_INFO("Generating texture of size {%f, %f} for text \"%s\"", texSize.first, texSize.second, text.c_str());
-
   glActiveTexture(GL_TEXTURE0);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -414,28 +413,28 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
 
   }
   else {
-    _INFO("--- CREATING FRAMEBUFFER FOR TEXT RENDERING HAS FAILED! ---");
+    LogConsole::instance().log("--- CREATING FRAMEBUFFER FOR TEXT RENDERING HAS FAILED! ---", LogConsole::LogLevel::Info);
     switch(status) {
       case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-        _INFO("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+        LogConsole::instance().log("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT", LogConsole::LogLevel::Info);
         break;
       case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-        _INFO("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+        LogConsole::instance().log("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS", LogConsole::LogLevel::Info);
         break;
       case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-        _INFO("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+        LogConsole::instance().log("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT", LogConsole::LogLevel::Info);
         break;
       case GL_FRAMEBUFFER_UNSUPPORTED:
-        _INFO("GL_FRAMEBUFFER_UNSUPPORTED");
+        LogConsole::instance().log("GL_FRAMEBUFFER_UNSUPPORTED", LogConsole::LogLevel::Info);
         break;
       case GL_INVALID_ENUM:
-        _INFO("GL_INVALID_ENUM");
+        LogConsole::instance().log("GL_INVALID_ENUM", LogConsole::LogLevel::Info);
         break;
       case GL_INVALID_OPERATION:
-        _INFO("GL_INVALID_OPERATION");
+        LogConsole::instance().log("GL_INVALID_OPERATION", LogConsole::LogLevel::Info);
         break;
       default:
-        _INFO("UNKNOWN ERROR: %d", status);
+        LogConsole::instance().log(std::string("UNKNOWN ERROR: %d" + std::to_string(status)), LogConsole::LogLevel::Info);
         break;
     }
   }
@@ -457,7 +456,7 @@ Text::TextTexture Text::getTextTexture(const std::string &text, int fontId, bool
 
 void Text::renderTextTexture(TextTexture textTexture, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color) {
   if(textTexture.textureId == GL_INVALID_VALUE) {
-    _INFO("INVALID TEXT TEXTURE");
+    LogConsole::instance().log("INVALID TEXT TEXTURE", LogConsole::LogLevel::Info);
     return;
   }
 
@@ -665,3 +664,9 @@ void Text::deleteUnusedTextures() {
     }
   }
 }
+
+void Text::switchRenderingMode() {
+  renderingMode = !renderingMode;
+  LogConsole::instance().log(std::string("Text rendering mode switched to ") + std::string(renderingMode ? "cached" : "direct") + std::string("."), LogConsole::LogLevel::Info);
+}
+

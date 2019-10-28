@@ -10,8 +10,6 @@
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
 
-#include "log.h"
-
 class Graph {
 private:
   GLuint programObject;

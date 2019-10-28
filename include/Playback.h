@@ -7,7 +7,6 @@
 #include <string>
 
 #include "Animation.h"
-#include "log.h"
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_

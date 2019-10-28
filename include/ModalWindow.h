@@ -5,8 +5,6 @@
 #include <utility>
 #include <vector>
 
-#include "log.h"
-
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
 #include <GLES2/gl2.h>

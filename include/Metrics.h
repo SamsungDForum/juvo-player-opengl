@@ -9,7 +9,6 @@
 
 #include "Graph.h"
 #include "LogConsole.h"
-#include "log.h"
 
 class Metrics {
 private:
@@ -38,7 +37,6 @@ private:
   const int framerateId = 0;
 
   Graph graph;
-  LogConsole logConsole;
   bool logConsoleVisible;
   
   std::vector<std::unique_ptr<Trace>> traces;
