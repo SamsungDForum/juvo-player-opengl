@@ -57,7 +57,6 @@ public:
   void UpdatePlaybackControls(PlaybackData playbackData);
   void SetIcon(ImageData imageData);
   void SetFooter(std::string footer);
-  void SwitchTextRenderingMode();
   void ShowSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);
   bool addSuboption(int parentId, int id, std::string name);

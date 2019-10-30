@@ -64,7 +64,6 @@ private:
   void renderBody();
   void renderButton();
   void calculateElementsPositions();
-  std::pair<int, int> getTextSize(std::string s, int lineWidth, int fontHeight, int fontId);
   void calculateParams();
 
 public:
@@ -72,7 +71,7 @@ public:
   ~ModalWindow();
   void show(std::string title, std::string body, std::string button);
   void hide();
-  void render(int fontId);
+  void render();
   bool isVisible();
 };
 

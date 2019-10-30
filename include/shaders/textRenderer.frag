@@ -18,7 +18,7 @@ uniform sampler2D s_texture;
 void main() {
 	vec4 text = TEXTURE2D(s_texture, v_texCoord) * vec4(u_color, 1);
 	vec4 shadow = TEXTURE2D(s_texture, v_texCoord - u_shadowOffset * vec2(1, -1)) * vec4(u_shadowColor, 1);
-    gl_FragColor = mix(shadow, text, text.a) * vec4(vec3(1), u_opacity);
+  gl_FragColor = mix(shadow, text, text.a) * vec4(vec3(1), u_opacity);
 }
 
 )"

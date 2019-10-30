@@ -1,7 +1,7 @@
 #include "Options.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 Options::Options()
   : optionRectangleSize({200, 40}),
@@ -93,12 +93,7 @@ void Options::renderIcon() {
 void Options::render() {
   if(!show || opacity <= 0.0f)
     return;
-  std::pair<int, int> position {this->position.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
-  render(position, optionRectangleSize, suboptionRectangleSize, opacity); // TODO: merge both methods like in OpenTK?
-}
-
-void Options::render(std::pair<int, int> position, std::pair<int, int> optionRectangleSize, std::pair<int, int> suboptionRectangleSize, float opacity) {
-  std::pair<int, int> optionPosition = position;
+  std::pair<int, int> optionPosition {this->position.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
   for(const std::pair<int, Option>& option : options) {
     renderRectangle(optionPosition,
                     optionRectangleSize,
@@ -157,11 +152,10 @@ void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> 
 
   int fontHeight = size.second / 2;
   int margin = (size.second - fontHeight) / 2;
-  Text::instance().render(name,
+  TextRenderer::instance().render(name,
               {position.first + margin, position.second + margin},
               {0, fontHeight},
               0,
-              {1.0, 1.0, 1.0, opacity},
-              true);
+              {1.0, 1.0, 1.0, opacity});
 }
 

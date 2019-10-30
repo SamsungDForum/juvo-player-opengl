@@ -24,7 +24,7 @@ private:
   GLuint opacityLoc = GL_INVALID_VALUE;
   GLuint viewportLoc = GL_INVALID_VALUE;
 
-  void renderText(float t);
+  void renderText(float time);
 
 public:
   Loader();

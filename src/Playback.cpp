@@ -1,7 +1,7 @@
 #include "Playback.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 Playback::Playback()
   : barProgramObject(GL_INVALID_VALUE),
@@ -35,7 +35,7 @@ Playback::~Playback() {
     glDeleteProgram(iconProgramObject);
 }
 
-bool Playback::initialize() {
+void Playback::initialize() {
   const GLchar* barVShaderTexStr = 
 #include "shaders/playbackBar.vert"
 ;
@@ -90,8 +90,6 @@ bool Playback::initialize() {
   opacityLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_opacity");
   viewportLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_viewport");
   sizeLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_size");
-
-  return true; // TODO: is it used? remove?
 }
 
 void Playback::updateProgress() {
@@ -140,7 +138,7 @@ void Playback::renderIcons(float opacity) {
       break;
   }
   renderIcon(icon, position, iconSize, color, opacity, selectedAction == Action::PlaybackControl);
-  //renderIcon(Icon::Options, {Settings::instance().viewport.first - 75, Settings::instance().viewport.second - 75}, iconSize, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu); // TODO: It's not being used right now since SelectAction is not being used.
+  //renderIcon(Icon::Options, {Settings::instance().viewport.first - 75, Settings::instance().viewport.second - 75}, iconSize, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu); // It's not being used right now since SelectAction is not being used.
 }
 
 void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom) {
@@ -205,23 +203,21 @@ void Playback::renderText(float opacity) {
   int fontHeight = 24;
   int textLeft = Settings::instance().viewport.first - (Settings::instance().viewport.first - progressBarSize.first) / 2 + progressBarSize.second;
   int textDown = progressBarMarginBottom + progressBarSize.second / 2 - fontHeight / 2;
-  Text::instance().render(timeToString(-1 * (totalTime - currentTime)),
+  TextRenderer::instance().render(timeToString(-1 * (totalTime - currentTime)),
               {textLeft, textDown},
               {0, fontHeight},
               0,
-              {1.0, 1.0, 1.0, opacity},
-              true); // caching
+              {1.0, 1.0, 1.0, opacity});
 
   // render title
   fontHeight = 48;
   textLeft = 100;
   textDown = Settings::instance().viewport.second - fontHeight - 100;
-  Text::instance().render(displayText,
+  TextRenderer::instance().render(displayText,
               {textLeft, textDown},
               {Settings::instance().viewport.first - textLeft * 2, fontHeight},
               0,
-              {1.0, 1.0, 1.0, opacity},
-              true);
+              {1.0, 1.0, 1.0, opacity});
 }
 
 void Playback::renderProgressBar(float opacity) {
@@ -256,7 +252,7 @@ void Playback::renderProgressBar(float opacity) {
 
 void Playback::initTexture(int id) {
   if(id >= static_cast<int>(icons.size()))
-    return; // TODO: throw???
+    return;
   glGenTextures(1, &icons[id]);
 }
 

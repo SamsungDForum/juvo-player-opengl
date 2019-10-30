@@ -1,7 +1,7 @@
 #include "Loader.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 Loader::Loader()
   : programObject(GL_INVALID_VALUE),
@@ -91,28 +91,26 @@ void Loader::render() {
   renderText(static_cast<float>(time));
 }
 
-void Loader::renderText(float t) {
+void Loader::renderText(float time) {
   int fontHeight = 48;
-  int textLeft = (Settings::instance().viewport.first - Text::instance().getTextSize("Loading... 0%", {0, fontHeight}, 0).first * Settings::instance().viewport.first / 2.0) / 2;
+  int textLeft = (Settings::instance().viewport.first - TextRenderer::instance().getTextSize("Loading... 0%", {0, fontHeight}, 0).first) / 2;
   int textDown = Settings::instance().viewport.second / 2 - 100;
-  float d = (int)t > 0 && ((int)t + 1) % 2 == 0 ? t - (int)t : 0; // fract(t) if t is odd, otherwise 0
+  float d = (int)time > 0 && ((int)time + 1) % 2 == 0 ? time - (int)time : 0; // fract(time) if time is odd, otherwise 0
   float a = (cos(d * 20 / M_PI) + 1.0) / 2.0;
-  Text::instance().render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"),
+  TextRenderer::instance().render(std::string("Loading... ") + std::to_string(static_cast<int>(param)) + std::string("%"),
               {textLeft, textDown},
               {0, fontHeight},
               0,
-              {1.0, 1.0, 1.0, a},
-              true);
+              {1.0, 1.0, 1.0, a});
 
   fontHeight *= 1.5;
-  textLeft = (Settings::instance().viewport.first - Text::instance().getTextSize("JuvoPlayer", {0, fontHeight}, 0).first * Settings::instance().viewport.first / 2.0) / 2;
+  textLeft = (Settings::instance().viewport.first - TextRenderer::instance().getTextSize("JuvoPlayer", {0, fontHeight}, 0).first) / 2;
   textDown = Settings::instance().viewport.second / 2 + 100;
 
-  Text::instance().render("JuvoPlayer",
+  TextRenderer::instance().render("JuvoPlayer",
               {textLeft, textDown},
               {0, fontHeight},
               0,
-              {1.0, 1.0, 1.0, 1.0},
-              true);
+              {1.0, 1.0, 1.0, 1.0});
 }
 

@@ -1,6 +1,6 @@
 #include "Metrics.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 Metrics::Metrics()
   : logConsoleVisible(false) {
@@ -28,12 +28,11 @@ void Metrics::render() {
 
     int fontHeight = 26;
     std::pair<int, int> textMargin = {size.first, margin.second + size.second};
-    Text::instance().render(traces[i]->tag + std::string(": ") + std::to_string(static_cast<int>(traces[i]->currentValue)) + std::string("/") + std::to_string(static_cast<int>(traces[i]->maxValue)),
+    TextRenderer::instance().render(traces[i]->tag + std::string(": ") + std::to_string(static_cast<int>(traces[i]->currentValue)) + std::string("/") + std::to_string(static_cast<int>(traces[i]->maxValue)),
                 {Settings::instance().viewport.first - textMargin.first, Settings::instance().viewport.second - textMargin.second - (size.second + margin.second) * rendered},
                 {0, fontHeight},
                 0,
-                {1.0, 1.0, 1.0, 1.0},
-                true);
+                {1.0, 1.0, 1.0, 1.0});
     ++rendered;
   }
 

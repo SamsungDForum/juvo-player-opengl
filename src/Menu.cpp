@@ -1,6 +1,6 @@
 #include "Menu.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
@@ -49,12 +49,11 @@ void Menu::render() {
       int fontHeight = 24;
       int marginBottom = 20;
       int marginLeft = 100;
-      Text::instance().render("Available content list",
+      TextRenderer::instance().render("Available content list",
                   {marginLeft, Settings::instance().marginFromBottom + Settings::instance().tileSize.second + marginBottom},
                   {0, fontHeight},
                   0,
-                  {1.0, 1.0, 1.0, bgOpacity},
-                  true);
+                  {1.0, 1.0, 1.0, bgOpacity});
     }
     for(size_t i = 0; i < tiles.size(); ++i) // render tiles
       if(static_cast<int>(i) != selectedTile)
@@ -66,14 +65,13 @@ void Menu::render() {
     int fontHeight = 13;
     int margin = 5;
     int marginBottom = margin;
-    int textWidth = Text::instance().getTextSize(footer, {0, fontHeight}, 0).first * Settings::instance().viewport.first / 2.0;
+    int textWidth = TextRenderer::instance().getTextSize(footer, {0, fontHeight}, 0).first;
     int marginLeft = Settings::instance().viewport.first - textWidth - margin;
-    Text::instance().render(footer,
+    TextRenderer::instance().render(footer,
                 {marginLeft, marginBottom},
                 {0, fontHeight},
                 0,
-                {1.0, 1.0, 1.0, 1.0},
-                true);
+                {1.0, 1.0, 1.0, 1.0});
   }
   { // controls/playback
     playback.render();
@@ -85,7 +83,7 @@ void Menu::render() {
     metrics.render();
   }
   { // render modal window
-    modalWindow.render(0);
+    modalWindow.render();
   }
 }
 
@@ -189,7 +187,7 @@ void Menu::SelectTile(int tileNo) {
 }
 
 int Menu::AddFont(char *data, int size) {
-  Text::instance().AddFont(data, size, 48);
+  TextRenderer::instance().addFont(data, size);
   return 0;
 }
 
@@ -217,10 +215,6 @@ void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
 
 void Menu::SetFooter(std::string footer) {
   this->footer = footer;
-}
-
-void Menu::SwitchTextRenderingMode() {
-  Text::instance().switchRenderingMode();
 }
 
 void Menu::ShowSubtitle(int duration, std::string text) {

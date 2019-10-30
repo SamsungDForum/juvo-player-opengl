@@ -1,7 +1,6 @@
 #include "Tile.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
-#include "Text.h"
 
 int Tile::staticTileObjectCount = 0;
 GLuint Tile::programObject = GL_INVALID_VALUE;

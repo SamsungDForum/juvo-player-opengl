@@ -1,7 +1,7 @@
 #include "LogConsole.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 #include "log.h"
 
 LogConsole::LogConsole()
@@ -74,10 +74,9 @@ void LogConsole::renderText(std::pair<int, int> position, std::pair<int, int> si
 }
 
 int LogConsole::getTextHeight(std::string s, int lineWidth, int fontHeight, int fontId) {
-  return Text::instance().getTextSize(s,
+  return TextRenderer::instance().getTextSize(s,
                           {lineWidth, fontHeight},
-                          fontId).second
-         * static_cast<float>(Settings::instance().viewport.second) / 2.0f;
+                          fontId).second;
 }
 
 void LogConsole::renderLogs(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
@@ -87,12 +86,11 @@ void LogConsole::renderLogs(std::pair<int, int> position, std::pair<int, int> si
     int textHeight = getTextHeight(*deqit, lineWidth, fontSize, fontId);
     if(offset + textHeight + margin.second > size.second)
       break;
-    Text::instance().render(*deqit,
+    TextRenderer::instance().render(*deqit,
                 {position.first + margin.first, position.second + size.second - offset - fontSize},
                 {lineWidth, fontSize},
                 fontId,
-                {1.0f, 1.0f, 1.0f, 1.0f},
-                true);
+                {1.0f, 1.0f, 1.0f, 1.0f});
     offset += textHeight + margin.second;
   }
   logs.erase(logs.begin(), logs.end() - i);

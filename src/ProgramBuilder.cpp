@@ -24,7 +24,7 @@ GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
   GLint isLinked = 0;
-  glGetProgramiv(program, GL_LINK_STATUS, (int*)&isLinked);
+  glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
   if(isLinked == GL_FALSE) {
     GLint maxLength = 0;
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);

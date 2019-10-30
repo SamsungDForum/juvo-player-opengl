@@ -1,6 +1,6 @@
 #include "Subtitles.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 Subtitles::Subtitles()
     : active(false),
@@ -23,18 +23,15 @@ void Subtitles::render() {
   std::pair<int, int> margin = {100, 150};
   int textWidth = Settings::instance().viewport.first - 2 * margin.first;
 
-  std::pair<float, float> textSize = Text::instance().getTextSize(subtitle,
+  std::pair<float, float> textSize = TextRenderer::instance().getTextSize(subtitle,
     {textWidth, fontHeight},
     0);
-    textSize.first *= Settings::instance().viewport.first / 2.0f;
-    textSize.second *= Settings::instance().viewport.second / 2.0f;
 
-    Text::instance().render(subtitle,
+    TextRenderer::instance().render(subtitle,
     {(Settings::instance().viewport.first - textSize.first) / 2, margin.second + textSize.second - fontHeight},
     {textWidth, fontHeight},
     0,
-    {1.0, 1.0, 1.0, 1.0},
-    true);
+    {1.0, 1.0, 1.0, 1.0});
 }
 
 void Subtitles::showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle) {

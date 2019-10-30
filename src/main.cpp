@@ -28,7 +28,6 @@ EXPORT_API void ShowLoader(int enabled, int percent);
 EXPORT_API void SetIcon(ImageExternData image);
 EXPORT_API void UpdatePlaybackControls(PlaybackExternData playbackExternData);
 EXPORT_API void SetFooter(char* footer, int footerLen);
-EXPORT_API void SwitchTextRenderingMode();
 EXPORT_API void ShowSubtitle(int duration, char* text, int textLen);
 EXPORT_API int OpenGLLibVersion();
 EXPORT_API int AddOption(int id, char* text, int textLen);
@@ -167,11 +166,6 @@ void SetFooter(char* footer, int footerLen)
 void Draw()
 {
   menu->render();
-}
-
-void SwitchTextRenderingMode()
-{
-  menu->SwitchTextRenderingMode();
 }
 
 void ShowSubtitle(int duration, char* text, int textLen)

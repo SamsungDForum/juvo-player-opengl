@@ -97,7 +97,7 @@ private:
   GLuint sizeLoaderLoc     = GL_INVALID_VALUE; 
 
 private:
-  bool initialize();
+  void initialize();
   void initTexture(int id);
   void renderIcons(float opacity);
   void renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom);

@@ -30,7 +30,7 @@ private:
   GLuint viewportLoc = GL_INVALID_VALUE;
 
   void initGL();
-  void renderText();
+  void renderNameAndDescription();
 
 public:
   Background();

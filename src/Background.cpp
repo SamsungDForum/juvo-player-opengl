@@ -1,7 +1,7 @@
 #include "Background.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
-#include "Text.h"
+#include "TextRenderer.h"
 
 #include <string>
 
@@ -93,39 +93,37 @@ void Background::render() {
   glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
   glUseProgram(GL_INVALID_VALUE);
 
-  renderText();
+  renderNameAndDescription();
 }
 
-void Background::renderText() {
+void Background::renderNameAndDescription() {
   std::string name = sourceTile != nullptr ? sourceTile->getName() : "";
   int textLineOffset = 0;
   if(!name.empty()) {
     int fontHeight = 52;
     int leftText = 100;
     int topText = Settings::instance().viewport.second - fontHeight - 200;
-    Text::instance().render(name,
+    TextRenderer::instance().render(name,
                 {leftText, topText},
                 {Settings::instance().viewport.first - 2 * leftText, fontHeight},
                 0,
-                {1.0, 1.0, 1.0, opacity},
-                true);
+                {1.0, 1.0, 1.0, opacity});
 
-    textLineOffset = Text::instance().getTextSize(name,
+    textLineOffset = TextRenderer::instance().getTextSize(name,
                                       {Settings::instance().viewport.first - 2 * leftText, fontHeight},
                                       0
-                     ).second * static_cast<float>(Settings::instance().viewport.first) / 2.0f;
+                     ).second;
   }
   std::string description = sourceTile != nullptr ? sourceTile->getDescription() : "";
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
     int topText = Settings::instance().viewport.second - fontHeight - 200 - textLineOffset;
-    Text::instance().render(description,
+    TextRenderer::instance().render(description,
                 {leftText, topText},
                 {Settings::instance().viewport.first - 2 * leftText, fontHeight},
                 0,
-                {1.0, 1.0, 1.0, opacity},
-                true);
+                {1.0, 1.0, 1.0, opacity});
   }
 }
 
