@@ -2,18 +2,16 @@
 #define _PLAYBACK_H_
 
 #include <chrono>
-#include <ctime>
 #include <vector>
 #include <utility>
+#include <string>
+
+#include "Animation.h"
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
 #include <GLES2/gl2.h>
 #endif // _INCLUDE_GLES_
-
-#include "Text.h"
-#include "log.h"
-#include "Animation.h"
 
 class Playback {
 private:
@@ -66,27 +64,31 @@ private:
   bool seeking;
   std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
 
-  std::pair<int, int> viewport;
+  const int progressUiLineLevel = 100;
+  std::pair<float, float> progressBarSizePx;
   std::pair<int, int> progressBarSize;
   const int progressBarMarginBottom;
+  const float dotScale;
+  std::pair<int, int> iconSize;
 
   GLuint posBarLoc         = GL_INVALID_VALUE; 
   GLuint paramBarLoc       = GL_INVALID_VALUE; 
   GLuint opacityBarLoc     = GL_INVALID_VALUE; 
   GLuint viewportBarLoc    = GL_INVALID_VALUE;
   GLuint sizeBarLoc        = GL_INVALID_VALUE; 
-  GLuint marginBarLoc      = GL_INVALID_VALUE;  
+  GLuint marginBarLoc      = GL_INVALID_VALUE;
+  GLuint dotScaleBarLoc    = GL_INVALID_VALUE;
 
-  GLuint samplerLoc        = GL_INVALID_VALUE;
-  GLuint colLoc            = GL_INVALID_VALUE;
-  GLuint opacityLoc        = GL_INVALID_VALUE;
-  GLuint posLoc            = GL_INVALID_VALUE;
-  GLuint texLoc            = GL_INVALID_VALUE;
-
-  GLuint colBloomLoc       = GL_INVALID_VALUE;
-  GLuint opacityBloomLoc   = GL_INVALID_VALUE;
-  GLuint posBloomLoc       = GL_INVALID_VALUE;
-  GLuint rectBloomLoc      = GL_INVALID_VALUE;
+  GLuint samplerIconLoc    = GL_INVALID_VALUE;
+  GLuint texCoordIconLoc   = GL_INVALID_VALUE;
+  GLuint posIconLoc        = GL_INVALID_VALUE;
+  GLuint colIconLoc        = GL_INVALID_VALUE;
+  GLuint shadowColIconLoc  = GL_INVALID_VALUE;
+  GLuint shadowOffIconLoc  = GL_INVALID_VALUE;
+  GLuint opacityIconLoc    = GL_INVALID_VALUE;
+  GLuint colBloomIconLoc   = GL_INVALID_VALUE;
+  GLuint opaBloomIconLoc   = GL_INVALID_VALUE;
+  GLuint rectBloomIconLoc  = GL_INVALID_VALUE;
 
   GLuint posLoaderLoc      = GL_INVALID_VALUE; 
   GLuint paramLoaderLoc    = GL_INVALID_VALUE; 
@@ -95,12 +97,11 @@ private:
   GLuint sizeLoaderLoc     = GL_INVALID_VALUE; 
 
 private:
-  bool initialize();
+  void initialize();
   void initTexture(int id);
-  void checkShaderCompileError(GLuint shader);
   void renderIcons(float opacity);
   void renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom);
-  void renderText(Text &text, float opacity);
+  void renderText(float opacity);
   void renderProgressBar(float opacity);
   std::string timeToString(int time);
   void updateProgress();
@@ -109,10 +110,10 @@ private:
   template<typename T> inline T clamp(T v, T lo, T hi) { return v < lo ? lo : v > hi ? hi : v; }
 
 public:
-  Playback(std::pair<int, int> viewport);
+  Playback();
   ~Playback();
   void setIcon(int id, char* pixels, std::pair<int, int> size, GLuint format);
-  void render(Text &text);
+  void render();
   void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking);
   void setOpacity(float opacity) { this->opacity = opacity; }
   float getOpacity() { return opacity; }

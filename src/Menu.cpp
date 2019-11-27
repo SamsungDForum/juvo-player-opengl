@@ -1,43 +1,24 @@
 #include "Menu.h"
+#include "Settings.h"
+#include "TextRenderer.h"
 
-Menu::Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, float zoom, int animationsDurationMilliseconds)
-  : viewport(viewport),
-    tileSize(tileSize),
-    tilesNumber(tilesNumber),
-    marginFromBottom(50),
-    zoom(zoom),
-    animationsDurationMilliseconds(animationsDurationMilliseconds),
-    fadingDurationMilliseconds(500),
-    bouncing(true),
-    loader(viewport),
-    background(viewport, 0.0),
-    playback(viewport),
-    subtitles(viewport),
-    metrics(viewport),
-    options(viewport) {
-  initialize();
-}
+#ifndef _INCLUDE_GLES_
+#define _INCLUDE_GLES_
+#include <GLES2/gl2.h>
+#endif // _INCLUDE_GLES_
 
-Menu::Menu(std::pair<int, int> viewport)
-  : viewport(viewport),
-    tileSize({432, 432 * viewport.second / viewport.first}),
-    tilesNumber({4, 1}),
-    marginFromBottom(50),
-    zoom(1.05),
-    animationsDurationMilliseconds(320),
-    fadingDurationMilliseconds(500),
-    bouncing(true),
-    loader(viewport),
-    background(viewport, 0.0),
-    playback(viewport),
-    subtitles(viewport),
-    metrics(viewport),
-    options(viewport) {
+Menu::Menu()
+  : loader(),
+    background(0.0),
+    playback(),
+    subtitles(),
+    metrics(),
+    options() {
   initialize();
 }
 
 void Menu::initialize() {
-  glViewport(0, 0, viewport.first, viewport.second);
+  glViewport(0, 0, Settings::instance().viewport.first, Settings::instance().viewport.second);
 
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
   glEnable(GL_BLEND);
@@ -60,83 +41,78 @@ void Menu::render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   if(loaderEnabled)
-    loader.render(text); // render loader
+    loader.render(); // render loader
   else { // render menu
-    background.render(text); // render background; updates background opacity
+    background.render(); // render background; updates background opacity
     float bgOpacity = background.getOpacity();
     if(bgOpacity > 0.0) { // render "Available content list" text
       int fontHeight = 24;
       int marginBottom = 20;
       int marginLeft = 100;
-      text.render("Available content list",
-                  {marginLeft, marginFromBottom + tileSize.second + marginBottom},
+      TextRenderer::instance().render("Available content list",
+                  {marginLeft, Settings::instance().marginFromBottom + Settings::instance().tileSize.second + marginBottom},
                   {0, fontHeight},
-                  viewport,
                   0,
-                  {1.0, 1.0, 1.0, bgOpacity},
-                  true);
+                  {1.0, 1.0, 1.0, bgOpacity});
     }
     for(size_t i = 0; i < tiles.size(); ++i) // render tiles
       if(static_cast<int>(i) != selectedTile)
-        tiles[i].render(text);
+        tiles[i].render();
     if(selectedTile < static_cast<int>(tiles.size()))
-      tiles[selectedTile].render(text);
+      tiles[selectedTile].render();
   }
   { // footer
     int fontHeight = 13;
     int margin = 5;
     int marginBottom = margin;
-    int textWidth = text.getTextSize(footer, {0, fontHeight}, 0, viewport).first * viewport.first / 2.0;
-    int marginLeft = viewport.first - textWidth - margin;
-    text.render(footer,
+    int textWidth = TextRenderer::instance().getTextSize(footer, {0, fontHeight}, 0).first;
+    int marginLeft = Settings::instance().viewport.first - textWidth - margin;
+    TextRenderer::instance().render(footer,
                 {marginLeft, marginBottom},
                 {0, fontHeight},
-                viewport,
                 0,
-                {1.0, 1.0, 1.0, 1.0},
-                true);
+                {1.0, 1.0, 1.0, 1.0});
   }
   { // controls/playback
-    playback.render(text);
-    subtitles.render(text);
+    playback.render();
+    subtitles.render();
     options.setOpacity(playback.getOpacity());
-    options.render(text);
+    options.render();
   }
   { // render metrics
-    metrics.render(text);
+    metrics.render();
   }
   { // render modal window
-    modalWindow.render(text, viewport, 0);
+    modalWindow.render();
   }
 }
 
 void Menu::ShowMenu(int enable) {
   for(size_t i = 0; i < tiles.size(); ++i) { // let's make sure position/size parameters aren't going to be animated
-    tiles[i].setPosition(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport));
-    tiles[i].setZoom(static_cast<int>(i) == selectedTile ? zoom : 1.0);
+    tiles[i].setPosition(getTilePosition(i - firstTile));
+    tiles[i].setZoom(static_cast<int>(i) == selectedTile ? Settings::instance().zoom : 1.0);
   }
 
-  int animationDelay = playback.getOpacity() > 0.0 ? fadingDurationMilliseconds * 3 / 4 : 0;
+  int animationDelay = playback.getOpacity() > 0.0 ? Settings::instance().fadingDuration.count() * 3 / 4 : 0;
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport),
-                    static_cast<int>(i) == selectedTile ? zoom : 1.0,
+    tiles[i].moveTo(getTilePosition(i - firstTile),
+                    static_cast<int>(i) == selectedTile ? Settings::instance().zoom : 1.0,
                     tiles[i].getSize(),
                     enable ? 1 : 0,
-                    std::chrono::milliseconds(fadingDurationMilliseconds),
+                    std::chrono::milliseconds(Settings::instance().fadingDuration),
                     std::chrono::milliseconds(animationDelay));
 }
 
-std::pair<int, int> Menu::getTilePosition(int tileNo, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, std::pair<int, int> viewport, bool initialMargin) {
-  int horizontalMargin = std::max(static_cast<int>(std::ceil(static_cast<double>(viewport.first - (tileSize.first * tilesNumber.first)) / (tilesNumber.first + 1))), 0);
-  int verticalMargin = std::max((viewport.second - (tileSize.second * tilesNumber.second)) / (tilesNumber.second + 1), 0);
+std::pair<int, int> Menu::getTilePosition(int tileNo, bool initialMargin) {
+  int horizontalMargin = std::max(static_cast<int>(std::ceil(static_cast<double>(Settings::instance().viewport.first - (Settings::instance().tileSize.first * Settings::instance().tilesArrangement.first)) / (Settings::instance().tilesArrangement.first + 1))), 0);
+  int verticalMargin = std::max((Settings::instance().viewport.second - (Settings::instance().tileSize.second * Settings::instance().tilesArrangement.second)) / (Settings::instance().tilesArrangement.second + 1), 0);
   int horizontalPosition = 0;
   int verticalPosition = 0;
-  horizontalPosition = (initialMargin ? horizontalMargin : 0) + (horizontalMargin + tileSize.first) * tileNo;
-  verticalPosition = tilesNumber.second > 1 ? tileSize.second + verticalMargin : marginFromBottom;
+  horizontalPosition = (initialMargin ? horizontalMargin : 0) + (horizontalMargin + Settings::instance().tileSize.first) * tileNo;
+  verticalPosition = Settings::instance().tilesArrangement.second > 1 ? Settings::instance().tileSize.second + verticalMargin : Settings::instance().marginFromBottom;
 
-  int sideMargin = 100;
-  int innerMargin = (viewport.first - 1.5 * sideMargin - tileSize.first * tilesNumber.first) / (tilesNumber.first - 1);
-  horizontalPosition = sideMargin + tileNo * (tileSize.first + innerMargin);
+  int innerMargin = (Settings::instance().viewport.first - 1.5 * Settings::instance().sideMargin - Settings::instance().tileSize.first * Settings::instance().tilesArrangement.first) / (Settings::instance().tilesArrangement.first - 1);
+  horizontalPosition = Settings::instance().sideMargin + tileNo * (Settings::instance().tileSize.first + innerMargin);
 
   return std::make_pair(horizontalPosition, verticalPosition);
 }
@@ -144,9 +120,8 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, std::pair<int, int> tileSi
 int Menu::AddTile(char *pixels, std::pair<int, int> size) {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
-            getTilePosition(tileNo, tileSize, tilesNumber, viewport),
-            tileSize,
-            viewport,
+            getTilePosition(tileNo),
+            Settings::instance().tileSize,
             1.0,
             0.0,
             "",
@@ -161,9 +136,8 @@ int Menu::AddTile(char *pixels, std::pair<int, int> size) {
 int Menu::AddTile() {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
-            getTilePosition(tileNo, tileSize, tilesNumber, viewport),
-            tileSize,
-            viewport,
+            getTilePosition(tileNo),
+            Settings::instance().tileSize,
             1.0,
             0.0,
             "",
@@ -187,33 +161,33 @@ void Menu::SetTileTexture(ImageData imageData) {
 }
 
 void Menu::SelectTile(int tileNo) {
-  int bounce = (bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? 1 : -1) : 0;
+  int bounce = (Settings::instance().bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? 1 : -1) : 0;
   selectedTile = tileNo;
-  bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + tilesNumber.first - 1 >= selectedTile);
+  bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + Settings::instance().tilesArrangement.first - 1 >= selectedTile);
   if(!selectedTileVisible) {
     int shiftLeft = firstTile - selectedTile;
-    int shiftRight = selectedTile - (firstTile + tilesNumber.first - 1);
+    int shiftRight = selectedTile - (firstTile + Settings::instance().tilesArrangement.first - 1);
     if(std::abs(shiftLeft) < std::abs(shiftRight))
       firstTile -= shiftLeft;
     else
       firstTile += shiftRight;
   }
   for(size_t i = 0; i < tiles.size(); ++i)
-    tiles[i].moveTo(getTilePosition(i - firstTile, tileSize, tilesNumber, viewport),
-                    static_cast<int>(i) == selectedTile ? zoom : 1.0,
+    tiles[i].moveTo(getTilePosition(i - firstTile),
+                    static_cast<int>(i) == selectedTile ? Settings::instance().zoom : 1.0,
                     tiles[i].getTargetSize(),
                     tiles[i].getTargetOpacity(),
-                    std::chrono::milliseconds(animationsDurationMilliseconds),
+                    Settings::instance().animationDuration,
                     std::chrono::milliseconds(0),
                     (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
   if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
     background.setSourceTile(&tiles[selectedTile],
-                             !bounce ? std::chrono::milliseconds(fadingDurationMilliseconds) : std::chrono::milliseconds(0),
+                             !bounce ? std::chrono::milliseconds(Settings::instance().fadingDuration) : std::chrono::milliseconds(0),
                              std::chrono::milliseconds(0));
 }
 
 int Menu::AddFont(char *data, int size) {
-  text.AddFont(data, size, 48);
+  TextRenderer::instance().addFont(data, size);
   return 0;
 }
 
@@ -232,8 +206,8 @@ void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
                   playbackData.currentTime,
                   playbackData.totalTime,
                   playbackData.text,
-                  std::chrono::milliseconds(fadingDurationMilliseconds),
-                  std::chrono::milliseconds(playbackData.show ? fadingDurationMilliseconds * 3 / 4 : 0),
+                  std::chrono::milliseconds(Settings::instance().fadingDuration),
+                  std::chrono::milliseconds(playbackData.show ? Settings::instance().fadingDuration.count() * 3 / 4 : 0),
                   playbackData.buffering,
                   playbackData.bufferingPercent,
 				  playbackData.seeking);
@@ -241,10 +215,6 @@ void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
 
 void Menu::SetFooter(std::string footer) {
   this->footer = footer;
-}
-
-void Menu::SwitchTextRenderingMode() {
-  text.switchRenderingMode();
 }
 
 void Menu::ShowSubtitle(int duration, std::string text) {

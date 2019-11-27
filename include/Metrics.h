@@ -7,10 +7,8 @@
 #include <string>
 #include <memory>
 
-#include "Text.h"
 #include "Graph.h"
 #include "LogConsole.h"
-#include "log.h"
 
 class Metrics {
 private:
@@ -38,16 +36,14 @@ private:
   };
   const int framerateId = 0;
 
-  const std::pair<int, int> viewport;
   Graph graph;
-  LogConsole logConsole;
   bool logConsoleVisible;
   
   std::vector<std::unique_ptr<Trace>> traces;
 
 public:
-  Metrics(std::pair<int, int> viewport);
-  void render(Text &text);
+  Metrics();
+  void render();
   int addGraph(std::string tag, float minVal, float maxVal, int valuesMaxCount);
   void setGraphVisibility(int graphId, bool visible);
   void updateGraphValues(int graphId, std::vector<float> values);

@@ -32,7 +32,8 @@ SET(SRCS
   src/Background.cpp
   src/Loader.cpp
   src/Playback.cpp
-  src/Text.cpp
+  src/TextRenderer.cpp
+  src/TextTextureGenerator.cpp
   src/Tile.cpp
   src/TileAnimation.cpp
   src/Subtitles.cpp
@@ -41,6 +42,8 @@ SET(SRCS
   src/Options.cpp
   src/LogConsole.cpp
   src/ModalWindow.cpp
+  src/ProgramBuilder.cpp
+  src/Settings.cpp
 )
 
 INCLUDE(FindPkgConfig)
@@ -54,7 +57,7 @@ FOREACH(flag ${PKGS_CFLAGS})
 ENDFOREACH(flag)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -fpermissive")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -std=c++17 -Iinclude")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -std=c++17 -Iinclude -Wall")
 
 ADD_LIBRARY (${PROJECT_NAME} SHARED ${SRCS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PKGS_LDFLAGS})

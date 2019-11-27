@@ -74,15 +74,11 @@ std::vector<double> Animation::update() {
   std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart - animationDelay);
   std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
   double fraction = target.count() ? time_span.count() / target.count() : 1.0;
-  if(fraction > 0.999)
-    active = false;
+  active = fraction <= 0.999;
 
   std::vector<double> values;
   for(size_t i = 0, sn = sourceValues.size(), tn = targetValues.size(); i < sn && i < tn; ++i) {
-    if(easing == Easing::BounceLeft || easing == Easing::BounceRight)
-      values.push_back(targetValues[i] + ease(fraction, easing));
-    else
-      values.push_back(sourceValues[i] + (targetValues[i] - sourceValues[i]) * ease(fraction, easing));
+    values.push_back(isBounce() ? targetValues[i] + ease(fraction, easing) : sourceValues[i] + (targetValues[i] - sourceValues[i]) * ease(fraction, easing));
   }
   return values;
 }

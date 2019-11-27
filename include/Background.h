@@ -1,9 +1,8 @@
 #ifndef _BACKGROUND_H_
 #define _BACKGROUND_H_
 
-#include <string>
 #include <chrono>
-#include <utility>
+#include <vector>
 
 #ifndef _INCLUDE_GLES_
 #define _INCLUDE_GLES_
@@ -11,15 +10,12 @@
 #endif // _INCLUDE_GLES_
 
 #include "Tile.h"
-#include "Text.h"
-#include "log.h"
 #include "Animation.h"
 
 class Background {
 private:
   GLuint programObject = GL_INVALID_VALUE;
   GLuint textureFormat = GL_INVALID_VALUE;
-  std::pair<int, int> viewport;
   float opacity;
   float black;
   Tile *sourceTile;
@@ -34,16 +30,15 @@ private:
   GLuint viewportLoc = GL_INVALID_VALUE;
 
   void initGL();
-  void checkShaderCompileError(GLuint shader);
+  void renderNameAndDescription();
 
 public:
   Background();
-  Background(std::pair<int, int> viewport, float opacity);
+  Background(float opacity);
   ~Background();
-  void render(Text &text);
+  void render();
   void setOpacity(float opacity);
   void setBlack(float black);
-  void setViewport(std::pair<int, int> viewport);
   void setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay);
   void setClearColor(std::vector<float> color);
   float getOpacity();

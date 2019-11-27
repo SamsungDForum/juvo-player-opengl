@@ -1,4 +1,7 @@
 #include "LogConsole.h"
+#include "ProgramBuilder.h"
+#include "Settings.h"
+#include "TextRenderer.h"
 #include "log.h"
 
 LogConsole::LogConsole()
@@ -7,8 +10,7 @@ LogConsole::LogConsole()
     posLoc(GL_INVALID_VALUE),
     sizLoc(GL_INVALID_VALUE),
     colLoc(GL_INVALID_VALUE),
-    opaLoc(GL_INVALID_VALUE),
-    doCleanup(false) {
+    opaLoc(GL_INVALID_VALUE) {
   initialize();
 }
 
@@ -19,54 +21,14 @@ LogConsole::~LogConsole() {
 
 void LogConsole::initialize() {
   const GLchar* vShaderTexStr =  
-    "attribute vec4 a_position;   \n"
-    "void main()                  \n"
-    "{                            \n"
-    "   gl_Position = a_position; \n"
-    "}                            \n";
+#include "shaders/logConsole.vert"
+;
 
   const GLchar* fShaderTexStr =  
-    "precision highp float;                               \n"
-    "                                                     \n"
-    "#define FG vec4(u_color, 0.75 * u_opacity)           \n"
-    "#define BG vec4(0.0, 0.0, 0.0, 0.75 * u_opacity)     \n"
-    "                                                     \n"
-    "const int VALUES = 100;                              \n"
-    "                                                     \n"
-    "uniform vec2 u_position;                             \n"
-    "uniform vec2 u_size;                                 \n"
-    "uniform vec3 u_color;                                \n"
-    "uniform float u_opacity;                             \n"
-    "                                                     \n"
-    "void main()                                          \n"
-    "{                                                    \n"
-    "  gl_FragColor = BG;                                 \n"
-    "                                                     \n"
-    "  if(gl_FragCoord.y <= u_position.y + 1.0            \n"
-    "  || gl_FragCoord.y >= u_position.y + u_size.y - 1.0 \n"
-    "  || gl_FragCoord.x <= u_position.x + 1.0            \n"
-    "  || gl_FragCoord.x >= u_position.x + u_size.x - 1.0 \n"
-    "  )                                                  \n"
-    "    gl_FragColor = vec4(u_color, 0.75 * u_opacity);  \n"
-    "}                                                    \n";
+#include "shaders/logConsole.frag"
+;
 
-  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vShaderTexStr, NULL);
-  glCompileShader(vertexShader);
-  checkShaderCompileError(vertexShader);
-
-  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fShaderTexStr, NULL);
-  glCompileShader(fragmentShader);
-  checkShaderCompileError(fragmentShader);
-
-  programObject = glCreateProgram();
-  glAttachShader(programObject, vertexShader);
-  glAttachShader(programObject, fragmentShader);
-  glLinkProgram(programObject);
-
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
+  programObject = ProgramBuilder::buildProgram(vShaderTexStr, fShaderTexStr);
 
   posALoc = glGetAttribLocation(programObject, "a_position");
   posLoc = glGetUniformLocation(programObject, "u_position");
@@ -75,11 +37,12 @@ void LogConsole::initialize() {
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
 }
 
-void LogConsole::render(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
-  float down  = static_cast<float>(position.second) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(viewport.first) * 2.0f - 1.0f;
+void LogConsole::render(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
+  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -88,91 +51,67 @@ void LogConsole::render(Text &text, std::pair<int, int> viewport, std::pair<int,
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
   glUseProgram(programObject);
-
   glEnableVertexAttribArray(posALoc);
   glVertexAttribPointer(posALoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
   glUniform2f(posLoc, static_cast<float>(position.first), static_cast<float>(position.second));
   glUniform2f(sizLoc, static_cast<float>(size.first), static_cast<float>(size.second));
   glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
-
   glUniform1f(opaLoc, 1.0f);
-
-  glEnable(GL_BLEND);
-  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-  glUseProgram(0);
+  glDisableVertexAttribArray(posALoc);
+  glUseProgram(GL_INVALID_VALUE);
 
-  renderText(text, viewport, position, size, fontId, fontSize);
+  renderText(position, size, fontId, fontSize);
 }
 
-void LogConsole::renderText(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
+void LogConsole::renderText(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
   std::pair<int, int> margin = {4, 10};
   int lineWidth = size.first - 2 * margin.first;
-  cleanupLogs(text, viewport, size, fontId, fontSize, margin, lineWidth);
-  renderLogs(text, viewport, position, size, fontId, fontSize, margin, lineWidth);
+  renderLogs(position, size, fontId, fontSize, margin, lineWidth);
 }
 
-int LogConsole::getTextHeight(Text &text, std::string s, int lineWidth, int fontHeight, int fontId, std::pair<int, int> viewport) {
-  return text.getTextSize(s,
+int LogConsole::getTextHeight(std::string s, int lineWidth, int fontHeight, int fontId) {
+  return TextRenderer::instance().getTextSize(s,
                           {lineWidth, fontHeight},
-                          fontId,
-                          viewport).second
-         * static_cast<float>(viewport.second) / 2.0f;
+                          fontId).second;
 }
 
-void LogConsole::cleanupLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
-  if(!doCleanup)
-    return;
-  doCleanup = false;
-
-  std::deque<std::string>::reverse_iterator rit = logs.rbegin();
-  for(int offset = margin.second; rit != logs.rend(); ++rit) {
-    int textHeight = getTextHeight(text, *rit, lineWidth, fontSize, fontId, viewport);
-    if(offset + textHeight + margin.second > size.second)
-      break;
-    offset += textHeight + margin.second;
-  }
-  if(rit != logs.rend())
-    logs.erase(logs.begin(), ++rit.base());
-}
-
-void LogConsole::renderLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
+void LogConsole::renderLogs(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
+  int i = 0;
   std::deque<std::string>::iterator deqit = logs.begin();
-  for(int offset = margin.second; deqit != logs.end(); ++deqit) {
-    int textHeight = getTextHeight(text, *deqit, lineWidth, fontSize, fontId, viewport);
+  for(int offset = margin.second; deqit != logs.end(); ++deqit, ++i) {
+    int textHeight = getTextHeight(*deqit, lineWidth, fontSize, fontId);
     if(offset + textHeight + margin.second > size.second)
       break;
-    text.render(*deqit,
+    TextRenderer::instance().render(*deqit,
                 {position.first + margin.first, position.second + size.second - offset - fontSize},
                 {lineWidth, fontSize},
-                viewport,
                 fontId,
-                {1.0f, 1.0f, 1.0f, 1.0f},
-                true);
+                {1.0f, 1.0f, 1.0f, 1.0f});
     offset += textHeight + margin.second;
   }
+  logs.erase(logs.begin(), logs.end() - i);
+}
+
+void LogConsole::log(std::string log, LogLevel logLevel) {
+  switch(logLevel) {
+    case LogLevel::Error:
+      _ERR("%s", log.c_str());
+      break;
+    case LogLevel::Debug:
+      _DBG("%s", log.c_str());
+      break;
+    case LogLevel::Info:
+      _INFO("%s", log.c_str());
+      break;
+  }
+  pushLog(log);
 }
 
 void LogConsole::pushLog(std::string log) {
   logs.push_back(log);
-  doCleanup = true;
-}
-
-void LogConsole::checkShaderCompileError(GLuint shader) {
-  GLint isCompiled = 0;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-  if(isCompiled == GL_FALSE) {
-    GLint maxLength = 0;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-    std::vector<GLchar> errorLog(maxLength);
-    glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
-    _ERR("%s", (std::string(errorLog.begin(), errorLog.end()).c_str()));
-
-    glDeleteShader(shader);
-  }
 }
 

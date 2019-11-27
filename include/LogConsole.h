@@ -10,8 +10,6 @@
 #include <utility>
 #include <deque>
 
-#include "Text.h"
-
 class LogConsole {
 private:
 
@@ -23,20 +21,32 @@ private:
   GLuint opaLoc;
 
   std::deque<std::string> logs;
-  bool doCleanup;
 
   void initialize();
-  void checkShaderCompileError(GLuint shader);
-  void renderText(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize);
-  void cleanupLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth);
-  void renderLogs(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth);
-  int getTextHeight(Text &text, std::string s, int lineWidth, int fontHeight, int fontId, std::pair<int, int> viewport);
+  void renderText(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize);
+  void renderLogs(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth);
+  int getTextHeight(std::string s, int lineWidth, int fontHeight, int fontId);
 
-public:
   LogConsole();
   ~LogConsole();
-  void render(Text &text, std::pair<int, int> viewport, std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize);
+  LogConsole(const LogConsole&) = delete;
+  LogConsole& operator=(const LogConsole&) = delete;
+
+public:
+  static LogConsole& instance() {
+    static LogConsole logConsole;
+    return logConsole;
+  }
+
+  enum class LogLevel {
+    Error,
+    Debug,
+    Info
+  };
+
+  void render(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize);
   void pushLog(std::string log);
+  void log(std::string log, LogLevel logLevel);
 };
 
 #endif // _LOGCONSOLE_H_

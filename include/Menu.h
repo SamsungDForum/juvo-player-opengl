@@ -1,20 +1,15 @@
 #ifndef _MENU_H_
 #define _MENU_H_
 
-#include <cmath>
 #include <chrono>
 #include <cstdlib> // malloc
 #include <cstring> // memcpy
 #include <vector>
-
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
+#include <string>
+#include <utility>
 
 #include "CommonStructs.h"
 #include "Tile.h"
-#include "Text.h"
 #include "Loader.h"
 #include "Background.h"
 #include "Playback.h"
@@ -33,18 +28,7 @@ private:
   float backgroundOpacity;
   std::string footer;
 
-  // tiles positioning and animation constants
-  const std::pair<int, int> viewport;
-  const std::pair<int, int> tileSize;
-  const std::pair<int, int> tilesNumber;
-  const int marginFromBottom;
-  const float zoom;
-  const int animationsDurationMilliseconds;
-  const int fadingDurationMilliseconds;
-  const bool bouncing;
-
   // UI helper objects
-  Text text;
   Loader loader;
   Background background;
   Playback playback;
@@ -56,11 +40,10 @@ private:
 private:
   void initialize();
   int AddTile(char *pixels, std::pair<int, int> size);
-  std::pair<int, int> getTilePosition(int tileNo, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, std::pair<int, int> viewport, bool initialMargin = true);
+  std::pair<int, int> getTilePosition(int tileNo, bool initialMargin = true);
 
 public:
-  Menu(std::pair<int, int> viewport);
-  Menu(std::pair<int, int> viewport, std::pair<int, int> tileSize, std::pair<int, int> tilesNumber, float zoom, int animationsDurationMilliseconds);
+  Menu();
   ~Menu();
 
   void render();
@@ -74,7 +57,6 @@ public:
   void UpdatePlaybackControls(PlaybackData playbackData);
   void SetIcon(ImageData imageData);
   void SetFooter(std::string footer);
-  void SwitchTextRenderingMode();
   void ShowSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);
   bool addSuboption(int parentId, int id, std::string name);
