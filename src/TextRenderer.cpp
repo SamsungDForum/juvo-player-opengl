@@ -49,7 +49,7 @@ std::pair<GLuint, GLuint> TextRenderer::getTextSize(const std::string text, std:
   } catch(...) {
     LogConsole::instance().log("Cannot get text size: unknown exception", LogConsole::LogLevel::Error);
   }
-
+  return {1, 1};
 }
 
 void TextRenderer::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color) {
