@@ -134,7 +134,7 @@ void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> 
   GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
   glUseProgram(programObject);
-  glEnableVertexAttribArray(positionLoc);
+  glEnableVertexAttribArray(positionALoc);
   glVertexAttribPointer(positionALoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
   glUniform2f(positionLoc, position.first, position.second);
