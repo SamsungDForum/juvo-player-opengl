@@ -113,7 +113,6 @@ public:
     }
 
     const std::chrono::time_point<std::chrono::high_resolution_clock>& getLastTimeAccessed() {
-      lastTimeAccessed = std::chrono::high_resolution_clock::now();
       return lastTimeAccessed;
     }
 
