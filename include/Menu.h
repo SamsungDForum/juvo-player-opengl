@@ -49,8 +49,7 @@ public:
   void render();
   void ShowMenu(int enable);
   int AddTile();
-  void SetTileTexture(ImageData imageData);
-  void SelectTile(int tileNo);
+  void SelectTile(int tileNo, bool runPreview);
   int AddFont(char *data, int size);
   void ShowLoader(bool enabled, int percent);
   void SetTileData(TileData tileData);

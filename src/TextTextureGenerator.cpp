@@ -157,7 +157,6 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
   std::pair<GLuint, GLuint> texSize = getTextSize(textureKey);
   const FontFace& font = getFontFace(textureKey.fontId, textureKey.size.second);
 
-  glActiveTexture(GL_TEXTURE0);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   GLuint framebuffer;

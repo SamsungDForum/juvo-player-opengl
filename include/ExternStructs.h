@@ -1,6 +1,55 @@
 #ifndef _EXTERN_STRUCTS_H_
 #define _EXTERN_STRUCTS_H_
 
+#include <cassert>
+#include <GLES2/gl2ext.h>
+
+enum class Format
+{
+  Rgba,
+  Bgra,
+  Rgb,
+  Unknown
+};
+
+inline GLuint ConvertFormat(int format)
+{
+  switch (static_cast<Format>(format)) {
+    case Format::Rgba:
+      return GL_RGBA;
+    case Format::Bgra:
+#ifndef GL_BGRA_EXT
+#error "GL_BGRA_EXT is not defined"
+#endif
+      return GL_BGRA_EXT;
+    case Format::Rgb:
+      return GL_RGB;
+    default:
+      assert(nullptr);
+  }
+}
+
+struct SubBitmapExtern
+{
+  float rectLeft;
+  float rectRight;
+  float rectTop;
+  float rectBottom;
+  int bitmapWidth;
+  int bitmapHeight;
+  int bitmapInfoColorType;
+  char* bitmapBytes;
+  int bitmapHash;
+};
+
+struct StoryboardExternData
+{
+  int isStoryboardReaderReady;
+  int isFrameReady;
+  SubBitmapExtern frame;
+  long long duration;
+};
+
 struct TileExternData
 {
   int tileId;
@@ -12,6 +61,7 @@ struct TileExternData
   char* desc;
   int descLen;
   int format;
+  StoryboardExternData (*getStoryboardData)(long long position, int tileId);
 };
 
 struct PlaybackExternData

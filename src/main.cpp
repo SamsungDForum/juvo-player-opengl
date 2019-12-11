@@ -1,7 +1,5 @@
-#include <cassert>
 #include <cstdio>
 #include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 
 #include "ExternStructs.h"
 #include "CommonStructs.h"
@@ -17,29 +15,32 @@ extern "C" {
 #endif
 EXPORT_API void Create();
 EXPORT_API void Terminate();
-EXPORT_API void ShowMenu(int enable);
+EXPORT_API void Draw();
+
 EXPORT_API int AddTile();
 EXPORT_API void SetTileData(TileExternData tileExternData);
-EXPORT_API void SetTileTexture(ImageExternData image);
-EXPORT_API void SelectTile(int tileNo);
-EXPORT_API void Draw();
 EXPORT_API int AddFont(char *data, int size);
-EXPORT_API void ShowLoader(int enabled, int percent);
 EXPORT_API void SetIcon(ImageExternData image);
+
+EXPORT_API void ShowMenu(int enable);
+EXPORT_API void ShowLoader(int enabled, int percent);
+EXPORT_API void ShowSubtitle(int duration, char* text, int textLen);
+EXPORT_API void SelectTile(int tileNo, int runPreview);
 EXPORT_API void UpdatePlaybackControls(PlaybackExternData playbackExternData);
 EXPORT_API void SetFooter(char* footer, int footerLen);
-EXPORT_API void ShowSubtitle(int duration, char* text, int textLen);
 EXPORT_API int OpenGLLibVersion();
+EXPORT_API void SelectAction(int id);
+
 EXPORT_API int AddOption(int id, char* text, int textLen);
 EXPORT_API int AddSuboption(int parentId, int id, char* text, int textLen);
 EXPORT_API int UpdateSelection(SelectionExternData selectionExternData);
 EXPORT_API void ClearOptions();
+
 EXPORT_API int AddGraph(GraphExternData graphExternData);
 EXPORT_API void SetGraphVisibility(int graphId, int visible);
 EXPORT_API void UpdateGraphValues(int graphId, float* values, int valuesCount);
 EXPORT_API void UpdateGraphValue(int graphId, float value);
 EXPORT_API void UpdateGraphRange(int graphId, float minVal, float maxVal);
-EXPORT_API void SelectAction(int id);
 EXPORT_API void SetLogConsoleVisibility(int visible);
 EXPORT_API void PushLog(char* log, int logLen);
 EXPORT_API void ShowAlert(AlertExternData alertExternData);
@@ -50,33 +51,6 @@ EXPORT_API int IsAlertVisible();
 #endif
 
 Menu *menu = nullptr;
-
-namespace {
-  enum class Format
-  {
-    Rgba,
-    Bgra,
-    Rgb,
-    Unknown
-  };
-
-  GLuint ConvertFormat(int format)
-  {
-    switch (static_cast<Format>(format)) {
-      case Format::Rgba:
-        return GL_RGBA;
-      case Format::Bgra:
-#ifndef GL_BGRA_EXT
-#error "GL_BGRA_EXT is not defined"
-#endif
-        return GL_BGRA_EXT;
-      case Format::Rgb:
-        return GL_RGB;
-      default:
-        assert(nullptr);
-    }
-  }
-}
 
 void Create()
 {
@@ -109,16 +83,8 @@ void SetTileData(TileExternData tileExternData)
       {tileExternData.width, tileExternData.height},
       std::string(tileExternData.name, tileExternData.nameLen),
       std::string(tileExternData.desc, tileExternData.descLen),
-      ConvertFormat(tileExternData.format)});
-}
-
-void SetTileTexture(ImageExternData image)
-{
-  menu->SetTileTexture(ImageData {
-      image.id,
-      image.pixels,
-      {image.width, image.height},
-      ConvertFormat(image.format)});
+      ConvertFormat(tileExternData.format),
+      tileExternData.getStoryboardData});
 }
 
 int AddFont(char *data, int size)
@@ -126,9 +92,9 @@ int AddFont(char *data, int size)
   return menu->AddFont(data, size);
 }
 
-void SelectTile(int tileNo)
+void SelectTile(int tileNo, int runPreview)
 {
-  menu->SelectTile(tileNo);
+  menu->SelectTile(tileNo, static_cast<bool>(runPreview));
 }
 
 void ShowLoader(int enabled, int percent)

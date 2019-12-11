@@ -11,6 +11,8 @@
 #endif // _INCLUDE_GLES_
 
 #include "TileAnimation.h"
+#include "CommonStructs.h"
+#include "ExternStructs.h"
 
 class Tile {
 private:
@@ -23,6 +25,16 @@ private:
   std::string description;
 
   TileAnimation animation;
+
+  bool runningPreview;
+  std::chrono::time_point<std::chrono::high_resolution_clock> storyboardPreviewStartTimePoint;
+  Rect storytileRect;
+  bool previewReady;
+  GLuint previewTextureId = GL_INVALID_VALUE;
+  SubBitmapExtern storyboardBitmap;
+  int bitmapHash;
+  StoryboardExternData (*getStoryboardDataCallback)(long long position, int tileId);
+
   GLuint textureId = GL_INVALID_VALUE;
   GLuint textureFormat = GL_INVALID_VALUE;
 
@@ -30,14 +42,15 @@ private:
   static GLuint programObject;
   static GLuint tileSizeLoc;
   static GLuint tilePositionLoc;
-  static GLuint frameColorLoc;
-  static GLuint frameWidthLoc;
   static GLuint samplerLoc;
   static GLuint posLoc;
   static GLuint texLoc;
   static GLuint opacityLoc;
+  static GLuint viewportLoc;
+  static GLuint scaleLoc;
+  static GLuint storytileRectLoc;
 
-  void initTexture();
+  void initTextures();
   void initGL();
 
 public:
@@ -53,6 +66,12 @@ public:
   void render();
   void setTexture(char *pixels, std::pair<int, int> size, GLuint format);
   void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce = 0);
+  void runPreview(bool run);
+  StoryboardExternData getStoryboardData(std::chrono::duration<double> position, int tileId);
+  GLuint getCurrentTextureId();
+  void setPreviewTexture(SubBitmapExtern frame);
+  void setStoryboardCallback(StoryboardExternData (*getStoryboardDataCallback)(long long position, int tileId));
+
 
   void setId(int id) { this->id = id; }
   int  getId() { return id; }

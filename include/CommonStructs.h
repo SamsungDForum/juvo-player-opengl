@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "ExternStructs.h"
+
 struct TileData
 {
   int tileId;
@@ -13,6 +15,17 @@ struct TileData
   std::string name;
   std::string desc;
   GLuint format;
+  StoryboardExternData (*getStoryboardData)(long long position, int tileId);
+};
+
+struct Rect
+{
+  float left;
+  float right;
+  float top;
+  float bottom;
+  inline float width() { return right - left; }
+  inline float height() { return bottom - top; }
 };
 
 struct PlaybackData
