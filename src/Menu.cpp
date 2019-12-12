@@ -27,6 +27,8 @@ void Menu::initialize() {
   glDisable(GL_SCISSOR_TEST);
   glDisable(GL_STENCIL_TEST);
 
+  glActiveTexture(GL_TEXTURE0);
+
   backgroundOpacity = 1.0;
   loaderEnabled = true;
   selectedTile = 0;
@@ -104,16 +106,19 @@ void Menu::ShowMenu(int enable) {
 }
 
 std::pair<int, int> Menu::getTilePosition(int tileNo, bool initialMargin) {
-  int horizontalMargin = std::max(static_cast<int>(std::ceil(static_cast<double>(Settings::instance().viewport.first - (Settings::instance().tileSize.first * Settings::instance().tilesArrangement.first)) / (Settings::instance().tilesArrangement.first + 1))), 0);
-  int verticalMargin = std::max((Settings::instance().viewport.second - (Settings::instance().tileSize.second * Settings::instance().tilesArrangement.second)) / (Settings::instance().tilesArrangement.second + 1), 0);
-  int horizontalPosition = 0;
-  int verticalPosition = 0;
-  horizontalPosition = (initialMargin ? horizontalMargin : 0) + (horizontalMargin + Settings::instance().tileSize.first) * tileNo;
-  verticalPosition = Settings::instance().tilesArrangement.second > 1 ? Settings::instance().tileSize.second + verticalMargin : Settings::instance().marginFromBottom;
 
-  int innerMargin = (Settings::instance().viewport.first - 1.5 * Settings::instance().sideMargin - Settings::instance().tileSize.first * Settings::instance().tilesArrangement.first) / (Settings::instance().tilesArrangement.first - 1);
-  horizontalPosition = Settings::instance().sideMargin + tileNo * (Settings::instance().tileSize.first + innerMargin);
-
+  int verticalPosition;
+  int innerMargin;
+  if(Settings::instance().arrangeTilesInGrid) {
+    int verticalMargin = std::max((Settings::instance().viewport.second - (Settings::instance().tileSize.second * Settings::instance().tilesArrangement.second)) / (Settings::instance().tilesArrangement.second + 1), 0);
+    verticalPosition = Settings::instance().tilesArrangement.second > 1 ? Settings::instance().tileSize.second + verticalMargin : Settings::instance().marginFromBottom;
+    innerMargin = (Settings::instance().viewport.first - 1.5 * Settings::instance().sideMargin - Settings::instance().tileSize.first * Settings::instance().tilesArrangement.first) / (Settings::instance().tilesArrangement.first - 1);
+  }
+  else {
+    verticalPosition = Settings::instance().marginFromBottom;
+    innerMargin = static_cast<int>(static_cast<float>(Settings::instance().tileSize.first) * (Settings::instance().zoom - 1.0f) * 0.5f);
+  }
+  int horizontalPosition = Settings::instance().sideMargin + tileNo * (Settings::instance().tileSize.first + innerMargin);
   return std::make_pair(horizontalPosition, verticalPosition);
 }
 
@@ -152,15 +157,10 @@ void Menu::SetTileData(TileData tileData) {
   tiles[tileData.tileId].setName(tileData.name);
   tiles[tileData.tileId].setDescription(tileData.desc);
   tiles[tileData.tileId].setTexture(tileData.pixels, tileData.size, tileData.format);
+  tiles[tileData.tileId].setStoryboardCallback(tileData.getStoryboardData);
 }
 
-void Menu::SetTileTexture(ImageData imageData) {
-  if(imageData.id >= static_cast<int>(tiles.size()))
-    return;
-  tiles[imageData.id].setTexture(imageData.pixels, imageData.size, imageData.format);
-}
-
-void Menu::SelectTile(int tileNo) {
+void Menu::SelectTile(int tileNo, bool runPreview) {
   int bounce = (Settings::instance().bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? 1 : -1) : 0;
   selectedTile = tileNo;
   bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + Settings::instance().tilesArrangement.first - 1 >= selectedTile);
@@ -172,7 +172,7 @@ void Menu::SelectTile(int tileNo) {
     else
       firstTile += shiftRight;
   }
-  for(size_t i = 0; i < tiles.size(); ++i)
+  for(size_t i = 0; i < tiles.size(); ++i) {
     tiles[i].moveTo(getTilePosition(i - firstTile),
                     static_cast<int>(i) == selectedTile ? Settings::instance().zoom : 1.0,
                     tiles[i].getTargetSize(),
@@ -180,6 +180,8 @@ void Menu::SelectTile(int tileNo) {
                     Settings::instance().animationDuration,
                     std::chrono::milliseconds(0),
                     (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
+    tiles[i].runPreview(runPreview && static_cast<int>(i) == selectedTile);
+  }
   if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
     background.setSourceTile(&tiles[selectedTile],
                              !bounce ? std::chrono::milliseconds(Settings::instance().fadingDuration) : std::chrono::milliseconds(0),

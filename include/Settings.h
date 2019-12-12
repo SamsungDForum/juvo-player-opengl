@@ -19,12 +19,15 @@ public:
   std::pair<int, int> viewport;
   const std::pair<int, int> tileSize;
   const std::pair<int, int> tilesArrangement;
+  const bool arrangeTilesInGrid;
   const float marginFromBottom;
   const float zoom;
   const std::chrono::milliseconds fadingDuration;
   const std::chrono::milliseconds animationDuration;
   const bool bouncing;
   const float sideMargin;
+  const std::chrono::milliseconds tilePreviewDelay;
+  const float tilePreviewTimeScale;
 };
 
 #endif // _SETTINGS_H_
