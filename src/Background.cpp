@@ -91,7 +91,7 @@ void Background::render() {
   glDisableVertexAttribArray(posLoc);
   glDisableVertexAttribArray(texLoc);
   glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 
   renderNameAndDescription();
 }

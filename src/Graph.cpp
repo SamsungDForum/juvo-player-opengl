@@ -71,6 +71,6 @@ void Graph::render(const std::vector<float> &values, const std::pair<float, floa
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(posALoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 }
 

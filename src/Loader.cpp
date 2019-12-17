@@ -86,7 +86,7 @@ void Loader::render() {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(posLoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 
   renderText(static_cast<float>(time));
 }

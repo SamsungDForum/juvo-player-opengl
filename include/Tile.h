@@ -5,11 +5,7 @@
 #include <chrono>
 #include <utility>
 
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
+#include "GLES.h"
 #include "TileAnimation.h"
 #include "CommonStructs.h"
 #include "ExternStructs.h"

@@ -1,10 +1,10 @@
 #ifndef _COMMON_STRUCTS_H_
 #define _COMMON_STRUCTS_H_
 
-#include <GLES2/gl2.h>
 #include <string>
 #include <utility>
 
+#include "GLES.h"
 #include "ExternStructs.h"
 
 struct TileData

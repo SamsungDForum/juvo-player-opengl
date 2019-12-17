@@ -4,11 +4,7 @@
 #include <chrono>
 #include <vector>
 
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
+#include "GLES.h"
 #include "Tile.h"
 #include "Animation.h"
 
@@ -45,4 +41,4 @@ public:
   float getBlack();
 };
 
-#endif // _BACKGRODUN_H_
+#endif // _BACKGROUND_H_

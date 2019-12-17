@@ -1,6 +1,7 @@
 #include "Tile.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Utility.h"
 
 int Tile::staticTileObjectCount = 0;
 GLuint Tile::programObject    = GL_INVALID_VALUE;
@@ -226,7 +227,7 @@ void Tile::render() {
   glDisableVertexAttribArray(posLoc);
   glDisableVertexAttribArray(texLoc);
   glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 }
 
 void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce) {

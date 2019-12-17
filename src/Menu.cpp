@@ -1,11 +1,7 @@
+#include "GLES.h"
 #include "Menu.h"
 #include "Settings.h"
 #include "TextRenderer.h"
-
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
 
 Menu::Menu()
   : loader(),

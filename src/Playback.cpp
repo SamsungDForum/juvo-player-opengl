@@ -195,7 +195,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
   glDisableVertexAttribArray(texCoordIconLoc);
   glDisableVertexAttribArray(posIconLoc);
   glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 }
 
 void Playback::renderText(float opacity) {
@@ -247,7 +247,7 @@ void Playback::renderProgressBar(float opacity) {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(posBarLoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 }
 
 void Playback::initTexture(int id) {
@@ -349,7 +349,7 @@ void Playback::renderLoader(float opacity) {
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(posLoaderLoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 }
 
 void Playback::selectAction(int id) {

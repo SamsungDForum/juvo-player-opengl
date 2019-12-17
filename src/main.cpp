@@ -1,6 +1,6 @@
 #include <cstdio>
-#include <GLES2/gl2.h>
 
+#include "GLES.h"
 #include "ExternStructs.h"
 #include "CommonStructs.h"
 #include "Menu.h"

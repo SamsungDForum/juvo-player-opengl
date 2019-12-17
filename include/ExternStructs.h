@@ -2,7 +2,8 @@
 #define _EXTERN_STRUCTS_H_
 
 #include <cassert>
-#include <GLES2/gl2ext.h>
+
+#include "GLES.h"
 
 enum class Format
 {

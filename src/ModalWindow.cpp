@@ -120,7 +120,7 @@ void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, i
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(posALoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 }
 
 void ModalWindow::renderContent() {

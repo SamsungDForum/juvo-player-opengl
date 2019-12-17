@@ -1,16 +1,12 @@
 #ifndef _TEXT_RENDERER_H_
 #define _TEXT_RENDERER_H_
 
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
-#include <glm/vec2.hpp>
-
 #include <string>
 #include <vector>
 #include <utility>
+
+#include "GLES.h"
+#include <glm/vec2.hpp>
 
 class TextRenderer {
 

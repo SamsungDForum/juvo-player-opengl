@@ -1,19 +1,6 @@
 #ifndef _TEXT_TEXTURE_GENERATOR_H_
 #define _TEXT_TEXTURE_GENERATOR_H_
 
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
-#include <glm/vec2.hpp>
-
-#ifndef _FT_FREETYPE_
-#define _FT_FREETYPE_
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#endif // _FT_FREETYPE_
-
 #include <unordered_map>
 #include <string>
 #include <algorithm>
@@ -22,6 +9,15 @@
 #include <cmath>
 #include <chrono>
 #include <map>
+
+#include "GLES.h"
+#include <glm/vec2.hpp>
+
+#ifndef _FT_FREETYPE_
+#define _FT_FREETYPE_
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#endif // _FT_FREETYPE_
 
 class TextTextureGenerator {
 private:

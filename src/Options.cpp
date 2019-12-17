@@ -148,7 +148,7 @@ void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(positionALoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 
   int fontHeight = size.second / 2;
   int margin = (size.second - fontHeight) / 2;

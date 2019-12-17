@@ -6,12 +6,8 @@
 #include <utility>
 #include <string>
 
+#include "GLES.h"
 #include "Animation.h"
-
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
 
 class Playback {
 private:

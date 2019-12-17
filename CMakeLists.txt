@@ -44,6 +44,7 @@ SET(SRCS
   src/ModalWindow.cpp
   src/ProgramBuilder.cpp
   src/Settings.cpp
+  src/Utility.cpp
 )
 
 INCLUDE(FindPkgConfig)

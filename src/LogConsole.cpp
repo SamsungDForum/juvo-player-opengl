@@ -62,7 +62,7 @@ void LogConsole::render(std::pair<int, int> position, std::pair<int, int> size, 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
   glDisableVertexAttribArray(posALoc);
-  glUseProgram(GL_INVALID_VALUE);
+  glUseProgram(0);
 
   renderText(position, size, fontId, fontSize);
 }

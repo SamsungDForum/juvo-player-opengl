@@ -1,14 +1,11 @@
 #ifndef _LOGCONSOLE_H_
 #define _LOGCONSOLE_H_
 
-#ifndef _INCLUDE_GLES_
-#define _INCLUDE_GLES_
-#include <GLES2/gl2.h>
-#endif // _INCLUDE_GLES_
-
 #include <string>
 #include <utility>
 #include <deque>
+
+#include "GLES.h"
 
 class LogConsole {
 private:
