@@ -31,14 +31,13 @@ void Loader::initialize() {
   opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   viewportLoc = glGetUniformLocation(programObject, "u_viewport");
 
-  time = std::chrono::high_resolution_clock::now();
+  time = std::chrono::steady_clock::now();
 }
 
 void Loader::setValue(int value) {
   Animation::Easing easing = animation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut;
-  animation = Animation(std::chrono::high_resolution_clock::now(),
-                        std::chrono::milliseconds(500),
-                        std::chrono::milliseconds(0),
+  animation = Animation(std::chrono::milliseconds(500),
+                        std::chrono::duration_values<std::chrono::milliseconds>::zero(),
                         {static_cast<double>(param)},
                         {static_cast<double>(value)},
                         easing);
@@ -46,8 +45,7 @@ void Loader::setValue(int value) {
 }
 
 void Loader::render() {
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<float, std::milli> timespan = now - time;
+  std::chrono::duration<float, std::milli> timespan = std::chrono::steady_clock::now() - time;
 
   std::pair<int, int> size = {1440, 486};
   std::pair<int, int> position = {(Settings::instance().viewport.first - size.first) / 2, (Settings::instance().viewport.second - size.second) / 2};
@@ -68,7 +66,7 @@ void Loader::render() {
   glEnableVertexAttribArray(posLoc);
   glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
-  GLfloat time = static_cast<float>(timespan.count()) / 1000.0f;
+  GLfloat time = timespan.count() / 1000.0f;
   glUniform1f(timeLoc, time);
 
   float paramArg = param;

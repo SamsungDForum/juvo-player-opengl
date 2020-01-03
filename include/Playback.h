@@ -58,7 +58,7 @@ private:
   bool buffering;
   float bufferingPercent;
   bool seeking;
-  std::chrono::time_point<std::chrono::high_resolution_clock> lastUpdate;
+  std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
 
   const int progressUiLineLevel = 100;
   std::pair<float, float> progressBarSizePx;

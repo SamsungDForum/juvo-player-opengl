@@ -18,7 +18,7 @@ Playback::Playback()
     buffering(false),
     bufferingPercent(0.0f),
     seeking(false),
-    lastUpdate(std::chrono::high_resolution_clock::now()),
+    lastUpdate(std::chrono::steady_clock::now()),
     progressUiLineLevel(100),
     progressBarSizePx({1400.0f, 20.0f}),
     progressBarSize({progressBarSizePx.first / 1920.0f * Settings::instance().viewport.first, progressBarSizePx.second / 1080.0f * Settings::instance().viewport.second}),
@@ -163,6 +163,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 
   glUseProgram(iconProgramObject);
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, icons[static_cast<int>(icon)]);
   glUniform1i(samplerIconLoc, 0);
 
@@ -262,6 +263,7 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
   if(icons[id] == GL_INVALID_VALUE)
     initTexture(id);
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, icons[id]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -277,12 +279,11 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
 
 void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking) {
   updateProgress();
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+  std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
   std::chrono::milliseconds fromLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate);
   if(static_cast<bool>(show) != enabled) {
     enabled = static_cast<bool>(show);
-    opacityAnimation = Animation(now,
-                          animationDuration,
+    opacityAnimation = Animation(animationDuration,
                           animationDelay,
                           {static_cast<double>(opacity)},
                           {enabled ? 1.0 : 0.0},
@@ -291,9 +292,8 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
 
   if(currentTime != this->currentTime && totalTime != 0) { // excluding totalTime=0 because of live content case
     lastUpdate = now;
-    progressAnimation = Animation(now,
-                          std::min(static_cast<std::chrono::milliseconds>(fromLastUpdate.count() * 2), std::chrono::milliseconds(1000)),
-                          std::chrono::milliseconds(0),
+    progressAnimation = Animation(std::min(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(fromLastUpdate).count() * 2), std::chrono::milliseconds(1000)),
+                          std::chrono::duration_values<std::chrono::milliseconds>::zero(),
                           {progress},
                           {static_cast<double>(currentTime) / static_cast<double>(totalTime ? totalTime : currentTime)},
                           Animation::Easing::Linear);

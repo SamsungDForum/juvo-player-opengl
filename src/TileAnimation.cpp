@@ -1,116 +1,70 @@
 #include "TileAnimation.h"
 
-float TileAnimation::doEasing(float fraction, Easing easing) {
-  float t  = fraction;
-  switch(easing) {
-    case Easing::QuintInOut:
-      return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * (t - 1) * (t - 1) * (t - 1) * (t - 1) * (t - 1);
-    case Easing::QuintOut:
-      return 1 + (t - 1) * (t - 1)  * (t - 1) * (t - 1) * (t - 1);
-    case Easing::QuintIn:
-      return t * t * t * t * t;
-    case Easing::QuartInOut:
-      return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (t - 1) * (t - 1) * (t - 1) * (t - 1);
-    case Easing::QuartOut:
-      return 1 - (t - 1) * (t - 1) * (t - 1) * (t - 1);
-    case Easing::QuartIn:
-      return t * t * t * t;
-    case Easing::CubicInOut:
-      return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
-    case Easing::CubicOut:
-      return (t - 1) * (t - 1) * (t - 1) + 1;
-    case Easing::CubicIn:
-      return t * t * t;
-    case Easing::QuadInOut:
-      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    case Easing::QuadOut:
-      return t * (2 - t);
-    case Easing::QuadIn:
-      return t * t;
-    case Easing::BounceLeft:
-      return std::sin(t * M_PI * 2) * (1.0 - t) * 20.0 * -1;
-    case Easing::BounceRight:
-      return std::sin(t * M_PI * 2) * (1.0 - t) * 20.0;
-    case Easing::Linear:
-    default:
-      return t;
-  }
-}
+#include <chrono>
 
 TileAnimation::TileAnimation() : active(false) {}
-TileAnimation::TileAnimation(std::chrono::time_point<std::chrono::high_resolution_clock> animationStart,
-          std::chrono::milliseconds animationDuration,
-          std::chrono::milliseconds animationDelay,
-          std::pair<int, int> sourcePosition,
-          std::pair<int, int> targetPosition,
-          Easing positionEasingType,
-          float sourceZoom,
-          float targetZoom,
-          Easing zoomEasingType,
-          std::pair<int, int> sourceSize,
-          std::pair<int, int> targetSize,
-          Easing sizeEasingType,
-          float sourceOpacity,
-          float targetOpacity,
-          Easing opacityEasingType)
+
+TileAnimation::TileAnimation(AnimationParameters<std::pair<int, int>> position,
+                             AnimationParameters<float> zoom,
+                             AnimationParameters<std::pair<int, int>> size,
+                             AnimationParameters<float> opacity)
   :
-          animationStart(animationStart),
-          animationDuration(animationDuration),
-          animationDelay(animationDelay),
-          sourcePosition(sourcePosition),
-          targetPosition(targetPosition),
-          positionEasingType(positionEasingType),
-          sourceZoom(sourceZoom),
-          targetZoom(targetZoom),
-          zoomEasingType(zoomEasingType),
-          sourceSize(sourceSize),
-          targetSize(targetSize),
-          sizeEasingType(sizeEasingType),
-          sourceOpacity(sourceOpacity),
-          targetOpacity(targetOpacity),
-          opacityEasingType(opacityEasingType),
-          active(animationDuration > std::chrono::milliseconds(0) ? true : false) {
+          start(std::chrono::steady_clock::now()),
+          position(position),
+          zoom(zoom),
+          size(size),
+          opacity(opacity),
+          active(position.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ||
+                 zoom.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ||
+                 size.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ||
+                 opacity.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero()) {
 }
 
 void TileAnimation::update(std::pair<int, int> &position, float &zoom, std::pair<int, int> &size, float &opacity) {
-  if(!active) {
-    position = targetPosition;
-    zoom = targetZoom;
-    size = targetSize;
-    opacity = targetOpacity;
-    return;
-  }
+  //auto [position2, zoom2, size2, opacity2] = update(); // i'm compiling this under GCC 6.2.1, so structured bindings are not yet available...
+  std::tuple<std::pair<int, int>, float, std::pair<int, int>, float> out = update();
+  position = std::get<0>(out);
+  zoom = std::get<1>(out);
+  size = std::get<2>(out);
+  opacity = std::get<3>(out);
+}
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+std::tuple<std::pair<int, int>, float, std::pair<int, int>, float> TileAnimation::update() {
+  if(!active)
+    return { position.target, zoom.target, size.target, opacity.target };
 
-  if(now - animationStart < animationDelay) {
-    position = sourcePosition;
-    zoom = sourceZoom;
-    size = sourceSize;
-    opacity = sourceOpacity;
-    return;
-  }
-  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart - animationDelay);
+  std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
 
-  std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
-  float fraction = target.count() ? time_span.count() / target.count() : 1.0;
-  switch(positionEasingType) {
-    case Easing::BounceLeft:
-    case Easing::BounceRight:
-      position.first = targetPosition.first + doEasing(fraction, positionEasingType);
-      position.second = targetPosition.second;
-      break;
-    default:
-      position.first = sourcePosition.first + (targetPosition.first - sourcePosition.first) * doEasing(fraction, positionEasingType);
-      position.second = sourcePosition.second + (targetPosition.second - sourcePosition.second) * doEasing(fraction, positionEasingType);
-  }
-  zoom = sourceZoom + (targetZoom - sourceZoom) * doEasing(fraction, zoomEasingType);
-  size.first = sourceSize.first + (targetSize.first - sourceSize.first) * doEasing(fraction, sizeEasingType);
-  size.second = sourceSize.second + (targetSize.second - sourceSize.second) * doEasing(fraction, sizeEasingType);
-  opacity = sourceOpacity + (targetOpacity - sourceOpacity) * doEasing(fraction, opacityEasingType);
-  if(fraction > 0.999) {
+  if(position.fraction(now, start) > fractionThreshold &&
+     zoom.fraction(now, start) > fractionThreshold &&
+     size.fraction(now, start) > fractionThreshold &&
+     opacity.fraction(now, start) > fractionThreshold)
     active = false;
-    return;
-  }
+
+  return {
+    interpolate(now, position),
+    interpolate(now, zoom),
+    interpolate(now, size),
+    interpolate(now, opacity)
+  };
+}
+
+float TileAnimation::interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<float> &value) {
+  float fraction = value.fraction(now, start);
+  if(fraction <= 0.0f)
+    return value.source;
+  if(fraction > fractionThreshold)
+    return value.target;
+  return value.source + (value.target - value.source) * Animation::ease(fraction, value.easing);
+}
+
+std::pair<int, int> TileAnimation::interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<std::pair<int, int>> &value) {
+  float fraction = value.fraction(now, start);
+  if(fraction <= 0.0f)
+    return value.source;
+  if(fraction > fractionThreshold)
+    return value.target;
+  float interpolation = Animation::ease(fraction, value.easing);
+  return { value.source.first + (value.target.first - value.source.first) * interpolation, value.source.second + (value.target.second - value.source.second) * interpolation };
 }
 

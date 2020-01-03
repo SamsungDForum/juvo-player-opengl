@@ -11,8 +11,7 @@ void Subtitles::render() {
   if(!active)
     return;
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-  if(now > start + duration) {
+  if(std::chrono::steady_clock::now() > start + duration) {
     active = false;
     if(showForOneFrame == false)
       return;
@@ -37,7 +36,7 @@ void Subtitles::render() {
 void Subtitles::showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle) {
   this->subtitle = subtitle;
   this->duration = duration;
-  this->start = std::chrono::high_resolution_clock::now();
+  this->start = std::chrono::steady_clock::now();
   this->active = true;
   if(duration == std::chrono::milliseconds(0))
     showForOneFrame = true;

@@ -4,26 +4,27 @@ Animation::Animation()
   : active(false) {
 }
 
-Animation::Animation(std::chrono::time_point<std::chrono::high_resolution_clock> animationStart,
-                     std::chrono::milliseconds animationDuration,
-                     std::chrono::milliseconds animationDelay,
-                     const std::vector<double> sourceValues,
-                     const std::vector<double> targetValues,
-                     Easing easing)
+Animation::Animation(std::chrono::milliseconds duration,
+                     std::chrono::milliseconds delay,
+                     const std::vector<double> source,
+                     const std::vector<double> target,
+                     Easing easing,
+                     std::function<void()> endWith)
   :
-                     animationStart(animationStart),
-                     animationDuration(animationDuration),
-                     animationDelay(animationDelay),
-                     sourceValues(sourceValues),
-                     targetValues(targetValues),
+                     start(std::chrono::steady_clock::now()),
+                     duration(duration),
+                     delay(delay),
+                     source(source),
+                     target(target),
                      easing(easing),
-                     active(animationDuration > std::chrono::milliseconds(0) ? true : false) {
-  if(this->sourceValues.size() != this->targetValues.size()) {
-    size_t minSize = std::min(this->sourceValues.size(), this->targetValues.size());
-    this->sourceValues.resize(minSize);
-    this->targetValues.resize(minSize);
+                     active(duration > std::chrono::duration_values<std::chrono::milliseconds>::zero()),
+                     endWith(endWith) {
+  if(this->source.size() != this->target.size()) {
+    size_t minSize = std::min(this->source.size(), this->target.size());
+    this->source.resize(minSize);
+    this->target.resize(minSize);
   }
-  if(sourceValues.empty())
+  if(source.empty())
     active = false;
 }
 
@@ -43,15 +44,15 @@ float Animation::ease(float fraction, Easing easing) {
     case Easing::QuartIn:
       return t * t * t * t;
     case Easing::CubicInOut:
-      return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      return t < 0.5 ? 4 * t * t * t : 1 + 4 * (t - 1) * (t - 1) * (t - 1);
     case Easing::CubicOut:
-      return (t - 1) * (t - 1) * (t - 1) + 1;
+      return 1 + (t - 1) * (t - 1) * (t - 1);
     case Easing::CubicIn:
       return t * t * t;
     case Easing::QuadInOut:
-      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      return t < 0.5 ? 2 * t * t : 1 - 2 * (t - 1) * (t - 1);
     case Easing::QuadOut:
-      return t * (2 - t);
+      return 1 - (t - 1) * (t - 1);
     case Easing::QuadIn:
       return t * t;
     case Easing::BounceLeft:
@@ -66,28 +67,35 @@ float Animation::ease(float fraction, Easing easing) {
 
 std::vector<double> Animation::update() {
   if(!active)
-    return targetValues;
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-  if(now - animationStart < animationDelay)
-    return sourceValues;
+    return target;
 
-  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - animationStart - animationDelay);
-  std::chrono::duration<double> target = std::chrono::duration_cast<std::chrono::duration<double>>(animationDuration);
-  double fraction = target.count() ? time_span.count() / target.count() : 1.0;
-  active = fraction <= 0.999;
+  if(isDuringDelay())
+    return source;
+
+  double fraction = duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ?
+    std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(std::chrono::steady_clock::now() - start - delay).count() / duration.count() :
+    1.0;
+  updateActivity(fraction);
 
   std::vector<double> values;
-  for(size_t i = 0, sn = sourceValues.size(), tn = targetValues.size(); i < sn && i < tn; ++i) {
-    values.push_back(isBounce() ? targetValues[i] + ease(fraction, easing) : sourceValues[i] + (targetValues[i] - sourceValues[i]) * ease(fraction, easing));
-  }
+  for(size_t i = 0, sn = source.size(), tn = target.size(); i < sn && i < tn; ++i)
+    values.push_back(source[i] + (target[i] - source[i]) * ease(fraction, easing));
   return values;
+}
+
+void Animation::updateActivity(double fraction) {
+  if(active && fraction > 0.999) {
+    active = false;
+    if(endWith != nullptr)
+      endWith();
+  }
 }
 
 bool Animation::isActive() {
   return active;
 }
 
-bool Animation::isBounce() {
-  return easing == Easing::BounceLeft || easing == Easing::BounceRight;
+bool Animation::isDuringDelay() {
+  return active && (std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(std::chrono::steady_clock::now() - start) < delay);
 }
 

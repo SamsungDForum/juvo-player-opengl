@@ -25,7 +25,6 @@ private:
   bool loaderEnabled;
   int selectedTile;
   int firstTile;
-  float backgroundOpacity;
   std::string footer;
 
   // UI helper objects
@@ -41,6 +40,7 @@ private:
   void initialize();
   int AddTile(char *pixels, std::pair<int, int> size);
   std::pair<int, int> getTilePosition(int tileNo, bool initialMargin = true);
+  std::pair<int, int> getGridSize();
 
 public:
   Menu();

@@ -8,10 +8,11 @@
 Background::Background()
   : programObject(GL_INVALID_VALUE),
     textureFormat(GL_INVALID_VALUE),
-    opacity(0),
-    black(1.0),
-    sourceTile(nullptr),
-    clearColor({}) {
+    opacity(0.0f),
+    mixing(1.0f),
+    lastTile(nullptr),
+    currentTile(nullptr),
+    queuedTile(nullptr) {
   initGL();
 }
 
@@ -19,9 +20,10 @@ Background::Background(float opacity)
   : programObject(GL_INVALID_VALUE),
     textureFormat(GL_INVALID_VALUE),
     opacity(opacity),
-    black(1.0),
-    sourceTile(nullptr),
-    clearColor({}) {
+    mixing(1.0f),
+    lastTile(nullptr),
+    currentTile(nullptr),
+    queuedTile(nullptr) {
   initGL();
 }
 
@@ -41,26 +43,30 @@ void Background::initGL() {
 
   programObject = ProgramBuilder::buildProgram(vShaderTexStr, fShaderTexStr);
 
-  samplerLoc = glGetUniformLocation(programObject, "s_texture");
   posLoc = glGetAttribLocation(programObject, "a_position");
   texLoc = glGetAttribLocation(programObject, "a_texCoord");
+  samplerLoc = glGetUniformLocation(programObject, "s_texture");
+  sampler2Loc = glGetUniformLocation(programObject, "s_texture2");
   opacityLoc = glGetUniformLocation(programObject, "u_opacity");
-  blackLoc = glGetUniformLocation(programObject, "u_black");
+  mixingLoc = glGetUniformLocation(programObject, "u_mixing");
   viewportLoc = glGetUniformLocation(programObject, "u_viewport");
 }
 
 void Background::render() {
-  GLuint textureId = sourceTile != nullptr ? sourceTile->getTextureId() : GL_INVALID_VALUE;
+  GLuint textureId = currentTile != nullptr ? currentTile->getTextureId() : GL_INVALID_VALUE;
   if(textureId == GL_INVALID_VALUE)
     return;
-  opacity = sourceTile != nullptr ? sourceTile->getOpacity() : 1.0;
+  GLuint texture2Id = lastTile != nullptr ? lastTile->getTextureId() : GL_INVALID_VALUE;
+  if(texture2Id == GL_INVALID_VALUE)
+    texture2Id = textureId;
+  opacity = currentTile != nullptr ? currentTile->getOpacity() : 1.0;
 
   float left = -1.0;
   float right = 1.0;
   float top = 1.0;
   float down = -1.0;
 
-  GLfloat vVertices[] = { left,   top,  0.0f,
+  GLfloat vertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
                           right,  top,  0.0f
@@ -72,17 +78,23 @@ void Background::render() {
   glUseProgram(programObject);
 
   glUniform1f(opacityLoc, static_cast<GLfloat>(opacity));
+
   std::vector<double> updated = animation.update();
   if(!updated.empty())
-    black = animation.update()[0];
-  glUniform1f(blackLoc, static_cast<GLfloat>(black));
+    mixing = updated[0];
+  glUniform1f(mixingLoc, static_cast<GLfloat>(mixing));
   glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.first), static_cast<GLfloat>(Settings::instance().viewport.second));
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureId);
   glUniform1i(samplerLoc, 0);
 
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, texture2Id);
+  glUniform1i(sampler2Loc, 1);
+
   glEnableVertexAttribArray(posLoc);
-  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
+  glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
   glEnableVertexAttribArray(texLoc);
   glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
 
@@ -97,7 +109,7 @@ void Background::render() {
 }
 
 void Background::renderNameAndDescription() {
-  std::string name = sourceTile != nullptr ? sourceTile->getName() : "";
+  std::string name = currentTile != nullptr ? currentTile->getName() : "";
   int textLineOffset = 0;
   if(!name.empty()) {
     int fontHeight = 52;
@@ -109,12 +121,13 @@ void Background::renderNameAndDescription() {
                 0,
                 {1.0, 1.0, 1.0, opacity});
 
-    textLineOffset = TextRenderer::instance().getTextSize(name,
-                                      {Settings::instance().viewport.first - 2 * leftText, fontHeight},
-                                      0
+    textLineOffset = TextRenderer::instance().getTextSize(
+                       name,
+                       {Settings::instance().viewport.first - 2 * leftText, fontHeight},
+                       0
                      ).second;
   }
-  std::string description = sourceTile != nullptr ? sourceTile->getDescription() : "";
+  std::string description = currentTile != nullptr ? currentTile->getDescription() : "";
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
@@ -135,25 +148,36 @@ float Background::getOpacity() {
   return opacity;
 }
 
-void Background::setBlack(float black) {
-  this->black = black;
+void Background::setSourceTile(Tile *tile) {
+  if(animation.isActive() && !animation.isDuringDelay()) {
+    queuedTile = tile;
+    return;
+  }
+
+  if(tile != currentTile && !animation.isActive())
+    lastTile = currentTile;
+  currentTile = tile;
+
+  runBackgroundChangeAnimation();
 }
 
-float Background::getBlack() {
-  return black;
+void Background::endAnimation() {
+  if(queuedTile == nullptr)
+    return;
+
+  lastTile = currentTile;
+  currentTile = queuedTile;
+  queuedTile = nullptr;
+
+  runBackgroundChangeAnimation();
 }
 
-void Background::setSourceTile(Tile *sourceTile, std::chrono::milliseconds duration, std::chrono::milliseconds delay) {
-  if(!animation.isActive() || duration != std::chrono::milliseconds(0))
-    animation = Animation(std::chrono::high_resolution_clock::now(),
-                          duration,
-                          delay,
-                          {1.0},
-                          {0.0},
-                          Animation::Easing::CubicInOut);
-  this->sourceTile = sourceTile;
+void Background::runBackgroundChangeAnimation() {
+  animation = Animation(Settings::instance().backgroundChangeDuration,
+                        Settings::instance().backgroundChangeDelay,
+                        { 1.0 },
+                        { 0.0 },
+                        Animation::Easing::CubicInOut,
+                        std::bind(&Background::endAnimation, this));
 }
 
-void Background::setClearColor(std::vector<float> color) {
-  clearColor = color;
-}

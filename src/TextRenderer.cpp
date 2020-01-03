@@ -84,6 +84,7 @@ void TextRenderer::render(std::string text, std::pair<int, int> position, std::p
 
     glUseProgram(programObject);
 
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureInfo.getTextureId());
     glUniform1i(samplerLoc, 0);
     glUniform3f(colLoc, color[0], color[1], color[2]);

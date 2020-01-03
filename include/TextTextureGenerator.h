@@ -79,7 +79,7 @@ public:
   struct TextureInfo {
   private:
     GLuint textureId;
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastTimeAccessed;
+    std::chrono::time_point<std::chrono::steady_clock> lastTimeAccessed;
     std::pair<GLuint, GLuint> size;
     int fontId;
     FontFace font;
@@ -87,33 +87,33 @@ public:
   public:
     TextureInfo(GLuint textureId, std::pair<GLuint, GLuint> size, GLuint fontId, FontFace font)
     : textureId(textureId),
-      lastTimeAccessed(std::chrono::high_resolution_clock::now()),
+      lastTimeAccessed(std::chrono::steady_clock::now()),
       size(size),
       fontId(fontId),
       font(font) {
     }
 
     GLuint getTextureId() {
-      lastTimeAccessed = std::chrono::high_resolution_clock::now();
+      lastTimeAccessed = std::chrono::steady_clock::now();
       return textureId;
     }
 
     const std::pair<GLuint, GLuint>& getSize() {
-      lastTimeAccessed = std::chrono::high_resolution_clock::now();
+      lastTimeAccessed = std::chrono::steady_clock::now();
       return size;
     }
 
     const int getFontId() {
-      lastTimeAccessed = std::chrono::high_resolution_clock::now();
+      lastTimeAccessed = std::chrono::steady_clock::now();
       return fontId;
     }
 
-    const std::chrono::time_point<std::chrono::high_resolution_clock>& getLastTimeAccessed() {
+    const std::chrono::time_point<std::chrono::steady_clock>& getLastTimeAccessed() {
       return lastTimeAccessed;
     }
 
     const FontFace getFont() {
-      lastTimeAccessed = std::chrono::high_resolution_clock::now();
+      lastTimeAccessed = std::chrono::steady_clock::now();
       return font;
     }
   };
@@ -128,26 +128,26 @@ private:
   private:
     std::string text;
     std::pair<GLuint, GLuint> size;
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastTimeAccessed;
+    std::chrono::time_point<std::chrono::steady_clock> lastTimeAccessed;
 
   public:
     BrokenTextValue(std::string text, std::pair<int, int> size)
     : text(text),
       size(size),
-      lastTimeAccessed(std::chrono::high_resolution_clock::now()) {
+      lastTimeAccessed(std::chrono::steady_clock::now()) {
     }
 
     const std::string& getText() {
-        lastTimeAccessed = std::chrono::high_resolution_clock::now();
+        lastTimeAccessed = std::chrono::steady_clock::now();
         return text;
     }
 
     const std::pair<GLuint, GLuint>& getSize() {
-        lastTimeAccessed = std::chrono::high_resolution_clock::now();
+        lastTimeAccessed = std::chrono::steady_clock::now();
         return size;
     }
 
-    const std::chrono::time_point<std::chrono::high_resolution_clock>& getLastTimeAccessed() {
+    const std::chrono::time_point<std::chrono::steady_clock>& getLastTimeAccessed() {
       return lastTimeAccessed;
     }
   };

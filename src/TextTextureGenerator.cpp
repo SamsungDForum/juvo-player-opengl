@@ -93,6 +93,7 @@ TextTextureGenerator::FontFace TextTextureGenerator::generateFontFace(FontFaceKe
     }
     GLuint texture;
     glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(
         GL_TEXTURE_2D,
@@ -167,6 +168,7 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
   glGenRenderbuffers(1, &depthRenderbuffer);
   glGenTextures(1, &texture);
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture);
   glTexImage2D(
       GL_TEXTURE_2D,
@@ -239,6 +241,7 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
         GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
         float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
                              1.0f, 1.0f,    1.0f, 0.0f };
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
         glUniform1i(samplerLoc, 0);
         glEnableVertexAttribArray(texLoc);
@@ -371,10 +374,9 @@ std::pair<GLuint, GLuint> TextTextureGenerator::getBrokenTextSize(const std::str
 }
 
 void TextTextureGenerator::gcTextures() {
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   auto it = generatedTextures.begin();
   while(it != generatedTextures.end()) {
-    if(std::chrono::duration_cast<std::chrono::duration<double>>(now - it->second.getLastTimeAccessed()) >= textureGCTimeout) {
+    if(std::chrono::steady_clock::now() - it->second.getLastTimeAccessed() >= textureGCTimeout) {
       GLuint id = it->second.getTextureId();
       glDeleteTextures(1, &id);
       it = generatedTextures.erase(it);
@@ -385,10 +387,9 @@ void TextTextureGenerator::gcTextures() {
 }
 
 void TextTextureGenerator::gcBrokenTextSizes() {
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
   auto it = brokenTexts.begin();
   while(it != brokenTexts.end()) {
-    if(std::chrono::duration_cast<std::chrono::duration<double>>(now - it->second.getLastTimeAccessed()) >= textureGCTimeout)
+    if(std::chrono::steady_clock::now() - it->second.getLastTimeAccessed() >= textureGCTimeout)
       it = brokenTexts.erase(it);
     else
       ++it;

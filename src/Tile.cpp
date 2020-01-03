@@ -2,6 +2,7 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "Utility.h"
+#include "TextRenderer.h"
 
 int Tile::staticTileObjectCount = 0;
 GLuint Tile::programObject    = GL_INVALID_VALUE;
@@ -165,6 +166,7 @@ void Tile::setTexture(char *pixels, std::pair<int, int> size, GLuint format) {
 
   textureFormat = format;
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureId);
   glTexImage2D(GL_TEXTURE_2D, 0, format, size.first, size.second, 0, format, GL_UNSIGNED_BYTE, pixels);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -209,6 +211,7 @@ void Tile::render() {
   glUniform1f(scaleLoc, static_cast<GLfloat>(zoom));
 
   // GetTextureId() updates texture data and metadata, so it should be called before setting texture metadata for the pipeline (before setting storytileRectLoc vec4 values)
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, getCurrentTextureId());
   glUniform1i(samplerLoc, 0);
 
@@ -228,36 +231,55 @@ void Tile::render() {
   glDisableVertexAttribArray(texLoc);
   glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
   glUseProgram(0);
+
+  if(active)
+    renderName();
 }
 
-void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce) {
-  TileAnimation::Easing positionEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
-  if(bounce && !animation.isActive())
-    positionEasing = bounce < 0 ? TileAnimation::Easing::BounceLeft : TileAnimation::Easing::BounceRight;
+void Tile::renderName() {
+  float opacity = (zoom - 1.0f) / (Settings::instance().zoom - 1.0f);
+  float left = position.first + size.first * 0.5f - TextRenderer::instance().getTextSize(name, {0, Settings::instance().tileNameFontHeight}, 0).first * 0.5f;
+  TextRenderer::instance().render(name, {left, position.second - Settings::instance().tileNameFontHeight - size.second * (Settings::instance().zoom - 1.0f) * 0.5f}, {0, Settings::instance().tileNameFontHeight}, 0, {1.0f, 1.0f, 1.0f, opacity});
+}
 
-  TileAnimation::Easing zoomEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
-  TileAnimation::Easing sizeEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
-  TileAnimation::Easing opacityEasing = animation.isActive() ? TileAnimation::Easing::CubicOut : TileAnimation::Easing::CubicInOut;
-  animation = TileAnimation(std::chrono::high_resolution_clock::now(),
-                            std::chrono::milliseconds(duration),
-                            std::chrono::milliseconds(delay),
-                            this->position,
-                            position,
-                            positionEasing,
-                            this->zoom,
-                            zoom,
-                            zoomEasing,
-                            this->size,
-                            size,
-                            sizeEasing,
-                            this->opacity,
-                            opacity,
-                            opacityEasing);
+void Tile::moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds moveDuration, std::chrono::milliseconds animationDuration, std::chrono::milliseconds delay) {
+  Animation::Easing easing = animation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut;
+
+  animation = TileAnimation(
+      TileAnimation::AnimationParameters<std::pair<int, int>> {
+        .duration = moveDuration,
+        .delay = delay,
+        .source = this->position,
+        .target = position,
+        .easing = easing
+      },
+      TileAnimation::AnimationParameters<float> {
+        .duration = animationDuration, // TODO: setting this to value lower than move Duration causes an animation artifacts in last stage
+        .delay = delay,
+        .source = this->zoom,
+        .target = zoom,
+        .easing = easing
+      },
+      TileAnimation::AnimationParameters<std::pair<int, int>> {
+        .duration = moveDuration,
+        .delay = delay,
+        .source = this->size,
+        .target = size,
+        .easing = easing
+     },
+      TileAnimation::AnimationParameters<float> {
+        .duration = moveDuration,
+        .delay = delay,
+        .source = this->opacity,
+        .target = opacity,
+        .easing = easing
+    }
+  );
 }
 
 void Tile::runPreview(bool run) {
   if(!runningPreview && run) {
-    storyboardPreviewStartTimePoint = std::chrono::high_resolution_clock::now();
+    storyboardPreviewStartTimePoint = std::chrono::steady_clock::now();
     previewReady = false;
   }
   runningPreview = run;
@@ -268,7 +290,7 @@ GLuint Tile::getCurrentTextureId() {
   if(!runningPreview) // avoid callback call most of the time
     return textureId;
 
-  std::chrono::milliseconds delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - storyboardPreviewStartTimePoint);
+  std::chrono::milliseconds delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - storyboardPreviewStartTimePoint);
   StoryboardExternData storyboardData = getStoryboardData(delta - std::chrono::milliseconds(storyboardData.duration), id);
 
   if(!storyboardData.isStoryboardReaderReady || (runningPreview && delta > std::chrono::milliseconds(storyboardData.duration))) { // no preview or preview just finished
@@ -307,6 +329,7 @@ void Tile::setPreviewTexture(SubBitmapExtern frame) {
   GLuint textureFormat = ConvertFormat(frame.bitmapInfoColorType);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, previewTextureId);
   glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, frame.bitmapWidth, frame.bitmapHeight, 0, textureFormat, GL_UNSIGNED_BYTE, frame.bitmapBytes);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -318,10 +341,10 @@ void Tile::setPreviewTexture(SubBitmapExtern frame) {
   glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
 }
 
-StoryboardExternData Tile::getStoryboardData(std::chrono::duration<double> position, int tileId) {
-  if(position < std::chrono::milliseconds(0))
-    position = std::chrono::milliseconds(0);
-  return getStoryboardDataCallback(static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(position).count()), id);
+StoryboardExternData Tile::getStoryboardData(std::chrono::milliseconds position, int tileId) {
+  if(position < std::chrono::duration_values<std::chrono::milliseconds>::zero())
+    position = std::chrono::duration_values<std::chrono::milliseconds>::zero();
+  return getStoryboardDataCallback(static_cast<long long>(position.count()), id);
 }
 
 

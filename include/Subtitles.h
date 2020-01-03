@@ -6,7 +6,7 @@
 
 class Subtitles {
 private:
-  std::chrono::time_point<std::chrono::high_resolution_clock> start;
+  std::chrono::time_point<std::chrono::steady_clock> start;
   std::chrono::milliseconds duration;
   std::string subtitle;
   bool active;

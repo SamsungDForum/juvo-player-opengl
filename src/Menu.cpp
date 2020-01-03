@@ -25,9 +25,8 @@ void Menu::initialize() {
 
   glActiveTexture(GL_TEXTURE0);
 
-  backgroundOpacity = 1.0;
   loaderEnabled = true;
-  selectedTile = 0;
+  selectedTile = -1;
   firstTile = 0;
 }
 
@@ -42,31 +41,29 @@ void Menu::render() {
     loader.render(); // render loader
   else { // render menu
     background.render(); // render background; updates background opacity
-    float bgOpacity = background.getOpacity();
-    if(bgOpacity > 0.0) { // render "Available content list" text
-      int fontHeight = 24;
-      int marginBottom = 20;
-      int marginLeft = 100;
-      TextRenderer::instance().render("Available content list",
-                  {marginLeft, Settings::instance().marginFromBottom + Settings::instance().tileSize.second + marginBottom},
-                  {0, fontHeight},
-                  0,
-                  {1.0, 1.0, 1.0, bgOpacity});
-    }
     for(size_t i = 0; i < tiles.size(); ++i) // render tiles
       if(static_cast<int>(i) != selectedTile)
         tiles[i].render();
     if(selectedTile < static_cast<int>(tiles.size()))
       tiles[selectedTile].render();
+    float bgOpacity = background.getOpacity();
+    if(bgOpacity > 0.0f) { // render "Available content list" text
+      int fontHeight = 24;
+      int marginLeft = 100;
+      TextRenderer::instance().render("Available content list",
+                  {marginLeft, getGridSize().second + Settings::instance().marginFromBottom},
+                  {0, fontHeight},
+                  0,
+                  {1.0, 1.0, 1.0, bgOpacity});
+    }
   }
   { // footer
     int fontHeight = 13;
     int margin = 5;
-    int marginBottom = margin;
     int textWidth = TextRenderer::instance().getTextSize(footer, {0, fontHeight}, 0).first;
     int marginLeft = Settings::instance().viewport.first - textWidth - margin;
     TextRenderer::instance().render(footer,
-                {marginLeft, marginBottom},
+                {marginLeft, Settings::instance().viewport.second - margin - fontHeight},
                 {0, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, 1.0});
@@ -98,7 +95,14 @@ void Menu::ShowMenu(int enable) {
                     tiles[i].getSize(),
                     enable ? 1 : 0,
                     std::chrono::milliseconds(Settings::instance().fadingDuration),
+                    std::chrono::milliseconds(Settings::instance().fadingDuration),
                     std::chrono::milliseconds(animationDelay));
+}
+
+std::pair<int, int> Menu::getGridSize() {
+  int rightmostTile = std::max(static_cast<int>(tiles.size() - 1), Settings::instance().tilesArrangement.first - 1);
+  return { Settings::instance().arrangeTilesInGrid ? getTilePosition(rightmostTile).first + tiles[rightmostTile].getSize().first : getTilePosition(tiles.size() - 1).first + tiles[tiles.size() - 1].getSize().first,
+           getTilePosition(tiles.size() - 1).second + tiles[tiles.size() - 1].getSize().second };
 }
 
 std::pair<int, int> Menu::getTilePosition(int tileNo, bool initialMargin) {
@@ -112,10 +116,10 @@ std::pair<int, int> Menu::getTilePosition(int tileNo, bool initialMargin) {
   }
   else {
     verticalPosition = Settings::instance().marginFromBottom;
-    innerMargin = static_cast<int>(static_cast<float>(Settings::instance().tileSize.first) * (Settings::instance().zoom - 1.0f) * 0.5f);
+    innerMargin = static_cast<int>(static_cast<float>(Settings::instance().tileSize.first) * (Settings::instance().zoom - 1.0f) * 0.75f);
   }
   int horizontalPosition = Settings::instance().sideMargin + tileNo * (Settings::instance().tileSize.first + innerMargin);
-  return std::make_pair(horizontalPosition, verticalPosition);
+  return std::make_pair(horizontalPosition, verticalPosition + Settings::instance().tileNameFontHeight + Settings::instance().marginFromBottom);
 }
 
 int Menu::AddTile(char *pixels, std::pair<int, int> size) {
@@ -157,7 +161,10 @@ void Menu::SetTileData(TileData tileData) {
 }
 
 void Menu::SelectTile(int tileNo, bool runPreview) {
-  int bounce = (Settings::instance().bouncing && selectedTile == tileNo) ? (selectedTile == 0 ? 1 : -1) : 0;
+
+  if(tileNo == selectedTile)
+    return;
+
   selectedTile = tileNo;
   bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + Settings::instance().tilesArrangement.first - 1 >= selectedTile);
   if(!selectedTileVisible) {
@@ -173,15 +180,16 @@ void Menu::SelectTile(int tileNo, bool runPreview) {
                     static_cast<int>(i) == selectedTile ? Settings::instance().zoom : 1.0,
                     tiles[i].getTargetSize(),
                     tiles[i].getTargetOpacity(),
-                    Settings::instance().animationDuration,
-                    std::chrono::milliseconds(0),
-                    (static_cast<int>(i) == selectedTile && bounce) ? bounce : 0);
+                    Settings::instance().animationMoveDuration,
+                    static_cast<int>(i) == selectedTile ? Settings::instance().animationZoomInDuration : Settings::instance().animationZoomOutDuration,
+                    std::chrono::duration_values<std::chrono::milliseconds>::zero());
     tiles[i].runPreview(runPreview && static_cast<int>(i) == selectedTile);
+    tiles[i].setActive(false);
   }
-  if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
-    background.setSourceTile(&tiles[selectedTile],
-                             !bounce ? std::chrono::milliseconds(Settings::instance().fadingDuration) : std::chrono::milliseconds(0),
-                             std::chrono::milliseconds(0));
+  if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size())) {
+    background.setSourceTile(&tiles[selectedTile]);
+    tiles[selectedTile].setActive(true);
+  }
 }
 
 int Menu::AddFont(char *data, int size) {
@@ -204,7 +212,7 @@ void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
                   playbackData.currentTime,
                   playbackData.totalTime,
                   playbackData.text,
-                  std::chrono::milliseconds(Settings::instance().fadingDuration),
+                  Settings::instance().fadingDuration,
                   std::chrono::milliseconds(playbackData.show ? Settings::instance().fadingDuration.count() * 3 / 4 : 0),
                   playbackData.buffering,
                   playbackData.bufferingPercent,

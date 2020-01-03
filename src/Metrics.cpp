@@ -87,13 +87,13 @@ Metrics::Trace::Trace(int id, std::string tag, float minValue, float maxValue, i
 Metrics::Framerate::Framerate()
   : Trace(0, "FPS", 0, 60, 100),
     fpsSum(0),
-    fpsTime(std::chrono::high_resolution_clock::now()),
+    fpsTime(std::chrono::steady_clock::now()),
     currentFps(0) {
 }
 
 void Metrics::Framerate::step() {
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> timespan = now - fpsTime;
+  std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+  std::chrono::duration<float, std::milli> timespan = now - fpsTime;
   fpsTime = now;
   float currentFps = 1000.0f / timespan.count();
   fpsSum += currentFps;

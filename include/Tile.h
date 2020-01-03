@@ -19,11 +19,12 @@ private:
   float opacity;
   std::string name;
   std::string description;
+  bool active;
 
   TileAnimation animation;
 
   bool runningPreview;
-  std::chrono::time_point<std::chrono::high_resolution_clock> storyboardPreviewStartTimePoint;
+  std::chrono::time_point<std::chrono::steady_clock> storyboardPreviewStartTimePoint;
   Rect storytileRect;
   bool previewReady;
   GLuint previewTextureId = GL_INVALID_VALUE;
@@ -60,10 +61,11 @@ public:
   Tile(Tile &&other);
 
   void render();
+  void renderName();
   void setTexture(char *pixels, std::pair<int, int> size, GLuint format);
-  void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds duration, std::chrono::milliseconds delay, int bounce = 0);
+  void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds moveDuration, std::chrono::milliseconds animationDuration, std::chrono::milliseconds delay);
   void runPreview(bool run);
-  StoryboardExternData getStoryboardData(std::chrono::duration<double> position, int tileId);
+  StoryboardExternData getStoryboardData(std::chrono::milliseconds position, int tileId);
   GLuint getCurrentTextureId();
   void setPreviewTexture(SubBitmapExtern frame);
   void setStoryboardCallback(StoryboardExternData (*getStoryboardDataCallback)(long long position, int tileId));
@@ -100,7 +102,8 @@ public:
   float getSourceOpacity() { return animation.isActive() ? animation.getSourceOpacity() : getOpacity(); }
   float getTargetOpacity() { return animation.isActive() ? animation.getTargetOpacity() : getOpacity(); }
   bool isAnimationActive() { return animation.isActive(); }
-
+  void setActive(bool value) { active = value; }
+  bool isActive() { return active; }
 };
 
 #endif // _TILE_H_
