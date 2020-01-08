@@ -149,14 +149,14 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::getTexture(TextTextureGe
   gcTextures();
   gcBrokenTextSizes();
   TextureInfo textureInfo = generateTexture(textureKey);
-  generatedTextures.insert(std::make_pair(textureKey, textureInfo));
+  generatedTextures.insert({ textureKey, textureInfo });
 
   return textureInfo;
 }
 
 TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextTextureGenerator::TextureKey textureKey) { // TODO: Rasterize to SDFs?
-  std::pair<GLuint, GLuint> texSize = getTextSize(textureKey);
-  const FontFace& font = getFontFace(textureKey.fontId, textureKey.size.second);
+  Size<GLuint> texSize = getTextSize(textureKey);
+  const FontFace& font = getFontFace(textureKey.fontId, textureKey.size.height);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -174,8 +174,8 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
       GL_TEXTURE_2D,
       0,
       GL_RGBA,
-      texSize.first,
-      texSize.second,
+      texSize.width,
+      texSize.height,
       0,
       GL_RGBA,
       GL_UNSIGNED_BYTE,
@@ -188,7 +188,7 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, texSize.first, texSize.second);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, texSize.width, texSize.height);
 
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
@@ -204,16 +204,16 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    std::pair<float, float> startingPos = {static_cast<float>(font.max_bearingx),
-                                           -static_cast<float>(font.max_descend)};
+    Position<float> startingPos = { static_cast<float>(font.max_bearingx),
+                                   -static_cast<float>(font.max_descend) };
 
     glUseProgram(programObject);
-    glViewport(0, 0, texSize.first, texSize.second);
+    glViewport(0, 0, texSize.width, texSize.height);
 
-    std::pair<float, float> pos{0.0f, 0.0f};
+    Position<float> pos{ 0.0f, 0.0f };
     std::string::const_iterator c;
 
-    GLuint textMaxWidth = textureKey.size.first > static_cast<GLuint>(font.max_bearingx) ? textureKey.size.first - static_cast<GLuint>(font.max_bearingx) : 0u;
+    GLuint textMaxWidth = textureKey.size.width > static_cast<GLuint>(font.max_bearingx) ? textureKey.size.width - static_cast<GLuint>(font.max_bearingx) : 0u;
     std::string text = textureKey.text; // we'll be modifying copy
     breakLines(text, font, textMaxWidth);
 
@@ -224,14 +224,14 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
       if(isprint(*c)) {
         Character ch = font.ch.at(*c);
 
-        float xpos = (pos.first + startingPos.first) + static_cast<float>(ch.bearing.x);
-        float ypos = (pos.second + startingPos.second) + (static_cast<float>(font.height) - static_cast<float>(ch.size.y)) + static_cast<float>(ch.size.y - ch.bearing.y);
+        float xpos = (pos.x + startingPos.x) + static_cast<float>(ch.bearing.x);
+        float ypos = (pos.y + startingPos.y) + (static_cast<float>(font.height) - static_cast<float>(ch.size.y)) + static_cast<float>(ch.size.y - ch.bearing.y);
         float w = static_cast<float>(ch.size.x);
         float h = static_cast<float>(ch.size.y);
-        float left = xpos * 2.0f / texSize.first - 1.0f;
-        float right = (xpos + w) * 2.0f / texSize.first - 1.0f;
-        float top = ypos * 2.0f / texSize.second - 1.0f;
-        float down = (ypos + h) * 2.0f / texSize.second - 1.0f;
+        float left = xpos * 2.0f / texSize.width - 1.0f;
+        float right = (xpos + w) * 2.0f / texSize.width - 1.0f;
+        float top = ypos * 2.0f / texSize.height - 1.0f;
+        float down = (ypos + h) * 2.0f / texSize.height - 1.0f;
 
         GLfloat vVertices[] = { left,   top,  0.0f,
                                 left,   down, 0.0f,
@@ -265,7 +265,7 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
   glDeleteRenderbuffers(1, &depthRenderbuffer);
   glDeleteFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, Settings::instance().viewport.first, Settings::instance().viewport.second); // restore previous viewport
+  glViewport(0, 0, Settings::instance().viewport.width, Settings::instance().viewport.height); // restore previous viewport
 
   return TextureInfo(texture, texSize, textureKey.fontId, font);
 }
@@ -297,29 +297,29 @@ void TextTextureGenerator::printFramebufferError(const GLuint status) {
     }
 }
 
-void TextTextureGenerator::advance(std::pair<float, float>& position, const char character, const FontFace& font, const bool invertVerticalAdvance) { // TODO: Implement kerning.
+void TextTextureGenerator::advance(Position<float>& position, const char character, const FontFace& font, const bool invertVerticalAdvance) { // TODO: Implement kerning.
   if(character < charRange.first || character >= charRange.second)
     return;
   if(character == '\n') {
-    position.second -= font.height * (invertVerticalAdvance ? -1.0 : 1.0);
-    position.first = 0.0f;
+    position.y -= font.height * (invertVerticalAdvance ? -1.0 : 1.0);
+    position.x = 0.0f;
     return;
   }
-  position.first += static_cast<float>(font.ch.at(character).advance.x >> 6); // advance is in 1/64px
+  position.x += static_cast<float>(font.ch.at(character).advance.x >> 6); // advance is in 1/64px
 }
 
 void TextTextureGenerator::breakLines(std::string &text, const FontFace &font, const float maxWidth) {
   if(maxWidth < 1)
     return;
 
-  std::pair<float, float> position = {0, 0};
-  std::pair<float, float> lastSpacePosition = {0, 0};
+  Position<float> position = {0, 0};
+  Position<float> lastSpacePosition = {0, 0};
   int lastSpaceIndex = -1;
 
   for(int i = 0, n = static_cast<int>(text.size()); i < n; ++i) {
-    std::pair<float, float> newPosition = position;
+    Position<float> newPosition = position;
     advance(newPosition, text[i], font);
-    if(newPosition.first >= maxWidth && (i > 0 && !isspace(text[i - 1]))) {
+    if(newPosition.x >= maxWidth && (i > 0 && !isspace(text[i - 1]))) {
       if(lastSpaceIndex != -1) {
         text[lastSpaceIndex] = '\n';
         i = lastSpaceIndex;
@@ -339,38 +339,38 @@ void TextTextureGenerator::breakLines(std::string &text, const FontFace &font, c
   }
 }
 
-std::pair<GLuint, GLuint> TextTextureGenerator::getTextSize(TextureKey textureKey) {
+Size<GLuint> TextTextureGenerator::getTextSize(TextureKey textureKey) {
   if(!isFontValid(textureKey.fontId))
-    return std::pair<GLuint, GLuint>({1, 1});
+    return { 1, 1 };
 
   auto search = brokenTexts.find(textureKey);
   if(search != brokenTexts.end())
-    return std::pair<GLuint, GLuint>(search->second.getSize());
+    return search->second.getSize();
 
-  const FontFace& font = getFontFace(textureKey.fontId, textureKey.size.second); 
-  GLuint textMaxWidth = textureKey.size.first > static_cast<GLuint>(font.max_bearingx) ? textureKey.size.first - static_cast<GLuint>(font.max_bearingx) : 0u;
+  const FontFace& font = getFontFace(textureKey.fontId, textureKey.size.height); 
+  GLuint textMaxWidth = textureKey.size.width > static_cast<GLuint>(font.max_bearingx) ? textureKey.size.width - static_cast<GLuint>(font.max_bearingx) : 0u;
 
   std::string text = textureKey.text;
   breakLines(text, font, textMaxWidth);
-  std::pair<GLuint, GLuint> brokenTextSize = getBrokenTextSize(text, textureKey.fontId, textureKey.size.second);
+  Size<GLuint> brokenTextSize = getBrokenTextSize(text, textureKey.fontId, textureKey.size.height);
   brokenTexts.insert({ textureKey, BrokenTextValue(text, brokenTextSize) });
   return brokenTextSize;
 }
 
-std::pair<GLuint, GLuint> TextTextureGenerator::getBrokenTextSize(const std::string text, int fontId, GLuint fontHeight) {
+Size<GLuint> TextTextureGenerator::getBrokenTextSize(const std::string text, int fontId, GLuint fontHeight) {
 
   const FontFace& font = getFontFace(fontId, fontHeight); 
-  std::pair<float, float> position{0.0f, 0.0f};
+  Position<float> position{ 0.0f, 0.0f };
   float maxWidth = 0.0f;
 
   for(std::string::const_iterator c = text.begin(); c != text.end(); ++c) {
     advance(position, *c, font);
-    maxWidth = std::max(maxWidth, position.first); // new lines reset position.first value
+    maxWidth = std::max(maxWidth, position.x); // new lines reset position.x value
   }
   advance(position, '\n', font);
-  position.first = maxWidth + static_cast<float>(font.max_bearingx);
-  position.second = std::fabs(position.second); // we want size, not offset
-  return static_cast<std::pair<GLuint, GLuint>>(position);
+  position.x = maxWidth + static_cast<float>(font.max_bearingx);
+  position.y = std::fabs(position.y); // we want size, not offset
+  return { static_cast<GLuint>(position.x), static_cast<GLuint>(position.y) };
 }
 
 void TextTextureGenerator::gcTextures() {

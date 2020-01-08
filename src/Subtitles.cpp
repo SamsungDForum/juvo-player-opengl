@@ -19,15 +19,17 @@ void Subtitles::render() {
   }
 
   int fontHeight = 26;
-  std::pair<int, int> margin = {100, 150};
-  int textWidth = Settings::instance().viewport.first - 2 * margin.first;
+  Size<int> margin = {100, 150};
+  int textWidth = Settings::instance().viewport.width - 2 * margin.width;
 
-  std::pair<float, float> textSize = TextRenderer::instance().getTextSize(subtitle,
-    {textWidth, fontHeight},
+  Size<GLuint> textSize = TextRenderer::instance().getTextSize(subtitle,
+    { static_cast<GLuint>(textWidth), static_cast<GLuint>(fontHeight) },
     0);
 
-    TextRenderer::instance().render(subtitle,
-    {(Settings::instance().viewport.first - textSize.first) / 2, margin.second + textSize.second - fontHeight},
+    TextRenderer::instance().render(subtitle, {
+      static_cast<int>((Settings::instance().viewport.width - textSize.width) / 2),
+      static_cast<int>(margin.height + textSize.height - fontHeight)
+    },
     {textWidth, fontHeight},
     0,
     {1.0, 1.0, 1.0, 1.0});

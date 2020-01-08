@@ -83,7 +83,7 @@ void Background::render() {
   if(!updated.empty())
     mixing = updated[0];
   glUniform1f(mixingLoc, static_cast<GLfloat>(mixing));
-  glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.first), static_cast<GLfloat>(Settings::instance().viewport.second));
+  glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.width), static_cast<GLfloat>(Settings::instance().viewport.height));
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureId);
@@ -114,27 +114,27 @@ void Background::renderNameAndDescription() {
   if(!name.empty()) {
     int fontHeight = 52;
     int leftText = 100;
-    int topText = Settings::instance().viewport.second - fontHeight - 200;
+    int topText = Settings::instance().viewport.height - fontHeight - 200;
     TextRenderer::instance().render(name,
                 {leftText, topText},
-                {Settings::instance().viewport.first - 2 * leftText, fontHeight},
+                {Settings::instance().viewport.width - 2 * leftText, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, opacity});
 
     textLineOffset = TextRenderer::instance().getTextSize(
                        name,
-                       {Settings::instance().viewport.first - 2 * leftText, fontHeight},
+                       { static_cast<GLuint>(Settings::instance().viewport.width - 2 * leftText), static_cast<GLuint>(fontHeight) },
                        0
-                     ).second;
+                     ).height;
   }
   std::string description = currentTile != nullptr ? currentTile->getDescription() : "";
   if(!description.empty()) {
     int fontHeight = 26;
     int leftText = 100;
-    int topText = Settings::instance().viewport.second - fontHeight - 200 - textLineOffset;
+    int topText = Settings::instance().viewport.height - fontHeight - 200 - textLineOffset;
     TextRenderer::instance().render(description,
                 {leftText, topText},
-                {Settings::instance().viewport.first - 2 * leftText, fontHeight},
+                {Settings::instance().viewport.width - 2 * leftText, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, opacity});
   }

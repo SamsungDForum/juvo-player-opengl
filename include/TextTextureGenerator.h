@@ -12,6 +12,7 @@
 
 #include "GLES.h"
 #include <glm/vec2.hpp>
+#include "Utility.h"
 
 #ifndef _FT_FREETYPE_
 #define _FT_FREETYPE_
@@ -70,22 +71,22 @@ private:
 public:
   struct TextureKey {
     std::string text;
-    std::pair<GLuint, GLuint> size;
+    Size<GLuint> size;
     int fontId;
     bool operator==(const TextureKey& other) const { return text == other.text && fontId == other.fontId && size == other.size; }
-    std::size_t operator()(const TextureKey& k) const { return std::hash<std::string>()(k.text) ^ std::hash<int>()(k.fontId) ^ std::hash<GLuint>()(k.size.first) ^ std::hash<GLuint>()(k.size.second); }
+    std::size_t operator()(const TextureKey& k) const { return std::hash<std::string>()(k.text) ^ std::hash<int>()(k.fontId) ^ std::hash<GLuint>()(k.size.width) ^ std::hash<GLuint>()(k.size.height); }
   };
 
   struct TextureInfo {
   private:
     GLuint textureId;
     std::chrono::time_point<std::chrono::steady_clock> lastTimeAccessed;
-    std::pair<GLuint, GLuint> size;
+    Size<GLuint> size;
     int fontId;
     FontFace font;
 
   public:
-    TextureInfo(GLuint textureId, std::pair<GLuint, GLuint> size, GLuint fontId, FontFace font)
+    TextureInfo(GLuint textureId, Size<GLuint> size, GLuint fontId, FontFace font)
     : textureId(textureId),
       lastTimeAccessed(std::chrono::steady_clock::now()),
       size(size),
@@ -98,7 +99,7 @@ public:
       return textureId;
     }
 
-    const std::pair<GLuint, GLuint>& getSize() {
+    const Size<GLuint>& getSize() {
       lastTimeAccessed = std::chrono::steady_clock::now();
       return size;
     }
@@ -127,11 +128,11 @@ private:
   struct BrokenTextValue {
   private:
     std::string text;
-    std::pair<GLuint, GLuint> size;
+    Size<GLuint> size;
     std::chrono::time_point<std::chrono::steady_clock> lastTimeAccessed;
 
   public:
-    BrokenTextValue(std::string text, std::pair<int, int> size)
+    BrokenTextValue(std::string text, Size<int> size)
     : text(text),
       size(size),
       lastTimeAccessed(std::chrono::steady_clock::now()) {
@@ -142,7 +143,7 @@ private:
         return text;
     }
 
-    const std::pair<GLuint, GLuint>& getSize() {
+    const Size<GLuint>& getSize() {
         lastTimeAccessed = std::chrono::steady_clock::now();
         return size;
     }
@@ -154,7 +155,7 @@ private:
   std::unordered_map<TextureKey, BrokenTextValue, TextureKey> brokenTexts;
 
   void prepareShaders();
-  void advance(std::pair<float, float>& position, const char character, const FontFace& font, const bool invertVerticalAdvance = false);
+  void advance(Position<float>& position, const char character, const FontFace& font, const bool invertVerticalAdvance = false);
   void breakLines(std::string &text, const FontFace &font, const float maxWidth);
   void printFramebufferError(const GLuint status);
   void gcTextures();
@@ -164,7 +165,7 @@ private:
   TextureInfo generateTexture(TextureKey textureKey);
   const FontFace getFontFace(int fontId, int fontSize);
   FontFace generateFontFace(FontFaceKey fontFaceKey);
-  std::pair<GLuint, GLuint> getBrokenTextSize(const std::string text, int fontId, GLuint fontHeight);
+  Size<GLuint> getBrokenTextSize(const std::string text, int fontId, GLuint fontHeight);
 
 public:
   static TextTextureGenerator& instance() {
@@ -175,7 +176,7 @@ public:
   TextureInfo getTexture(TextureKey textureKey);
   int addFont(char *data, int size);
 
-  std::pair<GLuint, GLuint> getTextSize(TextureKey TextureKey);
+  Size<GLuint> getTextSize(TextureKey TextureKey);
   bool isFontValid(int fontId);
 };
 

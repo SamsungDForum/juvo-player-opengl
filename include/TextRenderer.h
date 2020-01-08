@@ -7,6 +7,7 @@
 
 #include "GLES.h"
 #include <glm/vec2.hpp>
+#include "Utility.h"
 
 class TextRenderer {
 
@@ -36,8 +37,8 @@ private:
 
 public:
   int addFont(char *data, int size);
-  std::pair<GLuint, GLuint> getTextSize(const std::string text, std::pair<GLuint, GLuint> size, int fontId);
-  void render(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color);
+  Size<GLuint> getTextSize(const std::string text, Size<GLuint> size, int fontId);
+  void render(std::string text, Position<int> position, Size<int> size, int fontId, std::vector<float> color);
 };
 
 #endif // _TEXT_RENDERER_H_

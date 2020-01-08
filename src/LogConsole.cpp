@@ -37,11 +37,11 @@ void LogConsole::initialize() {
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
 }
 
-void LogConsole::render(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
-  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+void LogConsole::render(Position<int> position, Size<int> size, int fontId, int fontSize) {
+  float down  = static_cast<float>(position.y) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.y) + static_cast<float>(size.height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.x) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.x) + static_cast<float>(size.width)) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
 
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
@@ -54,8 +54,8 @@ void LogConsole::render(std::pair<int, int> position, std::pair<int, int> size, 
   glEnableVertexAttribArray(posALoc);
   glVertexAttribPointer(posALoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
-  glUniform2f(posLoc, static_cast<float>(position.first), static_cast<float>(position.second));
-  glUniform2f(sizLoc, static_cast<float>(size.first), static_cast<float>(size.second));
+  glUniform2f(posLoc, static_cast<float>(position.x), static_cast<float>(position.y));
+  glUniform2f(sizLoc, static_cast<float>(size.width), static_cast<float>(size.height));
   glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opaLoc, 1.0f);
 
@@ -67,31 +67,31 @@ void LogConsole::render(std::pair<int, int> position, std::pair<int, int> size, 
   renderText(position, size, fontId, fontSize);
 }
 
-void LogConsole::renderText(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize) {
-  std::pair<int, int> margin = {4, 10};
-  int lineWidth = size.first - 2 * margin.first;
+void LogConsole::renderText(Position<int> position, Size<int> size, int fontId, int fontSize) {
+  Size<int> margin = {4, 10};
+  int lineWidth = size.width - 2 * margin.width;
   renderLogs(position, size, fontId, fontSize, margin, lineWidth);
 }
 
 int LogConsole::getTextHeight(std::string s, int lineWidth, int fontHeight, int fontId) {
-  return TextRenderer::instance().getTextSize(s,
-                          {lineWidth, fontHeight},
-                          fontId).second;
+  return static_cast<int>(TextRenderer::instance().getTextSize(s,
+                          { static_cast<GLuint>(lineWidth), static_cast<GLuint>(fontHeight) },
+                          fontId).height);
 }
 
-void LogConsole::renderLogs(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth) {
+void LogConsole::renderLogs(Position<int> position, Size<int> size, int fontId, int fontSize, Size<int> margin, int lineWidth) {
   int i = 0;
   std::deque<std::string>::iterator deqit = logs.begin();
-  for(int offset = margin.second; deqit != logs.end(); ++deqit, ++i) {
+  for(int offset = margin.height; deqit != logs.end(); ++deqit, ++i) {
     int textHeight = getTextHeight(*deqit, lineWidth, fontSize, fontId);
-    if(offset + textHeight + margin.second > size.second)
+    if(offset + textHeight + margin.height > size.height)
       break;
     TextRenderer::instance().render(*deqit,
-                {position.first + margin.first, position.second + size.second - offset - fontSize},
+                {position.x + margin.width, position.y + size.height - offset - fontSize},
                 {lineWidth, fontSize},
                 fontId,
                 {1.0f, 1.0f, 1.0f, 1.0f});
-    offset += textHeight + margin.second;
+    offset += textHeight + margin.height;
   }
   logs.erase(logs.begin(), logs.end() - i);
 }

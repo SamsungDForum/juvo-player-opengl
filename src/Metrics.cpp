@@ -8,8 +8,8 @@ Metrics::Metrics()
 }
 
 void Metrics::render() {
-  std::pair<int, int> margin = {4, 10};
-  std::pair<int, int> size = {600, 50};
+  Size<int> margin = {4, 10};
+  Size<int> size = {600, 50};
   int rendered = 0;
 
   for(int i = 0; i < static_cast<int>(traces.size()); ++i) {
@@ -19,17 +19,17 @@ void Metrics::render() {
     if(!traces[i]->visible)
       continue;
 
-    std::pair<int, int> position = {Settings::instance().viewport.first - (size.first + margin.first),
-                                    Settings::instance().viewport.second - (size.second + margin.second) * (rendered + 1)};
+    Position<int> position = {Settings::instance().viewport.width - (size.width + margin.width),
+                              Settings::instance().viewport.height - (size.height + margin.height) * (rendered + 1)};
     graph.render({traces[i]->values.begin(), traces[i]->values.end()},
                  {traces[i]->minValue, traces[i]->maxValue},
                  position,
                  size);
 
     int fontHeight = 26;
-    std::pair<int, int> textMargin = {size.first, margin.second + size.second};
+    Size<int> textMargin = {size.width, margin.height + size.height};
     TextRenderer::instance().render(traces[i]->tag + std::string(": ") + std::to_string(static_cast<int>(traces[i]->currentValue)) + std::string("/") + std::to_string(static_cast<int>(traces[i]->maxValue)),
-                {Settings::instance().viewport.first - textMargin.first, Settings::instance().viewport.second - textMargin.second - (size.second + margin.second) * rendered},
+                {Settings::instance().viewport.width - textMargin.width, Settings::instance().viewport.height - textMargin.height - (size.height + margin.height) * rendered},
                 {0, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, 1.0});
@@ -37,11 +37,11 @@ void Metrics::render() {
   }
 
   if(logConsoleVisible) {
-    int bottomMargin = margin.second * 3;
-    std::pair<int, int> position = {Settings::instance().viewport.first - (size.first + margin.first),
-                                    bottomMargin};
-    std::pair<int, int> size2 = {size.first,
-                                 Settings::instance().viewport.second - margin.second - bottomMargin - (size.second + margin.second) * rendered};
+    int bottomMargin = margin.height * 3;
+    Position<int> position = { Settings::instance().viewport.width - (size.width + margin.width),
+                               bottomMargin };
+    Size<int> size2 = {size.width,
+                                 Settings::instance().viewport.height - margin.height - bottomMargin - (size.height + margin.height) * rendered};
     LogConsole::instance().render(position, size2, 0, 13);
   }
 }

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "GLES.h"
+#include "Utility.h"
 
 class ModalWindow {
 private:
@@ -26,16 +27,16 @@ private:
     int fontId;
     int fontSize;
     std::string text;
-    std::pair<int, int> position;
-    std::pair<int, int> size;
+    Position<int> position;
+    Size<int> size;
     std::vector<float> color;
   };
 
   class WindowParams {
   public:
-    std::pair<int, int> position;
-    std::pair<int, int> size;
-    std::pair<int, int> margin;
+    Position<int> position;
+    Size<int> size;
+    Size<int> margin;
   };
 
   class Params {
@@ -50,13 +51,13 @@ private:
     TextParams buttonText;
   };
 
-  std::pair<int, int> position;
-  std::pair<int, int> size;
+  Position<int> position;
+  Size<int> size;
   Params params;
 
   void initialize();
   void renderContent();
-  void renderRectangle(std::pair<int, int> position, std::pair<int, int> size);
+  void renderRectangle(Position<int> position, Size<int> size);
   void renderTitle();
   void renderBody();
   void renderButton();

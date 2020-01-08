@@ -14,7 +14,7 @@ Menu::Menu()
 }
 
 void Menu::initialize() {
-  glViewport(0, 0, Settings::instance().viewport.first, Settings::instance().viewport.second);
+  glViewport(0, 0, Settings::instance().viewport.width, Settings::instance().viewport.height);
 
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
   glEnable(GL_BLEND);
@@ -44,14 +44,14 @@ void Menu::render() {
     for(size_t i = 0; i < tiles.size(); ++i) // render tiles
       if(static_cast<int>(i) != selectedTile)
         tiles[i].render();
-    if(selectedTile < static_cast<int>(tiles.size()))
+    if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
       tiles[selectedTile].render();
     float bgOpacity = background.getOpacity();
     if(bgOpacity > 0.0f) { // render "Available content list" text
       int fontHeight = 24;
       int marginLeft = 100;
       TextRenderer::instance().render("Available content list",
-                  {marginLeft, getGridSize().second + Settings::instance().marginFromBottom},
+                  {marginLeft, getGridSize().height + Settings::instance().marginFromBottom},
                   {0, fontHeight},
                   0,
                   {1.0, 1.0, 1.0, bgOpacity});
@@ -60,10 +60,10 @@ void Menu::render() {
   { // footer
     int fontHeight = 13;
     int margin = 5;
-    int textWidth = TextRenderer::instance().getTextSize(footer, {0, fontHeight}, 0).first;
-    int marginLeft = Settings::instance().viewport.first - textWidth - margin;
+    int textWidth = TextRenderer::instance().getTextSize(footer, { 0, static_cast<GLuint>(fontHeight) }, 0).width;
+    int marginLeft = Settings::instance().viewport.width - textWidth - margin;
     TextRenderer::instance().render(footer,
-                {marginLeft, Settings::instance().viewport.second - margin - fontHeight},
+                {marginLeft, Settings::instance().viewport.height - margin - fontHeight},
                 {0, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, 1.0});
@@ -99,30 +99,36 @@ void Menu::ShowMenu(int enable) {
                     std::chrono::milliseconds(animationDelay));
 }
 
-std::pair<int, int> Menu::getGridSize() {
-  int rightmostTile = std::max(static_cast<int>(tiles.size() - 1), Settings::instance().tilesArrangement.first - 1);
-  return { Settings::instance().arrangeTilesInGrid ? getTilePosition(rightmostTile).first + tiles[rightmostTile].getSize().first : getTilePosition(tiles.size() - 1).first + tiles[tiles.size() - 1].getSize().first,
-           getTilePosition(tiles.size() - 1).second + tiles[tiles.size() - 1].getSize().second };
+Size<int> Menu::getGridSize() {
+  if(tiles.empty())
+    return { 0, 0 };
+  int rightmostTile = std::min(static_cast<int>(tiles.size() - 1), Settings::instance().tilesArrangement.width - 1);
+  return {
+    Settings::instance().arrangeTilesInGrid ?
+      getTilePosition(rightmostTile).x + tiles[rightmostTile].getSize().width :
+      getTilePosition(tiles.size() - 1).x + tiles[tiles.size() - 1].getSize().width,
+    getTilePosition(tiles.size() - 1).y + tiles[tiles.size() - 1].getSize().height
+  };
 }
 
-std::pair<int, int> Menu::getTilePosition(int tileNo, bool initialMargin) {
+Position<int> Menu::getTilePosition(int tileNo, bool initialMargin) {
 
   int verticalPosition;
   int innerMargin;
   if(Settings::instance().arrangeTilesInGrid) {
-    int verticalMargin = std::max((Settings::instance().viewport.second - (Settings::instance().tileSize.second * Settings::instance().tilesArrangement.second)) / (Settings::instance().tilesArrangement.second + 1), 0);
-    verticalPosition = Settings::instance().tilesArrangement.second > 1 ? Settings::instance().tileSize.second + verticalMargin : Settings::instance().marginFromBottom;
-    innerMargin = (Settings::instance().viewport.first - 1.5 * Settings::instance().sideMargin - Settings::instance().tileSize.first * Settings::instance().tilesArrangement.first) / (Settings::instance().tilesArrangement.first - 1);
+    int verticalMargin = std::max((Settings::instance().viewport.height - (Settings::instance().tileSize.height * Settings::instance().tilesArrangement.height)) / (Settings::instance().tilesArrangement.height + 1), 0);
+    verticalPosition = Settings::instance().tilesArrangement.height > 1 ? Settings::instance().tileSize.height + verticalMargin : Settings::instance().marginFromBottom;
+    innerMargin = (Settings::instance().viewport.width - 1.5 * Settings::instance().sideMargin - Settings::instance().tileSize.width * Settings::instance().tilesArrangement.width) / (Settings::instance().tilesArrangement.width - 1);
   }
   else {
     verticalPosition = Settings::instance().marginFromBottom;
-    innerMargin = static_cast<int>(static_cast<float>(Settings::instance().tileSize.first) * (Settings::instance().zoom - 1.0f) * 0.75f);
+    innerMargin = static_cast<int>(static_cast<float>(Settings::instance().tileSize.width) * (Settings::instance().zoom - 1.0f) * 0.75f);
   }
-  int horizontalPosition = Settings::instance().sideMargin + tileNo * (Settings::instance().tileSize.first + innerMargin);
-  return std::make_pair(horizontalPosition, verticalPosition + Settings::instance().tileNameFontHeight + Settings::instance().marginFromBottom);
+  int horizontalPosition = Settings::instance().sideMargin + tileNo * (Settings::instance().tileSize.width + innerMargin);
+  return { horizontalPosition, verticalPosition + Settings::instance().tileNameFontHeight + Settings::instance().marginFromBottom };
 }
 
-int Menu::AddTile(char *pixels, std::pair<int, int> size) {
+int Menu::AddTile(char *pixels, Size<int> size) {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
             getTilePosition(tileNo),
@@ -166,10 +172,10 @@ void Menu::SelectTile(int tileNo, bool runPreview) {
     return;
 
   selectedTile = tileNo;
-  bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + Settings::instance().tilesArrangement.first - 1 >= selectedTile);
+  bool selectedTileVisible = (firstTile <= selectedTile) && (firstTile + Settings::instance().tilesArrangement.width - 1 >= selectedTile);
   if(!selectedTileVisible) {
     int shiftLeft = firstTile - selectedTile;
-    int shiftRight = selectedTile - (firstTile + Settings::instance().tilesArrangement.first - 1);
+    int shiftRight = selectedTile - (firstTile + Settings::instance().tilesArrangement.width - 1);
     if(std::abs(shiftLeft) < std::abs(shiftRight))
       firstTile -= shiftLeft;
     else

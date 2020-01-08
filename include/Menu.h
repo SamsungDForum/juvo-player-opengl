@@ -17,6 +17,7 @@
 #include "Metrics.h"
 #include "Options.h"
 #include "ModalWindow.h"
+#include "Utility.h"
 
 class Menu {
 private:
@@ -38,9 +39,9 @@ private:
 
 private:
   void initialize();
-  int AddTile(char *pixels, std::pair<int, int> size);
-  std::pair<int, int> getTilePosition(int tileNo, bool initialMargin = true);
-  std::pair<int, int> getGridSize();
+  int AddTile(char *pixels, Size<int> size);
+  Position<int> getTilePosition(int tileNo, bool initialMargin = true);
+  Size<int> getGridSize();
 
 public:
   Menu();

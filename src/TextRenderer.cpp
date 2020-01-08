@@ -37,7 +37,7 @@ int TextRenderer::addFont(char *data, int size) {
   return TextTextureGenerator::instance().addFont(data, size);
 }
 
-std::pair<GLuint, GLuint> TextRenderer::getTextSize(const std::string text, std::pair<GLuint, GLuint> size, int fontId) {
+Size<GLuint> TextRenderer::getTextSize(const std::string text, Size<GLuint> size, int fontId) {
   try {
     return TextTextureGenerator::instance().getTexture(TextTextureGenerator::TextureKey {
       .text = text,
@@ -52,7 +52,7 @@ std::pair<GLuint, GLuint> TextRenderer::getTextSize(const std::string text, std:
   return {1, 1};
 }
 
-void TextRenderer::render(std::string text, std::pair<int, int> position, std::pair<int, int> size, int fontId, std::vector<float> color) {
+void TextRenderer::render(std::string text, Position<int> position, Size<int> size, int fontId, std::vector<float> color) {
   try {
     if(color.size() >= 4 && color[3] < 0.001f) // if the text is fully transparent, we don't have to render it
       return;
@@ -63,15 +63,15 @@ void TextRenderer::render(std::string text, std::pair<int, int> position, std::p
       .fontId = fontId,
     });
 
-    if(textureInfo.getSize().first < 1 || textureInfo.getSize().second < 1) {
+    if(textureInfo.getSize().width < 1 || textureInfo.getSize().height < 1) {
       LogConsole::instance().log("textureInfo.size invalid!", LogConsole::LogLevel::Error);
       return;
     }
 
-    float left = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
-    float right = left + static_cast<float>(textureInfo.getSize().first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f;
-    float top = (static_cast<float>(position.second) + static_cast<float>(textureInfo.getFont().height)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-    float down = top - static_cast<float>(textureInfo.getSize().second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f;
+    float left = static_cast<float>(position.x) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
+    float right = left + static_cast<float>(textureInfo.getSize().width) / static_cast<float>(Settings::instance().viewport.width) * 2.0f;
+    float top = (static_cast<float>(position.y) + static_cast<float>(textureInfo.getFont().height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+    float down = top - static_cast<float>(textureInfo.getSize().height) / static_cast<float>(Settings::instance().viewport.height) * 2.0f;
 
     GLfloat vertices[] = { left,   top,  0.0f,
                            left,   down, 0.0f,
@@ -90,7 +90,7 @@ void TextRenderer::render(std::string text, std::pair<int, int> position, std::p
     glUniform3f(colLoc, color[0], color[1], color[2]);
     glUniform3f(shaColLoc, 0.0f, 0.0f, 0.0f);
     glUniform1f(opaLoc, color[3]);
-    glUniform2f(shaOffLoc, -1.0f / textureInfo.getSize().first, -1.0f / textureInfo.getSize().second);
+    glUniform2f(shaOffLoc, -1.0f / textureInfo.getSize().width, -1.0f / textureInfo.getSize().height);
     glEnableVertexAttribArray(posLoc);
     glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
     glEnableVertexAttribArray(texLoc);

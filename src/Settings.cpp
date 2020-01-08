@@ -1,9 +1,9 @@
 #include "Settings.h"
 
 Settings::Settings()
-  : viewport (std::pair<int, int>( 1920, 1080 )),
-    tileSize (std::pair<int, int>( 400, 400 * viewport.second / viewport.first )),
-    tilesArrangement (std::pair<int, int>( 4, 1 )),
+  : viewport (Size<int>( 1920, 1080 )),
+    tileSize (Size<int>( 400, 400 * viewport.height / viewport.width )),
+    tilesArrangement (Size<int>( 4, 1 )),
     arrangeTilesInGrid (false),
     marginFromBottom (20),
     tileNameFontHeight(24),
@@ -16,5 +16,7 @@ Settings::Settings()
     sideMargin (100),
     fadingDuration (std::chrono::milliseconds(500)),
     tilePreviewDelay (std::chrono::milliseconds(500)),
-    tilePreviewTimeScale (10.0f / 3.0f) {
+    tilePreviewTimeScale (10.0f / 3.0f),
+    loaderUpdateAnimationDuration (std::chrono::milliseconds(500)),
+    loaderUpdateAnimationDelay (std::chrono::duration_values<std::chrono::milliseconds>::zero()) {
 }

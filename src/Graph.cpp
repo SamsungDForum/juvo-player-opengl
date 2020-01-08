@@ -37,7 +37,7 @@ void Graph::initialize() {
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
 }
 
-void Graph::render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size) {
+void Graph::render(const std::vector<float> &values, const std::pair<float, float> &minMax, const Position<int> &position, const Size<int> &size) {
 
   GLfloat vs[VALUES] = { 0.0f };
   for(int i = 0; i < VALUES; ++i) {
@@ -47,10 +47,10 @@ void Graph::render(const std::vector<float> &values, const std::pair<float, floa
     vs[i] = static_cast<GLfloat>(v);
   }
 
-  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+  float down  = static_cast<float>(position.y) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.y) + static_cast<float>(size.height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.x) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.x) + static_cast<float>(size.width)) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -62,8 +62,8 @@ void Graph::render(const std::vector<float> &values, const std::pair<float, floa
   glEnableVertexAttribArray(posALoc);
   glVertexAttribPointer(posALoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
-  glUniform2f(posLoc, static_cast<float>(position.first), static_cast<float>(position.second));
-  glUniform2f(sizLoc, static_cast<float>(size.first), static_cast<float>(size.second));
+  glUniform2f(posLoc, static_cast<float>(position.x), static_cast<float>(position.y));
+  glUniform2f(sizLoc, static_cast<float>(size.width), static_cast<float>(size.height));
   glUniform1fv(valLoc, VALUES, static_cast<GLfloat*>(vs));
   glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opaLoc, 1.0f);

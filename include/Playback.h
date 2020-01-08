@@ -8,6 +8,7 @@
 
 #include "GLES.h"
 #include "Animation.h"
+#include "Utility.h"
 
 class Playback {
 private:
@@ -61,11 +62,11 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> lastUpdate;
 
   const int progressUiLineLevel = 100;
-  std::pair<float, float> progressBarSizePx;
-  std::pair<int, int> progressBarSize;
+  Size<int> progressBarSizePx;
+  Size<int> progressBarSize;
   const int progressBarMarginBottom;
   const float dotScale;
-  std::pair<int, int> iconSize;
+  Size<int> iconSize;
 
   GLuint posBarLoc         = GL_INVALID_VALUE; 
   GLuint paramBarLoc       = GL_INVALID_VALUE; 
@@ -96,7 +97,7 @@ private:
   void initialize();
   void initTexture(int id);
   void renderIcons(float opacity);
-  void renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom);
+  void renderIcon(Icon icon, Position<int> position, Size<int> size, std::vector<float> color, float opacity, bool bloom);
   void renderText(float opacity);
   void renderProgressBar(float opacity);
   std::string timeToString(int time);
@@ -108,7 +109,7 @@ private:
 public:
   Playback();
   ~Playback();
-  void setIcon(int id, char* pixels, std::pair<int, int> size, GLuint format);
+  void setIcon(int id, char* pixels, Size<int> size, GLuint format);
   void render();
   void update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking);
   void setOpacity(float opacity) { this->opacity = opacity; }

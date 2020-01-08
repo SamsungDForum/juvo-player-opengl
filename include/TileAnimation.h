@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include "Animation.h"
+#include "Utility.h"
 
 class TileAnimation {
 public:
@@ -19,43 +20,55 @@ public:
     Animation::Easing easing;
 
     float fraction(const std::chrono::time_point<std::chrono::steady_clock> &now, const std::chrono::time_point<std::chrono::steady_clock> &start) const {
-      return duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ?
+      return isDurationPositive(duration) ?
         std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(now - start - delay).count() / duration.count() :
         1.0f;
     }
   };
 
+  struct UpdatedValues {
+    Position<int> position;
+    float zoom;
+    Size<int> size;
+    float opacity;
+  };
+
 private:
   std::chrono::time_point<std::chrono::steady_clock> start;
-  AnimationParameters<std::pair<int, int>> position;
+  AnimationParameters<Position<int>> position;
   AnimationParameters<float> zoom;
-  AnimationParameters<std::pair<int, int>> size;
+  AnimationParameters<Size<int>> size;
   AnimationParameters<float> opacity;
   bool active;
   static constexpr float fractionThreshold = 0.999f;
 
+  static bool isDurationPositive(std::chrono::milliseconds duration) {
+    return duration > std::chrono::duration_values<std::chrono::milliseconds>::zero();
+  }
+
 public:
-  TileAnimation(AnimationParameters<std::pair<int, int>> position,
+  TileAnimation(AnimationParameters<Position<int>> position,
                 AnimationParameters<float> zoom,
-                AnimationParameters<std::pair<int, int>> size,
+                AnimationParameters<Size<int>> size,
                 AnimationParameters<float> opacity);
   TileAnimation();
   ~TileAnimation() = default;
-  void update(std::pair<int, int> &position, float &zoom, std::pair<int, int> &size, float &opacity);
-  std::tuple<std::pair<int, int>, float, std::pair<int, int>, float> update();
+  void update(Position<int> &position, float &zoom, Size<int> &size, float &opacity);
+  UpdatedValues update();
   float fraction(const std::chrono::time_point<std::chrono::steady_clock> &now, const std::chrono::milliseconds &duration, const std::chrono::milliseconds &delay);
 
   bool isActive() { return active; }
-  std::pair<int, int> getSourcePosition() { return position.source; }
-  std::pair<int, int> getTargetPosition() { return position.target; }
+  Position<int> getSourcePosition() { return position.source; }
+  Position<int> getTargetPosition() { return position.target; }
   float getSourceZoom() { return zoom.source; }
   float getTargetZoom() { return zoom.target; }
-  std::pair<int, int> getSourceSize() { return size.source; }
-  std::pair<int, int> getTargetSize() { return size.target; }
+  Size<int> getSourceSize() { return size.source; }
+  Size<int> getTargetSize() { return size.target; }
   float getSourceOpacity() { return opacity.source; }
   float getTargetOpacity() { return opacity.target; }
   float interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<float> &value);
-  std::pair<int, int> interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<std::pair<int, int>> &value);
+  Position<int> interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<Position<int>> &value);
+  Size<int> interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<Size<int>> &value);
 };
 
 

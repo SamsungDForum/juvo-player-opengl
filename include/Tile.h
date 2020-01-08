@@ -9,12 +9,13 @@
 #include "TileAnimation.h"
 #include "CommonStructs.h"
 #include "ExternStructs.h"
+#include "Utility.h"
 
 class Tile {
 private:
   int id;
-  std::pair<int, int> position;
-  std::pair<int, int> size;
+  Position<int> position;
+  Size<int> size;
   float zoom;
   float opacity;
   std::string name;
@@ -51,8 +52,8 @@ private:
   void initGL();
 
 public:
-  Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, float zoom, float opacity, std::string name, std::string description, char *texturePixels, std::pair<int, int> textureSize, GLuint textureFormat);
-  Tile(int tileId, std::pair<int, int> position, std::pair<int, int> size, float zoom, float opacity, std::string name, std::string description);
+  Tile(int tileId, Position<int> position, Size<int> size, float zoom, float opacity, std::string name, std::string description, char *texturePixels, Size<int> textureSize, GLuint textureFormat);
+  Tile(int tileId, Position<int> position, Size<int> size, float zoom, float opacity, std::string name, std::string description);
   Tile(int tileId);
   ~Tile();
   Tile(Tile &) = delete; // no copy constructor
@@ -62,8 +63,8 @@ public:
 
   void render();
   void renderName();
-  void setTexture(char *pixels, std::pair<int, int> size, GLuint format);
-  void moveTo(std::pair<int, int> position, float zoom, std::pair<int, int> size, float opacity, std::chrono::milliseconds moveDuration, std::chrono::milliseconds animationDuration, std::chrono::milliseconds delay);
+  void setTexture(char *pixels, Size<int> size, GLuint format);
+  void moveTo(Position<int> position, float zoom, Size<int> size, float opacity, std::chrono::milliseconds moveDuration, std::chrono::milliseconds animationDuration, std::chrono::milliseconds delay);
   void runPreview(bool run);
   StoryboardExternData getStoryboardData(std::chrono::milliseconds position, int tileId);
   GLuint getCurrentTextureId();
@@ -73,16 +74,16 @@ public:
 
   void setId(int id) { this->id = id; }
   int  getId() { return id; }
-  void setSize(int width, int height) { size.first = width; size.second = height; }
-  void setSize(const std::pair<int, int> &size) { this->size = size; }
-  std::pair<int, int> getSize() { return size; }
-  int getWidth() { return size.first; }
-  int getHeight() { return size.second; }
-  void setPosition(int x, int y) { position.first = x; position.second = y; }
-  void setPosition(const std::pair<int, int> &position) { this->position = position; }
-  int getX() { return position.first; }
-  int getY() { return position.second; }
-  std::pair<int, int> getPosition() { return position; }
+  void setSize(int width, int height) { size.width = width; size.height = height; }
+  void setSize(const Size<int> &size) { this->size = size; }
+  Size<int> getSize() { return size; }
+  int getWidth() { return size.width; }
+  int getHeight() { return size.height; }
+  void setPosition(int x, int y) { position.x = x; position.y = y; }
+  void setPosition(const Position<int> &position) { this->position = position; }
+  int getX() { return position.x; }
+  int getY() { return position.y; }
+  Position<int> getPosition() { return position; }
   void setName(const std::string &name) { this->name = name; }
   std::string getName() { return name; }
   std::string getDescription() { return description; }
@@ -93,12 +94,12 @@ public:
   float getZoom() { return zoom; }
   float getOpacity() { return opacity; }
 
-  std::pair<int, int> getSourcePosition() { return animation.isActive() ? animation.getSourcePosition() : getPosition(); }
-  std::pair<int, int> getTargetPosition() { return animation.isActive() ? animation.getTargetPosition() : getPosition(); }
+  Position<int> getSourcePosition() { return animation.isActive() ? animation.getSourcePosition() : getPosition(); }
+  Position<int> getTargetPosition() { return animation.isActive() ? animation.getTargetPosition() : getPosition(); }
   float getSourceZoom() { return animation.isActive() ? animation.getSourceZoom() : getZoom(); }
   float getTargetZoom() { return animation.isActive() ? animation.getTargetZoom() : getZoom(); }
-  std::pair<int, int> getSourceSize() { return animation.isActive() ? animation.getSourceSize() : getSize(); }
-  std::pair<int, int> getTargetSize() { return animation.isActive() ? animation.getTargetSize() : getSize(); }
+  Size<int> getSourceSize() { return animation.isActive() ? animation.getSourceSize() : getSize(); }
+  Size<int> getTargetSize() { return animation.isActive() ? animation.getTargetSize() : getSize(); }
   float getSourceOpacity() { return animation.isActive() ? animation.getSourceOpacity() : getOpacity(); }
   float getTargetOpacity() { return animation.isActive() ? animation.getTargetOpacity() : getOpacity(); }
   bool isAnimationActive() { return animation.isActive(); }

@@ -4,9 +4,9 @@
 
 TileAnimation::TileAnimation() : active(false) {}
 
-TileAnimation::TileAnimation(AnimationParameters<std::pair<int, int>> position,
+TileAnimation::TileAnimation(AnimationParameters<Position<int>> position,
                              AnimationParameters<float> zoom,
-                             AnimationParameters<std::pair<int, int>> size,
+                             AnimationParameters<Size<int>> size,
                              AnimationParameters<float> opacity)
   :
           start(std::chrono::steady_clock::now()),
@@ -14,22 +14,21 @@ TileAnimation::TileAnimation(AnimationParameters<std::pair<int, int>> position,
           zoom(zoom),
           size(size),
           opacity(opacity),
-          active(position.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ||
-                 zoom.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ||
-                 size.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero() ||
-                 opacity.duration > std::chrono::duration_values<std::chrono::milliseconds>::zero()) {
+          active(isDurationPositive(position.duration) ||
+                 isDurationPositive(zoom.duration) ||
+                 isDurationPositive(size.duration) ||
+                 isDurationPositive(opacity.duration)) {
 }
 
-void TileAnimation::update(std::pair<int, int> &position, float &zoom, std::pair<int, int> &size, float &opacity) {
-  //auto [position2, zoom2, size2, opacity2] = update(); // i'm compiling this under GCC 6.2.1, so structured bindings are not yet available...
-  std::tuple<std::pair<int, int>, float, std::pair<int, int>, float> out = update();
-  position = std::get<0>(out);
-  zoom = std::get<1>(out);
-  size = std::get<2>(out);
-  opacity = std::get<3>(out);
+void TileAnimation::update(Position<int> &position, float &zoom, Size<int> &size, float &opacity) {
+  UpdatedValues out = update();
+  position = out.position;
+  zoom = out.zoom;
+  size = out.size;
+  opacity = out.opacity;
 }
 
-std::tuple<std::pair<int, int>, float, std::pair<int, int>, float> TileAnimation::update() {
+TileAnimation::UpdatedValues TileAnimation::update() {
   if(!active)
     return { position.target, zoom.target, size.target, opacity.target };
 
@@ -58,13 +57,29 @@ float TileAnimation::interpolate(const std::chrono::time_point<std::chrono::stea
   return value.source + (value.target - value.source) * Animation::ease(fraction, value.easing);
 }
 
-std::pair<int, int> TileAnimation::interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<std::pair<int, int>> &value) {
+Position<int> TileAnimation::interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<Position<int>> &value) {
   float fraction = value.fraction(now, start);
   if(fraction <= 0.0f)
     return value.source;
   if(fraction > fractionThreshold)
     return value.target;
   float interpolation = Animation::ease(fraction, value.easing);
-  return { value.source.first + (value.target.first - value.source.first) * interpolation, value.source.second + (value.target.second - value.source.second) * interpolation };
+  return {
+    static_cast<int>(value.source.x + (value.target.x - value.source.x) * interpolation),
+    static_cast<int>(value.source.y + (value.target.y - value.source.y) * interpolation)
+  };
+}
+
+Size<int> TileAnimation::interpolate(const std::chrono::time_point<std::chrono::steady_clock> &now, const AnimationParameters<Size<int>> &value) {
+  float fraction = value.fraction(now, start);
+  if(fraction <= 0.0f)
+    return value.source;
+  if(fraction > fractionThreshold)
+    return value.target;
+  float interpolation = Animation::ease(fraction, value.easing);
+  return {
+    static_cast<int>(value.source.width + (value.target.width - value.source.width) * interpolation),
+    static_cast<int>(value.source.height + (value.target.height - value.source.height) * interpolation)
+  };
 }
 
