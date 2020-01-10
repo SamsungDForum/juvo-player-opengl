@@ -168,7 +168,7 @@ void Menu::SetTileData(TileData tileData) {
 
 void Menu::SelectTile(int tileNo, bool runPreview) {
 
-  if(tileNo == selectedTile)
+  if(tileNo == selectedTile || tileNo < 0 || tileNo >= static_cast<int>(tiles.size()))
     return;
 
   selectedTile = tileNo;

@@ -15,7 +15,6 @@ private:
   GLuint posLoc;
   GLuint sizLoc;
   GLuint valLoc;
-  GLuint colLoc;
   GLuint opaLoc;
 
   const int VALUES = 100;

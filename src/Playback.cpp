@@ -6,7 +6,7 @@
 Playback::Playback()
   : barProgramObject(GL_INVALID_VALUE),
     iconProgramObject(GL_INVALID_VALUE),
-    icons(std::vector<GLuint>(static_cast<int>(Icon::LENGTH), GL_INVALID_VALUE)),
+    icons(std::vector<GLuint>(static_cast<int>(Icon::LENGTH), 0)),
     enabled(false),
     state(State::Idle),
     currentTime(0),
@@ -144,7 +144,7 @@ void Playback::renderIcons(float opacity) {
 }
 
 void Playback::renderIcon(Icon icon, Position<int> position, Size<int> size, std::vector<float> color, float opacity, bool bloom) {
-  if(static_cast<int>(icon) >= static_cast<int>(icons.size()) || icons[static_cast<int>(icon)] == GL_INVALID_VALUE)
+  if(static_cast<int>(icon) >= static_cast<int>(icons.size()) || icons[static_cast<int>(icon)] == 0)
     return;
 
   float leftPx = position.x - size.width / 2.0;
@@ -197,7 +197,7 @@ void Playback::renderIcon(Icon icon, Position<int> position, Size<int> size, std
 
   glDisableVertexAttribArray(texCoordIconLoc);
   glDisableVertexAttribArray(posIconLoc);
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glUseProgram(0);
 }
 
@@ -262,7 +262,7 @@ void Playback::initTexture(int id) {
 void Playback::setIcon(int id, char* pixels, Size<int> size, GLuint format) {
   if(id >= static_cast<int>(icons.size()))
    return; 
-  if(icons[id] == GL_INVALID_VALUE)
+  if(icons[id] == 0)
     initTexture(id);
 
   glActiveTexture(GL_TEXTURE0);
@@ -276,7 +276,7 @@ void Playback::setIcon(int id, char* pixels, Size<int> size, GLuint format) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking) {

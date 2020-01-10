@@ -27,6 +27,8 @@ private:
   TextTextureGenerator(const TextTextureGenerator&) = delete;
   TextTextureGenerator& operator=(const TextTextureGenerator&) = delete;
 
+  Size<GLint> maxTextureSize;
+
   const int CHARS = 128;
   const std::pair<int, int> charRange = {0, CHARS};
   const std::chrono::milliseconds textureGCTimeout = std::chrono::milliseconds(1000);
@@ -122,6 +124,7 @@ public:
 private:
   FT_Library ftLibrary;
   std::vector<FT_Face> faces;
+  std::vector<FT_Byte*> facesData;
   std::unordered_map<FontFaceKey, FontFace, FontFaceKey> fonts;
   std::unordered_map<TextureKey, TextureInfo, TextureKey> generatedTextures;
 

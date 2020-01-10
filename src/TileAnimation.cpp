@@ -20,6 +20,17 @@ TileAnimation::TileAnimation(AnimationParameters<Position<int>> position,
                  isDurationPositive(opacity.duration)) {
 }
 
+TileAnimation::TileAnimation(Position<int> position, float zoom, Size<int> size, float opacity)
+  :
+          start(std::chrono::steady_clock::now()),
+          position(AnimationParameters<Position<int>>(position)),
+          zoom(AnimationParameters<float>(zoom)),
+          size(AnimationParameters<Size<int>>(size)),
+          opacity(AnimationParameters<float>(opacity)),
+          active(false) {
+
+}
+
 void TileAnimation::update(Position<int> &position, float &zoom, Size<int> &size, float &opacity) {
   UpdatedValues out = update();
   position = out.position;

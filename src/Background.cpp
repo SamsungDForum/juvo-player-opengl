@@ -53,11 +53,11 @@ void Background::initGL() {
 }
 
 void Background::render() {
-  GLuint textureId = currentTile != nullptr ? currentTile->getTextureId() : GL_INVALID_VALUE;
-  if(textureId == GL_INVALID_VALUE)
+  GLuint textureId = currentTile != nullptr ? currentTile->getTextureId() : 0;
+  if(!textureId)
     return;
-  GLuint texture2Id = lastTile != nullptr ? lastTile->getTextureId() : GL_INVALID_VALUE;
-  if(texture2Id == GL_INVALID_VALUE)
+  GLuint texture2Id = lastTile != nullptr ? lastTile->getTextureId() : 0;
+  if(texture2Id == 0)
     texture2Id = textureId;
   opacity = currentTile != nullptr ? currentTile->getOpacity() : 1.0;
 
@@ -102,7 +102,7 @@ void Background::render() {
 
   glDisableVertexAttribArray(posLoc);
   glDisableVertexAttribArray(texLoc);
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glUseProgram(0);
 
   renderNameAndDescription();

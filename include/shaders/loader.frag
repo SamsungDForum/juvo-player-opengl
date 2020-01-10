@@ -4,7 +4,6 @@ precision highp float;
 
 uniform float u_time;
 uniform float u_param;
-uniform float u_opacity;
 uniform vec2 u_viewport;
 
 float hash(vec2 n) {
