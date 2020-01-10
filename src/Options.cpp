@@ -93,7 +93,7 @@ void Options::renderIcon() {
 void Options::render() {
   if(!show || opacity <= 0.0f)
     return;
-  std::pair<int, int> optionPosition {this->position.first + margin.first, this->position.second + (options.size() - 1) * (optionRectangleSize.second + margin.second)};
+  Position<int> optionPosition { this->position.x + margin.width, this->position.y + static_cast<int>(options.empty() ? 0 : options.size() - 1) * (optionRectangleSize.height + margin.height) };
   for(const std::pair<int, Option>& option : options) {
     renderRectangle(optionPosition,
                     optionRectangleSize,
@@ -104,7 +104,7 @@ void Options::render() {
                     frameColor,
                     option.first == selectedOptionId ? true : false);
     if(option.first == selectedOptionId) {
-      std::pair<int, int> suboptionPosition = {optionPosition.first + optionRectangleSize.first + margin.first, optionPosition.second + (suboptionRectangleSize.second + margin.second) * (option.second.subopt.size() - 1)};
+      Position<int> suboptionPosition = {optionPosition.x + optionRectangleSize.width + margin.width, optionPosition.y + (suboptionRectangleSize.height + margin.height) * static_cast<int>(option.second.subopt.empty() ? 0 : option.second.subopt.size() - 1)};
       for(const std::pair<int, Suboption>& suboption : option.second.subopt) {
         renderRectangle(suboptionPosition,
                         suboptionRectangleSize,
@@ -114,18 +114,18 @@ void Options::render() {
                         suboption.first == selectedSuboptionId ? frameWidth : 0,
                         frameColor,
                         false);
-        suboptionPosition.second -= suboptionRectangleSize.second + margin.second;
+        suboptionPosition.y -= suboptionRectangleSize.height + margin.height;
       }
     }
-    optionPosition.second -= optionRectangleSize.second + margin.second;
+    optionPosition.y -= optionRectangleSize.height + margin.height;
   }
 }
 
-void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected) {
-  float down = static_cast<float>(position.second) / Settings::instance().viewport.second * 2.0f - 1.0f;
-  float top = static_cast<float>(position.second + size.second) / Settings::instance().viewport.second * 2.0f - 1.0f;
-  float left = static_cast<float>(position.first) / Settings::instance().viewport.first * 2.0f - 1.0f;
-  float right = static_cast<float>(position.first + size.first) / Settings::instance().viewport.first * 2.0f - 1.0f;
+void Options::renderRectangle(Position<int> position, Size<int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected) {
+  float down = static_cast<float>(position.y) / Settings::instance().viewport.height * 2.0f - 1.0f;
+  float top = static_cast<float>(position.y + size.height) / Settings::instance().viewport.height * 2.0f - 1.0f;
+  float left = static_cast<float>(position.x) / Settings::instance().viewport.width * 2.0f - 1.0f;
+  float right = static_cast<float>(position.x + size.width) / Settings::instance().viewport.width * 2.0f - 1.0f;
   GLfloat vertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -137,8 +137,8 @@ void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> 
   glEnableVertexAttribArray(positionALoc);
   glVertexAttribPointer(positionALoc, 3, GL_FLOAT, GL_FALSE, 0, vertices);
 
-  glUniform2f(positionLoc, position.first, position.second);
-  glUniform2f(sizeLoc, size.first, size.second);
+  glUniform2f(positionLoc, position.x, position.y);
+  glUniform2f(sizeLoc, size.width, size.height);
   glUniform3f(colorLoc, color[0], color[1], color[2]);
   glUniform1f(opacityLoc, opacity);
 
@@ -150,10 +150,10 @@ void Options::renderRectangle(std::pair<int, int> position, std::pair<int, int> 
   glDisableVertexAttribArray(positionALoc);
   glUseProgram(0);
 
-  int fontHeight = size.second / 2;
-  int margin = (size.second - fontHeight) / 2;
+  int fontHeight = size.height / 2;
+  int margin = (size.height - fontHeight) / 2;
   TextRenderer::instance().render(name,
-              {position.first + margin, position.second + margin},
+              {position.x + margin, position.y + margin},
               {0, fontHeight},
               0,
               {1.0, 1.0, 1.0, opacity});

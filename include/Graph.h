@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "GLES.h"
+#include "Utility.h"
 
 class Graph {
 private:
@@ -25,7 +26,7 @@ private:
 public:
   Graph();
   ~Graph();
-  void render(const std::vector<float> &values, const std::pair<float, float> &minMax, const std::pair<int, int> &position, const std::pair<int, int> &size);
+  void render(const std::vector<float> &values, const std::pair<float, float> &minMax, const Position<int> &position, const Size<int> &size);
 };
 
 #endif // _GRAPH_H_

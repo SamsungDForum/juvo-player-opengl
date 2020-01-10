@@ -7,13 +7,14 @@
 #include <functional>
 
 #include "GLES.h"
+#include "Utility.h"
 
 class Options {
   private:
-    std::pair<int, int> optionRectangleSize;
-    std::pair<int, int> suboptionRectangleSize;
-    std::pair<int, int> position;
-    std::pair<int, int> margin;
+    Size<int> optionRectangleSize;
+    Size<int> suboptionRectangleSize;
+    Position<int> position;
+    Size<int> margin;
     int frameWidth;
     std::vector<float> optionColor;
     std::vector<float> selectedOptionColor;
@@ -57,8 +58,8 @@ class Options {
     GLuint frameColorLoc = GL_INVALID_VALUE;
 
     void initialize();
-    void render(std::pair<int, int> position, std::pair<int, int> optionRectangleSize, std::pair<int, int> suboptionRectangleSize, float opacity);
-    void renderRectangle(std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected = false);
+    void render(Position<int> position, Size<int> optionRectangleSize, Size<int> suboptionRectangleSize, float opacity);
+    void renderRectangle(Position<int> position, Size<int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected = false);
 
   public:
     Options();

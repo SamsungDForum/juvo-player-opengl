@@ -6,6 +6,7 @@
 #include <deque>
 
 #include "GLES.h"
+#include "Utility.h"
 
 class LogConsole {
 private:
@@ -20,8 +21,8 @@ private:
   std::deque<std::string> logs;
 
   void initialize();
-  void renderText(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize);
-  void renderLogs(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize, std::pair<int, int> margin, int lineWidth);
+  void renderText(Position<int> position, Size<int> size, int fontId, int fontSize);
+  void renderLogs(Position<int> position, Size<int> size, int fontId, int fontSize, Size<int> margin, int lineWidth);
   int getTextHeight(std::string s, int lineWidth, int fontHeight, int fontId);
 
   LogConsole();
@@ -41,7 +42,7 @@ public:
     Info
   };
 
-  void render(std::pair<int, int> position, std::pair<int, int> size, int fontId, int fontSize);
+  void render(Position<int> position, Size<int> size, int fontId, int fontSize);
   void pushLog(std::string log);
   void log(std::string log, LogLevel logLevel);
 };

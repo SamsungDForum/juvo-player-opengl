@@ -6,12 +6,13 @@
 
 #include "GLES.h"
 #include "ExternStructs.h"
+#include "Utility.h"
 
 struct TileData
 {
   int tileId;
   char* pixels;
-  std::pair<int, int> size;
+  Size<int> size;
   std::string name;
   std::string desc;
   GLuint format;
@@ -59,7 +60,7 @@ struct ImageData
 {
   int id;
   char* pixels;
-  std::pair<int, int> size;
+  Size<int> size;
   GLuint format;
 };
 

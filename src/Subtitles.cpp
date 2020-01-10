@@ -11,8 +11,7 @@ void Subtitles::render() {
   if(!active)
     return;
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-  if(now > start + duration) {
+  if(std::chrono::steady_clock::now() > start + duration) {
     active = false;
     if(showForOneFrame == false)
       return;
@@ -20,15 +19,17 @@ void Subtitles::render() {
   }
 
   int fontHeight = 26;
-  std::pair<int, int> margin = {100, 150};
-  int textWidth = Settings::instance().viewport.first - 2 * margin.first;
+  Size<int> margin = {100, 150};
+  int textWidth = Settings::instance().viewport.width - 2 * margin.width;
 
-  std::pair<float, float> textSize = TextRenderer::instance().getTextSize(subtitle,
-    {textWidth, fontHeight},
+  Size<GLuint> textSize = TextRenderer::instance().getTextSize(subtitle,
+    { static_cast<GLuint>(textWidth), static_cast<GLuint>(fontHeight) },
     0);
 
-    TextRenderer::instance().render(subtitle,
-    {(Settings::instance().viewport.first - textSize.first) / 2, margin.second + textSize.second - fontHeight},
+    TextRenderer::instance().render(subtitle, {
+      static_cast<int>((Settings::instance().viewport.width - textSize.width) / 2),
+      static_cast<int>(margin.height + textSize.height - fontHeight)
+    },
     {textWidth, fontHeight},
     0,
     {1.0, 1.0, 1.0, 1.0});
@@ -37,7 +38,7 @@ void Subtitles::render() {
 void Subtitles::showSubtitle(const std::chrono::milliseconds duration, const std::string subtitle) {
   this->subtitle = subtitle;
   this->duration = duration;
-  this->start = std::chrono::high_resolution_clock::now();
+  this->start = std::chrono::steady_clock::now();
   this->active = true;
   if(duration == std::chrono::milliseconds(0))
     showForOneFrame = true;

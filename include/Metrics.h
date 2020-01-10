@@ -29,7 +29,7 @@ private:
   class Framerate : public Trace {
   public:
     float fpsSum;
-    std::chrono::time_point<std::chrono::high_resolution_clock> fpsTime;
+    std::chrono::time_point<std::chrono::steady_clock> fpsTime;
     float currentFps;
     Framerate();
     void step();

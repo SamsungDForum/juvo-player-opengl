@@ -4,6 +4,7 @@
 #include <chrono>
 #include <vector>
 #include <cmath>
+#include <functional>
 
 class Animation {
 public:
@@ -17,29 +18,35 @@ public:
   } Easing;
 
 private:
-  std::chrono::time_point<std::chrono::high_resolution_clock> animationStart;
-  std::chrono::milliseconds animationDuration;
-  std::chrono::milliseconds animationDelay;
-  std::vector<double> sourceValues;
-  std::vector<double> targetValues;
+  std::chrono::time_point<std::chrono::steady_clock> start;
+  std::chrono::milliseconds duration;
+  std::chrono::milliseconds delay;
+  std::vector<double> source;
+  std::vector<double> target;
   Easing easing;
   bool active;
 
-  static constexpr double pi() { return std::atan(1) * 4; }
-  float ease(float fraction, Easing easing);
+  std::function<void()> endWith;
+
+  void updateActivity(double fraction);
 
 public:
   Animation();
-  Animation(std::chrono::time_point<std::chrono::high_resolution_clock> animationStart,
-            std::chrono::milliseconds animationDuration,
-            std::chrono::milliseconds animationDelay,
-            const std::vector<double> sourceValues,
-            const std::vector<double> targetValues,
-            Easing easing);
+  Animation(std::chrono::milliseconds duration,
+            std::chrono::milliseconds delay,
+            const std::vector<double> source,
+            const std::vector<double> target,
+            Easing easing,
+            std::function<void()> endWith = nullptr);
   ~Animation() = default;
+  Animation(const Animation&) = delete;
+  Animation(Animation&&) = default;
+  Animation& operator=(const Animation &other) = default;
+
   std::vector<double> update();
   bool isActive();
-  bool isBounce();
+  bool isDuringDelay();
+  static float ease(float fraction, Easing easing);
 };
 
 #endif // _ANIMATION_H_

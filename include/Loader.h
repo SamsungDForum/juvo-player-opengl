@@ -9,7 +9,7 @@
 class Loader {
 private:
   GLuint programObject;
-  std::chrono::time_point<std::chrono::high_resolution_clock> time;
+  std::chrono::time_point<std::chrono::steady_clock> time;
   void initialize();
   int param;
   Animation animation;

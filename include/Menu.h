@@ -17,6 +17,7 @@
 #include "Metrics.h"
 #include "Options.h"
 #include "ModalWindow.h"
+#include "Utility.h"
 
 class Menu {
 private:
@@ -25,7 +26,6 @@ private:
   bool loaderEnabled;
   int selectedTile;
   int firstTile;
-  float backgroundOpacity;
   std::string footer;
 
   // UI helper objects
@@ -39,8 +39,9 @@ private:
 
 private:
   void initialize();
-  int AddTile(char *pixels, std::pair<int, int> size);
-  std::pair<int, int> getTilePosition(int tileNo, bool initialMargin = true);
+  int AddTile(char *pixels, Size<int> size);
+  Position<int> getTilePosition(int tileNo, bool initialMargin = true);
+  Size<int> getGridSize();
 
 public:
   Menu();

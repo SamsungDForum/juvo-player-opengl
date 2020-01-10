@@ -18,11 +18,13 @@ Playback::Playback()
     buffering(false),
     bufferingPercent(0.0f),
     seeking(false),
-    lastUpdate(std::chrono::high_resolution_clock::now()),
+    lastUpdate(std::chrono::steady_clock::now()),
     progressUiLineLevel(100),
-    progressBarSizePx({1400.0f, 20.0f}),
-    progressBarSize({progressBarSizePx.first / 1920.0f * Settings::instance().viewport.first, progressBarSizePx.second / 1080.0f * Settings::instance().viewport.second}),
-    progressBarMarginBottom(progressUiLineLevel / 1080.0f * Settings::instance().viewport.second - progressBarSize.second / 2.0f),
+    progressBarSizePx({1400, 20}),
+    progressBarSize({
+        static_cast<int>(progressBarSizePx.width / 1920.0f * Settings::instance().viewport.width),
+        static_cast<int>(progressBarSizePx.height / 1080.0f * Settings::instance().viewport.height)}),
+    progressBarMarginBottom(progressUiLineLevel / 1080.0f * Settings::instance().viewport.height - progressBarSize.height / 2.0f),
     dotScale(1.5f),
     iconSize({64, 64}) {
   initialize();
@@ -122,7 +124,7 @@ void Playback::render() {
 void Playback::renderIcons(float opacity) {
   Icon icon = Icon::Play;
   std::vector<float> color = {1.0, 1.0, 1.0, 1.0};
-  std::pair<int, int> position = {200, progressUiLineLevel};
+  Position<int> position = {200, progressUiLineLevel};
   switch(state) {
     case State::Playing:
       icon = Icon::Pause;
@@ -138,21 +140,21 @@ void Playback::renderIcons(float opacity) {
       break;
   }
   renderIcon(icon, position, iconSize, color, opacity, selectedAction == Action::PlaybackControl);
-  //renderIcon(Icon::Options, {Settings::instance().viewport.first - 75, Settings::instance().viewport.second - 75}, iconSize, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu); // It's not being used right now since SelectAction is not being used.
+  //renderIcon(Icon::Options, {Settings::instance().viewport.width - 75, Settings::instance().viewport.height - 75}, iconSize, {1.0, 1.0, 1.0, 1.0}, opacity, selectedAction == Action::OptionsMenu); // It's not being used right now since SelectAction is not being used.
 }
 
-void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int, int> size, std::vector<float> color, float opacity, bool bloom) {
+void Playback::renderIcon(Icon icon, Position<int> position, Size<int> size, std::vector<float> color, float opacity, bool bloom) {
   if(static_cast<int>(icon) >= static_cast<int>(icons.size()) || icons[static_cast<int>(icon)] == GL_INVALID_VALUE)
     return;
 
-  float leftPx = position.first - size.first / 2.0;
-  float rightPx = leftPx + size.first;
-  float downPx = position.second - size.second / 2.0;
-  float topPx = downPx + size.second;
-  float left = (leftPx / Settings::instance().viewport.first) * 2.0 - 1.0;
-  float right = (rightPx / Settings::instance().viewport.first) * 2.0 - 1.0;
-  float down = (downPx / Settings::instance().viewport.second) * 2.0 - 1.0;
-  float top = (topPx / Settings::instance().viewport.second) * 2.0 - 1.0;
+  float leftPx = position.x - size.width / 2.0;
+  float rightPx = leftPx + size.width;
+  float downPx = position.y - size.height / 2.0;
+  float topPx = downPx + size.height;
+  float left = (leftPx / Settings::instance().viewport.width) * 2.0 - 1.0;
+  float right = (rightPx / Settings::instance().viewport.width) * 2.0 - 1.0;
+  float down = (downPx / Settings::instance().viewport.height) * 2.0 - 1.0;
+  float top = (topPx / Settings::instance().viewport.height) * 2.0 - 1.0;
 
   GLfloat vertices[] = { left,   top,  0.0f,
                          left,   down, 0.0f,
@@ -163,6 +165,7 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 
   glUseProgram(iconProgramObject);
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, icons[static_cast<int>(icon)]);
   glUniform1i(samplerIconLoc, 0);
 
@@ -181,14 +184,14 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
     glUniform3f(colIconLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opacityIconLoc, static_cast<GLfloat>(opacity));
   glUniform3f(shadowColIconLoc, 0.0f, 0.0f, 0.0f);
-  glUniform2f(shadowOffIconLoc, -1.0f / size.first, -1.0f / size.second);
+  glUniform2f(shadowOffIconLoc, -1.0f / size.width, -1.0f / size.height);
 
   if(color.size() >= 3)
     glUniform3f(colBloomIconLoc, color[0], color[1], color[2]);
   else
     glUniform3f(colBloomIconLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opaBloomIconLoc, bloom ? opacity : 0.0f);
-  glUniform4f(rectBloomIconLoc, position.first, position.second, size.first, size.second);
+  glUniform4f(rectBloomIconLoc, position.x, position.y, size.width, size.height);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
@@ -201,8 +204,8 @@ void Playback::renderIcon(Icon icon, std::pair<int, int> position, std::pair<int
 void Playback::renderText(float opacity) {
   // render remaining time
   int fontHeight = 24;
-  int textLeft = Settings::instance().viewport.first - (Settings::instance().viewport.first - progressBarSize.first) / 2 + progressBarSize.second;
-  int textDown = progressBarMarginBottom + progressBarSize.second / 2 - fontHeight / 2;
+  int textLeft = Settings::instance().viewport.width - (Settings::instance().viewport.width - progressBarSize.width) / 2 + progressBarSize.height;
+  int textDown = progressBarMarginBottom + progressBarSize.height / 2 - fontHeight / 2;
   TextRenderer::instance().render(timeToString(-1 * (totalTime - currentTime)),
               {textLeft, textDown},
               {0, fontHeight},
@@ -212,20 +215,20 @@ void Playback::renderText(float opacity) {
   // render title
   fontHeight = 48;
   textLeft = 100;
-  textDown = Settings::instance().viewport.second - fontHeight - 100;
+  textDown = Settings::instance().viewport.height - fontHeight - 100;
   TextRenderer::instance().render(displayText,
               {textLeft, textDown},
-              {Settings::instance().viewport.first - textLeft * 2, fontHeight},
+              {Settings::instance().viewport.width - textLeft * 2, fontHeight},
               0,
               {1.0, 1.0, 1.0, opacity});
 }
 
 void Playback::renderProgressBar(float opacity) {
   float marginHeightScale = 1.5; // the dot is 1.25x
-  float down = static_cast<float>(progressBarMarginBottom + progressBarSize.second / 2 - marginHeightScale * progressBarSize.second / 2) / Settings::instance().viewport.second * 2.0f - 1.0f;
-  float top = static_cast<float>(progressBarMarginBottom + progressBarSize.second / 2 + marginHeightScale * progressBarSize.second / 2) / Settings::instance().viewport.second * 2.0f - 1.0f;
-  float left = static_cast<float>(0.9f * (Settings::instance().viewport.first - progressBarSize.first) / 2) / Settings::instance().viewport.first * 2.0f - 1.0f;
-  float right = static_cast<float>(Settings::instance().viewport.first - (0.9f * (Settings::instance().viewport.first - progressBarSize.first) / 2)) / Settings::instance().viewport.first * 2.0f - 1.0f;
+  float down = static_cast<float>(progressBarMarginBottom + progressBarSize.height / 2 - marginHeightScale * progressBarSize.height / 2) / Settings::instance().viewport.height * 2.0f - 1.0f;
+  float top = static_cast<float>(progressBarMarginBottom + progressBarSize.height / 2 + marginHeightScale * progressBarSize.height / 2) / Settings::instance().viewport.height * 2.0f - 1.0f;
+  float left = static_cast<float>(0.9f * (Settings::instance().viewport.width - progressBarSize.width) / 2) / Settings::instance().viewport.width * 2.0f - 1.0f;
+  float right = static_cast<float>(Settings::instance().viewport.width - (0.9f * (Settings::instance().viewport.width - progressBarSize.width) / 2)) / Settings::instance().viewport.width * 2.0f - 1.0f;
   GLfloat vertices[] = { left,   top,  0.0f,
                          left,   down, 0.0f,
                          right,  down, 0.0f,
@@ -239,8 +242,8 @@ void Playback::renderProgressBar(float opacity) {
 
   glUniform1f(paramBarLoc, clamp<float>(progress, 0.0, 1.0));
   glUniform1f(opacityBarLoc, opacity);
-  glUniform2f(viewportBarLoc, Settings::instance().viewport.first, Settings::instance().viewport.second);
-  glUniform2f(sizeBarLoc, progressBarSize.first, progressBarSize.second);
+  glUniform2f(viewportBarLoc, Settings::instance().viewport.width, Settings::instance().viewport.height);
+  glUniform2f(sizeBarLoc, progressBarSize.width, progressBarSize.height);
   glUniform1f(marginBarLoc, progressBarMarginBottom);
   glUniform1f(dotScaleBarLoc, dotScale);
 
@@ -256,16 +259,17 @@ void Playback::initTexture(int id) {
   glGenTextures(1, &icons[id]);
 }
 
-void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint format) {
+void Playback::setIcon(int id, char* pixels, Size<int> size, GLuint format) {
   if(id >= static_cast<int>(icons.size()))
    return; 
   if(icons[id] == GL_INVALID_VALUE)
     initTexture(id);
 
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, icons[id]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexImage2D(GL_TEXTURE_2D, 0, format, size.first, size.second, 0, format, GL_UNSIGNED_BYTE, pixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, format, size.width, size.height, 0, format, GL_UNSIGNED_BYTE, pixels);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -277,12 +281,11 @@ void Playback::setIcon(int id, char* pixels, std::pair<int, int> size, GLuint fo
 
 void Playback::update(int show, int state, int currentTime, int totalTime, std::string text, std::chrono::milliseconds animationDuration, std::chrono::milliseconds animationDelay, bool buffering, float bufferingPercent, bool seeking) {
   updateProgress();
-  std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+  std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
   std::chrono::milliseconds fromLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate);
   if(static_cast<bool>(show) != enabled) {
     enabled = static_cast<bool>(show);
-    opacityAnimation = Animation(now,
-                          animationDuration,
+    opacityAnimation = Animation(animationDuration,
                           animationDelay,
                           {static_cast<double>(opacity)},
                           {enabled ? 1.0 : 0.0},
@@ -291,9 +294,8 @@ void Playback::update(int show, int state, int currentTime, int totalTime, std::
 
   if(currentTime != this->currentTime && totalTime != 0) { // excluding totalTime=0 because of live content case
     lastUpdate = now;
-    progressAnimation = Animation(now,
-                          std::min(static_cast<std::chrono::milliseconds>(fromLastUpdate.count() * 2), std::chrono::milliseconds(1000)),
-                          std::chrono::milliseconds(0),
+    progressAnimation = Animation(std::min(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(fromLastUpdate).count() * 2), std::chrono::milliseconds(1000)),
+                          std::chrono::duration_values<std::chrono::milliseconds>::zero(),
                           {progress},
                           {static_cast<double>(currentTime) / static_cast<double>(totalTime ? totalTime : currentTime)},
                           Animation::Easing::Linear);
@@ -326,10 +328,10 @@ std::string Playback::timeToString(int time) {
 
 void Playback::renderLoader(float opacity) {
   int squareWidth = 200;
-  float down = static_cast<float>((Settings::instance().viewport.second - squareWidth) / 2) / Settings::instance().viewport.second * 2.0f - 1.0f;
-  float top = static_cast<float>((Settings::instance().viewport.second + squareWidth) / 2) / Settings::instance().viewport.second * 2.0f - 1.0f;
-  float left = static_cast<float>((Settings::instance().viewport.first - squareWidth) / 2) / Settings::instance().viewport.first * 2.0f - 1.0f;
-  float right = static_cast<float>((Settings::instance().viewport.first + squareWidth) / 2) / Settings::instance().viewport.first * 2.0f - 1.0f;
+  float down = static_cast<float>((Settings::instance().viewport.height - squareWidth) / 2) / Settings::instance().viewport.height * 2.0f - 1.0f;
+  float top = static_cast<float>((Settings::instance().viewport.height + squareWidth) / 2) / Settings::instance().viewport.height * 2.0f - 1.0f;
+  float left = static_cast<float>((Settings::instance().viewport.width - squareWidth) / 2) / Settings::instance().viewport.width * 2.0f - 1.0f;
+  float right = static_cast<float>((Settings::instance().viewport.width + squareWidth) / 2) / Settings::instance().viewport.width * 2.0f - 1.0f;
   GLfloat vertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -343,7 +345,7 @@ void Playback::renderLoader(float opacity) {
 
   glUniform1f(paramLoaderLoc, fmod(static_cast<double>(std::clock()) / CLOCKS_PER_SEC, 1.0));
   glUniform1f(opacityLoaderLoc, opacity);
-  glUniform2f(viewportLoaderLoc, Settings::instance().viewport.first, Settings::instance().viewport.second);
+  glUniform2f(viewportLoaderLoc, Settings::instance().viewport.width, Settings::instance().viewport.height);
   glUniform2f(sizeLoaderLoc, squareWidth, squareWidth);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);

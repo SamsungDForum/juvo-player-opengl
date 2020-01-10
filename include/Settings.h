@@ -4,6 +4,8 @@
 #include <utility>
 #include <chrono>
 
+#include "Utility.h"
+
 class Settings {
 private:
   Settings();
@@ -16,18 +18,24 @@ public:
     return settings;
   }
 
-  std::pair<int, int> viewport;
-  const std::pair<int, int> tileSize;
-  const std::pair<int, int> tilesArrangement;
+  Size<int> viewport;
+  const Size<int> tileSize;
+  const Size<int> tilesArrangement;
   const bool arrangeTilesInGrid;
-  const float marginFromBottom;
+  const int marginFromBottom;
+  const int tileNameFontHeight;
   const float zoom;
-  const std::chrono::milliseconds fadingDuration;
-  const std::chrono::milliseconds animationDuration;
-  const bool bouncing;
+  const std::chrono::milliseconds animationMoveDuration;
+  const std::chrono::milliseconds animationZoomInDuration;
+  const std::chrono::milliseconds animationZoomOutDuration;
+  const std::chrono::milliseconds backgroundChangeDuration;
+  const std::chrono::milliseconds backgroundChangeDelay;
   const float sideMargin;
+  const std::chrono::milliseconds fadingDuration;
   const std::chrono::milliseconds tilePreviewDelay;
   const float tilePreviewTimeScale;
+  const std::chrono::milliseconds loaderUpdateAnimationDuration;
+  const std::chrono::milliseconds loaderUpdateAnimationDelay;
 };
 
 #endif // _SETTINGS_H_

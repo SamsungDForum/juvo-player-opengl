@@ -46,12 +46,12 @@ void ModalWindow::render() {
 }
 
 void ModalWindow::calculateParams() {
-  int windowWidth = Settings::instance().viewport.first / 2;
-  std::pair<int,int> margin = {10, 10};
-  size = {windowWidth,
-          Settings::instance().viewport.second / 2.5};
-  position = {(Settings::instance().viewport.first - size.first) / 2,
-              (Settings::instance().viewport.second - size.second) / 2};
+  int windowWidth = Settings::instance().viewport.width / 2;
+  Size<int> margin = {10, 10};
+  size = { windowWidth,
+           static_cast<int>(Settings::instance().viewport.height / 2.5) };
+  position = { (Settings::instance().viewport.width - size.width) / 2,
+               (Settings::instance().viewport.height - size.height) / 2 };
 
   params = Params {
     .title = TextParams {
@@ -70,7 +70,7 @@ void ModalWindow::calculateParams() {
       .size = {1, 1},
       .color = {1.0f, 1.0f, 1.0f, 1.0f}
     },
-    .lineWidth = size.first - 2 * margin.first,
+    .lineWidth = size.width - 2 * margin.width,
 
     .window = WindowParams {
       .position = position,
@@ -96,11 +96,11 @@ void ModalWindow::calculateParams() {
   calculateElementsPositions();
 }
 
-void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, int> size) {
-  float down  = static_cast<float>(position.second) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-  float top   = (static_cast<float>(position.second) + static_cast<float>(size.second)) / static_cast<float>(Settings::instance().viewport.second) * 2.0f - 1.0f;
-  float left  = static_cast<float>(position.first) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
-  float right = (static_cast<float>(position.first) + static_cast<float>(size.first)) / static_cast<float>(Settings::instance().viewport.first) * 2.0f - 1.0f;
+void ModalWindow::renderRectangle(Position<int> position, Size<int> size) {
+  float down  = static_cast<float>(position.y) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+  float top   = (static_cast<float>(position.y) + static_cast<float>(size.height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
+  float left  = static_cast<float>(position.x) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
+  float right = (static_cast<float>(position.x) + static_cast<float>(size.width)) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
   GLfloat vVertices[] = { left,   top,  0.0f,
                           left,   down, 0.0f,
                           right,  down, 0.0f,
@@ -112,8 +112,8 @@ void ModalWindow::renderRectangle(std::pair<int, int> position, std::pair<int, i
   glEnableVertexAttribArray(posALoc);
   glVertexAttribPointer(posALoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
 
-  glUniform2f(posLoc, static_cast<float>(position.first), static_cast<float>(position.second));
-  glUniform2f(sizLoc, static_cast<float>(size.first), static_cast<float>(size.second));
+  glUniform2f(posLoc, static_cast<float>(position.x), static_cast<float>(position.y));
+  glUniform2f(sizLoc, static_cast<float>(size.width), static_cast<float>(size.height));
   glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opaLoc, 1.0f);
 
@@ -132,26 +132,26 @@ void ModalWindow::renderContent() {
 void ModalWindow::calculateElementsPositions() {
   params.title.size = TextRenderer::instance().getTextSize(
     params.title.text,
-    { params.lineWidth, params.title.fontSize },
+    { static_cast<GLuint>(params.lineWidth), static_cast<GLuint>(params.title.fontSize) },
     params.title.fontId);
   params.body.size = TextRenderer::instance().getTextSize(
     params.body.text,
-    { params.lineWidth, params.body.fontSize },
+    { static_cast<GLuint>(params.lineWidth), static_cast<GLuint>(params.body.fontSize) },
     params.body.fontId);
-  params.title.position = {params.window.position.first + (params.window.size.first - params.title.size.first) / 2,
-                           (params.window.position.second + params.window.size.second) - params.window.margin.second - params.title.fontSize};
-  params.body.position = {params.window.position.first + (params.window.size.first - params.body.size.first) / 2,
-                          params.window.position.second + (params.window.size.second + params.body.size.second) / 2 - params.body.fontSize};
+  params.title.position = {params.window.position.x + (params.window.size.width - params.title.size.width) / 2,
+                           (params.window.position.y + params.window.size.height) - params.window.margin.height - params.title.fontSize};
+  params.body.position = {params.window.position.x + (params.window.size.width - params.body.size.width) / 2,
+                          params.window.position.y + (params.window.size.height + params.body.size.height) / 2 - params.body.fontSize};
   params.buttonText.size = TextRenderer::instance().getTextSize(
     params.buttonText.text,
-    { params.lineWidth, params.buttonText.fontSize },
+    { static_cast<GLuint>(params.lineWidth), static_cast<GLuint>(params.buttonText.fontSize) },
     params.buttonText.fontId);
-  params.buttonWindow.size = {params.buttonText.size.first + 4 * params.buttonText.fontSize,
-                              params.buttonText.size.second + 2 * params.buttonText.fontSize};
-  params.buttonWindow.position = {params.window.position.first + (params.window.size.first - params.buttonWindow.size.first) / 2,
-                                  params.window.position.second + params.window.margin.second};
-  params.buttonText.position = {params.buttonWindow.position.first + (params.buttonWindow.size.first - params.buttonText.size.first) / 2,
-                                params.buttonWindow.position.second + (params.buttonWindow.size.second + params.buttonText.size.second) / 2 - params.buttonText.fontSize};
+  params.buttonWindow.size = {params.buttonText.size.width + 4 * params.buttonText.fontSize,
+                              params.buttonText.size.height + 2 * params.buttonText.fontSize};
+  params.buttonWindow.position = {params.window.position.x + (params.window.size.width - params.buttonWindow.size.width) / 2,
+                                  params.window.position.y + params.window.margin.height};
+  params.buttonText.position = {params.buttonWindow.position.x + (params.buttonWindow.size.width - params.buttonText.size.width) / 2,
+                                params.buttonWindow.position.y + (params.buttonWindow.size.height + params.buttonText.size.height) / 2 - params.buttonText.fontSize};
 }
 
 void ModalWindow::renderTitle() {
