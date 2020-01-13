@@ -35,6 +35,11 @@ Playback::~Playback() {
     glDeleteProgram(barProgramObject);
   if(iconProgramObject != GL_INVALID_VALUE)
     glDeleteProgram(iconProgramObject);
+  for(size_t i = 0; i < icons.size(); ++i)
+    if(icons[i] > 0) {
+      glDeleteTextures(1, &icons[i]);
+      icons[i] = 0;
+    }
 }
 
 void Playback::initialize() {

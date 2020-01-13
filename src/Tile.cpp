@@ -60,6 +60,7 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
 
 Tile::Tile(int tileId)
           : id(tileId),
+          previewTextureId(0),
           textureId(0) {
   initGL();
   initTextures();
