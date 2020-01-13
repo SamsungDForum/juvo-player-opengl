@@ -16,17 +16,6 @@ Background::Background()
   initGL();
 }
 
-Background::Background(float opacity)
-  : programObject(GL_INVALID_VALUE),
-    textureFormat(GL_INVALID_VALUE),
-    opacity(opacity),
-    mixing(1.0f),
-    lastTile(nullptr),
-    currentTile(nullptr),
-    queuedTile(nullptr) {
-  initGL();
-}
-
 Background::~Background() {
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
@@ -53,13 +42,16 @@ void Background::initGL() {
 }
 
 void Background::render() {
-  GLuint textureId = currentTile != nullptr ? currentTile->getTextureId() : GL_INVALID_VALUE;
-  if(textureId == GL_INVALID_VALUE)
+  opacity = getOpacity();
+  if(opacity < 0.001f)
     return;
-  GLuint texture2Id = lastTile != nullptr ? lastTile->getTextureId() : GL_INVALID_VALUE;
-  if(texture2Id == GL_INVALID_VALUE)
+
+  GLuint textureId = currentTile != nullptr ? currentTile->getTextureId() : 0;
+  if(!textureId)
+    return;
+  GLuint texture2Id = lastTile != nullptr ? lastTile->getTextureId() : 0;
+  if(texture2Id == 0)
     texture2Id = textureId;
-  opacity = currentTile != nullptr ? currentTile->getOpacity() : 1.0;
 
   float left = -1.0;
   float right = 1.0;
@@ -102,7 +94,7 @@ void Background::render() {
 
   glDisableVertexAttribArray(posLoc);
   glDisableVertexAttribArray(texLoc);
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glUseProgram(0);
 
   renderNameAndDescription();
@@ -145,7 +137,7 @@ void Background::setOpacity(float opacity) {
 }
 
 float Background::getOpacity() {
-  return opacity;
+  return currentTile != nullptr ? currentTile->getOpacity() : 0.0;
 }
 
 void Background::setSourceTile(Tile *tile) {

@@ -20,20 +20,19 @@ private:
   float opacity;
   std::string name;
   std::string description;
-  bool active;
-
   TileAnimation animation;
+  bool active;
 
   bool runningPreview;
   std::chrono::time_point<std::chrono::steady_clock> storyboardPreviewStartTimePoint;
   Rect storytileRect;
   bool previewReady;
-  GLuint previewTextureId = GL_INVALID_VALUE;
+  GLuint previewTextureId = 0;
   SubBitmapExtern storyboardBitmap;
   int bitmapHash;
   StoryboardExternData (*getStoryboardDataCallback)(long long position, int tileId);
 
-  GLuint textureId = GL_INVALID_VALUE;
+  GLuint textureId = 0;
   GLuint textureFormat = GL_INVALID_VALUE;
 
   static int staticTileObjectCount;

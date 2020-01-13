@@ -19,6 +19,25 @@ public:
     T target;
     Animation::Easing easing;
 
+    AnimationParameters() : AnimationParameters(T{}) {}
+
+    AnimationParameters(T staticValue) : AnimationParameters(
+      std::chrono::duration_values<std::chrono::milliseconds>::zero(),
+      std::chrono::duration_values<std::chrono::milliseconds>::zero(),
+      staticValue,
+      staticValue,
+      Animation::Easing::Linear) {
+    }
+
+    AnimationParameters(std::chrono::milliseconds duration, std::chrono::milliseconds delay, T source, T target, Animation::Easing easing) :
+      duration(duration),
+      delay(delay),
+      source(source),
+      target(target),
+      easing(easing) {
+    }
+
+
     float fraction(const std::chrono::time_point<std::chrono::steady_clock> &now, const std::chrono::time_point<std::chrono::steady_clock> &start) const {
       return isDurationPositive(duration) ?
         std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(now - start - delay).count() / duration.count() :
@@ -51,6 +70,7 @@ public:
                 AnimationParameters<float> zoom,
                 AnimationParameters<Size<int>> size,
                 AnimationParameters<float> opacity);
+  TileAnimation(Position<int> position, float zoom, Size<int> size, float opacity);
   TileAnimation();
   ~TileAnimation() = default;
   void update(Position<int> &position, float &zoom, Size<int> &size, float &opacity);

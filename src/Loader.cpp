@@ -28,7 +28,6 @@ void Loader::initialize() {
   posLoc = glGetAttribLocation(programObject, "a_position");
   timeLoc = glGetUniformLocation(programObject, "u_time");
   paramLoc = glGetUniformLocation(programObject, "u_param");
-  opacityLoc = glGetUniformLocation(programObject, "u_opacity");
   viewportLoc = glGetUniformLocation(programObject, "u_viewport");
 
   time = std::chrono::steady_clock::now();
@@ -78,7 +77,6 @@ void Loader::render() {
   
   glUniform1f(paramLoc, paramArg);
 
-  glUniform1f(opacityLoc, 1.0f);
   glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.width), static_cast<GLfloat>(Settings::instance().viewport.height));
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);

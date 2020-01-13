@@ -38,6 +38,9 @@ int TextRenderer::addFont(char *data, int size) {
 }
 
 Size<GLuint> TextRenderer::getTextSize(const std::string text, Size<GLuint> size, int fontId) {
+  if(text.empty() || size.height == 0)
+    return { 0, 0 };
+
   try {
     return TextTextureGenerator::instance().getTexture(TextTextureGenerator::TextureKey {
       .text = text,
@@ -49,10 +52,13 @@ Size<GLuint> TextRenderer::getTextSize(const std::string text, Size<GLuint> size
   } catch(...) {
     LogConsole::instance().log("Cannot get text size: unknown exception", LogConsole::LogLevel::Error);
   }
-  return {1, 1};
+  return { 0, 0 };
 }
 
 void TextRenderer::render(std::string text, Position<int> position, Size<int> size, int fontId, std::vector<float> color) {
+  if(text.empty() || size.height == 0)
+    return;
+
   try {
     if(color.size() >= 4 && color[3] < 0.001f) // if the text is fully transparent, we don't have to render it
       return;

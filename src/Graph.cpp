@@ -8,7 +8,6 @@ Graph::Graph()
     posLoc(GL_INVALID_VALUE),
     sizLoc(GL_INVALID_VALUE),
     valLoc(GL_INVALID_VALUE),
-    colLoc(GL_INVALID_VALUE),
     opaLoc(GL_INVALID_VALUE) {
   initialize();
 }
@@ -33,7 +32,6 @@ void Graph::initialize() {
   posLoc = glGetUniformLocation(programObject, "u_position");
   sizLoc = glGetUniformLocation(programObject, "u_size");
   valLoc = glGetUniformLocation(programObject, "u_value");
-  colLoc = glGetUniformLocation(programObject, "u_color");
   opaLoc = glGetUniformLocation(programObject, "u_opacity");
 }
 
@@ -65,7 +63,6 @@ void Graph::render(const std::vector<float> &values, const std::pair<float, floa
   glUniform2f(posLoc, static_cast<float>(position.x), static_cast<float>(position.y));
   glUniform2f(sizLoc, static_cast<float>(size.width), static_cast<float>(size.height));
   glUniform1fv(valLoc, VALUES, static_cast<GLfloat*>(vs));
-  glUniform3f(colLoc, 1.0f, 1.0f, 1.0f);
   glUniform1f(opaLoc, 1.0f);
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);

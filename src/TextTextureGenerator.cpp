@@ -6,6 +6,8 @@
 
 #include <stdexcept>
 #include <algorithm>
+#include <sstream>
+#include <string>
 
 TextTextureGenerator::TextTextureGenerator()
   : textureGCTimeout(1000) {
@@ -13,6 +15,9 @@ TextTextureGenerator::TextTextureGenerator()
   if(error != FT_Err_Ok)
     throw std::runtime_error(getErrorMessage(error));
   prepareShaders();
+
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize.width);
+  maxTextureSize.height = maxTextureSize.width;
 }
 
 TextTextureGenerator::~TextTextureGenerator() {
@@ -25,6 +30,9 @@ TextTextureGenerator::~TextTextureGenerator() {
   for(FT_Face& face : faces)
     FT_Done_Face(face);
   FT_Done_FreeType(ftLibrary);
+
+  for(size_t i = 0; i < facesData.size(); ++i)
+    free(facesData[i]);
 }
 
 void TextTextureGenerator::prepareShaders() {
@@ -46,14 +54,18 @@ void TextTextureGenerator::prepareShaders() {
 }
 
 int TextTextureGenerator::addFont(char *data, int size) {
+  FT_Byte* ftByteData = (FT_Byte*) malloc(sizeof(char) * size);
+  memcpy(ftByteData, data, size);
+
   FT_Face ftFace;
-  FT_Error error = FT_New_Memory_Face(ftLibrary, reinterpret_cast<FT_Byte*>(data), size, 0, &ftFace); // FT_Byte* is an alias for unsigned char*
+  FT_Error error = FT_New_Memory_Face(ftLibrary, ftByteData, size, 0, &ftFace); // FT_Byte* is an alias for unsigned char*
 
   if(error) {
     LogConsole::instance().log("Cannot create new FT_Face from data", LogConsole::LogLevel::Error);
     return -1;
   }
 
+  facesData.push_back(ftByteData);
   faces.push_back(ftFace);
   return faces.size() - 1;
 }
@@ -156,6 +168,13 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::getTexture(TextTextureGe
 
 TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextTextureGenerator::TextureKey textureKey) { // TODO: Rasterize to SDFs?
   Size<GLuint> texSize = getTextSize(textureKey);
+
+  if(texSize.width < 1 ||
+    texSize.height < 1 ||
+    texSize.width > static_cast<GLuint>(maxTextureSize.width) ||
+    texSize.height > static_cast<GLuint>(maxTextureSize.height))
+    throw std::out_of_range(std::string("Invalid requested texture size = { ") + std::to_string(texSize.width) + std::string(", ") + std::to_string(texSize.height) + std::string(" }!"));
+
   const FontFace& font = getFontFace(textureKey.fontId, textureKey.size.height);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -259,6 +278,9 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextText
   }
   else {
     printFramebufferError(status);
+    std::ostringstream info;
+    info << "TextureKey { text = \"" << textureKey.text << "\", size = { " << textureKey.size.width << ", " << textureKey.size.height << " }, fontId = " << textureKey.fontId << " }, texSize = { " << texSize.width << ", " << texSize.height << " }";
+    LogConsole::instance().log(info.str(), LogConsole::LogLevel::Error);
     throw std::runtime_error("Framebuffer error while rasterizing glyphs.");
   }
 
@@ -341,7 +363,7 @@ void TextTextureGenerator::breakLines(std::string &text, const FontFace &font, c
 
 Size<GLuint> TextTextureGenerator::getTextSize(TextureKey textureKey) {
   if(!isFontValid(textureKey.fontId))
-    return { 1, 1 };
+    return { 0, 0 };
 
   auto search = brokenTexts.find(textureKey);
   if(search != brokenTexts.end())

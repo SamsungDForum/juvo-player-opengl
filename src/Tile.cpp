@@ -3,6 +3,9 @@
 #include "Settings.h"
 #include "Utility.h"
 #include "TextRenderer.h"
+#include "LogConsole.h"
+
+#include<sstream>
 
 int Tile::staticTileObjectCount = 0;
 GLuint Tile::programObject    = GL_INVALID_VALUE;
@@ -24,10 +27,12 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             opacity(opacity),
             name(name),
             description(description),
+            animation(TileAnimation(position, zoom, size, opacity)),
+            active(false),
             runningPreview(false),
             previewReady(false),
-            previewTextureId(GL_INVALID_VALUE),
-            textureId(GL_INVALID_VALUE) {
+            previewTextureId(0),
+            textureId(0) {
   initGL();
   initTextures();
   setTexture(texturePixels, textureSize, textureFormat);
@@ -42,10 +47,12 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             opacity(opacity),
             name(name),
             description(description),
+            animation(TileAnimation(position, zoom, size, opacity)),
+            active(false),
             runningPreview(false),
             previewReady(false),
-            previewTextureId(GL_INVALID_VALUE),
-            textureId(GL_INVALID_VALUE) {
+            previewTextureId(0),
+            textureId(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;
@@ -53,17 +60,26 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
 
 Tile::Tile(int tileId)
           : id(tileId),
-          textureId(GL_INVALID_VALUE) {
+            active(false),
+            runningPreview(false),
+            previewReady(false),
+            previewTextureId(0),
+            textureId(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;
 }
 
 void Tile::initTextures() {
-  if(textureId == GL_INVALID_VALUE)
+  if(textureId == 0)
     glGenTextures(1, &textureId);
-  if(previewTextureId == GL_INVALID_VALUE)
+  if(previewTextureId == 0)
     glGenTextures(1, &previewTextureId);
+
+  if(textureId == GL_INVALID_VALUE || previewTextureId == GL_INVALID_VALUE) {
+    LogConsole::instance().log("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----", LogConsole::LogLevel::Error);
+    throw("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----");
+  }
 }
 
 void Tile::initGL() {
@@ -128,19 +144,19 @@ Tile::Tile(Tile &&other) { // update this move constructor when adding new membe
     scaleLoc = other.scaleLoc;
     storytileRectLoc = other.storytileRectLoc;
 
-    other.textureId = GL_INVALID_VALUE; // prevent destructor of the object we moved from from deleting the texture
-    other.previewTextureId = GL_INVALID_VALUE; // prevent destructor of the object we moved from from deleting the texture
+    other.textureId = 0; // prevent destructor of the object we moved from from deleting the texture
+    other.previewTextureId = 0; // prevent destructor of the object we moved from from deleting the texture
   }
 }
 
 Tile::~Tile() {
-  if(textureId != GL_INVALID_VALUE) {
+  if(textureId != 0) {
     glDeleteTextures(1, &textureId);
-    textureId = GL_INVALID_VALUE;
+    textureId = 0;
   }
-  if(previewTextureId != GL_INVALID_VALUE) {
+  if(previewTextureId != 0) {
     glDeleteTextures(1, &previewTextureId);
-    previewTextureId = GL_INVALID_VALUE;
+    previewTextureId = 0;
   }
   if(staticTileObjectCount == 1 && programObject != GL_INVALID_VALUE) {
     glDeleteProgram(programObject);
@@ -161,7 +177,7 @@ Tile::~Tile() {
 }
 
 void Tile::setTexture(char *pixels, Size<int> size, GLuint format) {
-  if(textureId == GL_INVALID_VALUE)
+  if(textureId == 0)
     initTextures();
 
   textureFormat = format;
@@ -175,11 +191,11 @@ void Tile::setTexture(char *pixels, Size<int> size, GLuint format) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Tile::render() {
-  if(textureId == GL_INVALID_VALUE)
+  if(textureId == 0)
     return;
 
   animation.update(position, zoom, size, opacity);
@@ -229,7 +245,7 @@ void Tile::render() {
 
   glDisableVertexAttribArray(posLoc);
   glDisableVertexAttribArray(texLoc);
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glUseProgram(0);
 
   if(active)
@@ -237,7 +253,7 @@ void Tile::render() {
 }
 
 void Tile::renderName() {
-  float opacity = (zoom - 1.0f) / (Settings::instance().zoom - 1.0f);
+  float opacity = (zoom - 1.0f) / (Settings::instance().zoom - 1.0f) * this->opacity;
   float left = position.x + size.width * 0.5f - TextRenderer::instance().getTextSize(name, {0, static_cast<GLuint>(Settings::instance().tileNameFontHeight)}, 0).width * 0.5f;
   TextRenderer::instance().render(
       name,
@@ -329,7 +345,7 @@ GLuint Tile::getCurrentTextureId() {
 }
 
 void Tile::setPreviewTexture(SubBitmapExtern frame) {
-  if(previewTextureId == GL_INVALID_VALUE)
+  if(previewTextureId == 0)
     initTextures();
 
   GLuint textureFormat = ConvertFormat(frame.bitmapInfoColorType);
@@ -344,7 +360,7 @@ void Tile::setPreviewTexture(SubBitmapExtern frame) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  glBindTexture(GL_TEXTURE_2D, GL_INVALID_VALUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 StoryboardExternData Tile::getStoryboardData(std::chrono::milliseconds position, int tileId) {

@@ -7,7 +7,6 @@ const int VALUES = 100;
 uniform vec2 u_position;
 uniform vec2 u_size;
 uniform float u_value[VALUES];
-uniform vec3 u_color;
 uniform float u_opacity;
 
 float rect(vec2 uv, vec2 p, vec2 s) {

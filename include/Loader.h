@@ -17,7 +17,6 @@ private:
   GLuint posLoc     = GL_INVALID_VALUE;
   GLuint timeLoc    = GL_INVALID_VALUE;
   GLuint paramLoc   = GL_INVALID_VALUE;
-  GLuint opacityLoc = GL_INVALID_VALUE;
   GLuint viewportLoc = GL_INVALID_VALUE;
 
   void renderText(float time);

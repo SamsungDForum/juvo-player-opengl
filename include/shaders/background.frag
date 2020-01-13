@@ -26,7 +26,7 @@ void main() {
 	float mask = tile(uv, u_viewport, vec2(0., 0.), u_viewport - vec2(0., 0.), radius, radius);
 	float brightness = .5;
 	vec3 texture = mix(TEXTURE2D(s_texture, v_texCoord).rgb, TEXTURE2D(s_texture2, v_texCoord).rgb, u_mixing);
-	gl_FragColor = vec4(vec3(texture * brightness * mask), 1.);
+	gl_FragColor = vec4(vec3(texture * brightness * mask), u_opacity);
 }
 
 )"
