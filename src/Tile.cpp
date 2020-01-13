@@ -27,8 +27,8 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             opacity(opacity),
             name(name),
             description(description),
-            active(false),
             animation(TileAnimation(position, zoom, size, opacity)),
+            active(false),
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
@@ -47,8 +47,8 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             opacity(opacity),
             name(name),
             description(description),
-            active(false),
             animation(TileAnimation(position, zoom, size, opacity)),
+            active(false),
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
@@ -60,8 +60,11 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
 
 Tile::Tile(int tileId)
           : id(tileId),
-          previewTextureId(0),
-          textureId(0) {
+            active(false),
+            runningPreview(false),
+            previewReady(false),
+            previewTextureId(0),
+            textureId(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;

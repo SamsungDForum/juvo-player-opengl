@@ -31,7 +31,6 @@ private:
 
 public:
   Background();
-  Background(float opacity);
   ~Background();
   void render();
   void setOpacity(float opacity);

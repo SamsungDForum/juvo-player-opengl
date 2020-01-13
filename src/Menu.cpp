@@ -5,7 +5,7 @@
 
 Menu::Menu()
   : loader(),
-    background(0.0),
+    background(),
     playback(),
     subtitles(),
     metrics(),
@@ -47,7 +47,7 @@ void Menu::render() {
     if(selectedTile >= 0 && selectedTile < static_cast<int>(tiles.size()))
       tiles[selectedTile].render();
     float bgOpacity = background.getOpacity();
-    if(bgOpacity > 0.0f) { // render "Available content list" text
+    if(bgOpacity >= 0.001f) { // render "Available content list" text
       int fontHeight = 24;
       int marginLeft = 100;
       TextRenderer::instance().render("Available content list",

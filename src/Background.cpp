@@ -16,17 +16,6 @@ Background::Background()
   initGL();
 }
 
-Background::Background(float opacity)
-  : programObject(GL_INVALID_VALUE),
-    textureFormat(GL_INVALID_VALUE),
-    opacity(opacity),
-    mixing(1.0f),
-    lastTile(nullptr),
-    currentTile(nullptr),
-    queuedTile(nullptr) {
-  initGL();
-}
-
 Background::~Background() {
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
@@ -53,7 +42,7 @@ void Background::initGL() {
 }
 
 void Background::render() {
-  opacity = currentTile != nullptr ? currentTile->getOpacity() : 1.0;
+  opacity = getOpacity();
   if(opacity < 0.001f)
     return;
 
@@ -148,7 +137,7 @@ void Background::setOpacity(float opacity) {
 }
 
 float Background::getOpacity() {
-  return opacity;
+  return currentTile != nullptr ? currentTile->getOpacity() : 0.0;
 }
 
 void Background::setSourceTile(Tile *tile) {
