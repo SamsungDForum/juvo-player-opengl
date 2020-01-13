@@ -51,10 +51,16 @@ void Menu::render() {
       int fontHeight = 24;
       int marginLeft = 100;
       TextRenderer::instance().render("Available content list",
-                  {marginLeft, getGridSize().height + Settings::instance().marginFromBottom},
+                  {marginLeft, getGridSize().height + Settings::instance().marginFromBottom + 4},
                   {0, fontHeight},
                   0,
                   {1.0, 1.0, 1.0, bgOpacity});
+    }
+    { // controls/playback
+      playback.render();
+      subtitles.render();
+      options.setOpacity(playback.getOpacity());
+      options.render();
     }
   }
   { // footer
@@ -67,12 +73,6 @@ void Menu::render() {
                 {0, fontHeight},
                 0,
                 {1.0, 1.0, 1.0, 1.0});
-  }
-  { // controls/playback
-    playback.render();
-    subtitles.render();
-    options.setOpacity(playback.getOpacity());
-    options.render();
   }
   { // render metrics
     metrics.render();

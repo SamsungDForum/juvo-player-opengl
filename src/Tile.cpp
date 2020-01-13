@@ -249,7 +249,7 @@ void Tile::render() {
 }
 
 void Tile::renderName() {
-  float opacity = (zoom - 1.0f) / (Settings::instance().zoom - 1.0f);
+  float opacity = (zoom - 1.0f) / (Settings::instance().zoom - 1.0f) * this->opacity;
   float left = position.x + size.width * 0.5f - TextRenderer::instance().getTextSize(name, {0, static_cast<GLuint>(Settings::instance().tileNameFontHeight)}, 0).width * 0.5f;
   TextRenderer::instance().render(
       name,

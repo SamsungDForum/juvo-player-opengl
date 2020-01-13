@@ -53,13 +53,16 @@ void Background::initGL() {
 }
 
 void Background::render() {
+  opacity = currentTile != nullptr ? currentTile->getOpacity() : 1.0;
+  if(opacity < 0.001f)
+    return;
+
   GLuint textureId = currentTile != nullptr ? currentTile->getTextureId() : 0;
   if(!textureId)
     return;
   GLuint texture2Id = lastTile != nullptr ? lastTile->getTextureId() : 0;
   if(texture2Id == 0)
     texture2Id = textureId;
-  opacity = currentTile != nullptr ? currentTile->getOpacity() : 1.0;
 
   float left = -1.0;
   float right = 1.0;
