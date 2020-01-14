@@ -5,27 +5,52 @@
 
 #include "GLES.h"
 #include "Animation.h"
+#include "Utility.h"
 
 class Loader {
 private:
-  GLuint programObject;
-  std::chrono::time_point<std::chrono::steady_clock> time;
   void initialize();
-  int param;
+  int percent;
   Animation animation;
 
-  GLuint posLoc     = GL_INVALID_VALUE;
-  GLuint timeLoc    = GL_INVALID_VALUE;
-  GLuint paramLoc   = GL_INVALID_VALUE;
+  GLuint programObject = GL_INVALID_VALUE;
+  GLuint percentLoc  = GL_INVALID_VALUE;
   GLuint viewportLoc = GL_INVALID_VALUE;
+  GLuint positionLoc = GL_INVALID_VALUE;
+  GLuint posLoc      = GL_INVALID_VALUE;
+  GLuint sizLoc      = GL_INVALID_VALUE;
+  GLuint fgColorLoc  = GL_INVALID_VALUE;
+  GLuint bgColorLoc  = GL_INVALID_VALUE;
 
-  void renderText(float time);
+  GLuint logoProgramObject = GL_INVALID_VALUE;
+  GLuint logoPosLoc = GL_INVALID_VALUE;
+  GLuint logoSamplerLoc = GL_INVALID_VALUE;
+  GLuint logoTexLoc = GL_INVALID_VALUE;
+
+  GLuint logoTextureId = 0;
+
+  Size<int> progressBarSize;
+  Size<int> logoMaxSize;
+  Size<int> logoSize;
+  Position<int> logoPosition;
+  Position<int> progressBarPosition;
+  int verticalMargin;
+  std::vector<float> backgroundColor;
 
 public:
   Loader();
   ~Loader();
+  Loader(const Loader& other) = delete;
+  Loader(Loader&& other) = delete;
+  Loader& operator=(Loader&& other) = delete;
   void render();
   void setValue(int value);
+  void setLogo(int id, char* pixels, Size<int> size, GLuint format);
+  void initTexture();
+  void recalculateSizesAndPositions(Size<int> bitmapSize);
+  void renderLogo(Size<int> size, Position<int> position);
+  void renderProgressBar(Size<int> size, Position<int> position, float percent);
+  float getUpdatedPercent();
 };
 
 #endif // _LOADER_H_
