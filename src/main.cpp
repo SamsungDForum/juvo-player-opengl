@@ -4,6 +4,7 @@
 #include "ExternStructs.h"
 #include "CommonStructs.h"
 #include "Menu.h"
+#include "Utility.h"
 #include "version.h"
 
 #ifndef EXPORT_API
@@ -55,6 +56,8 @@ Menu *menu = nullptr;
 
 void Create()
 {
+  Utility::setCurrentEGLContext();
+
   if(menu != nullptr)
     delete menu;
   menu = new Menu();

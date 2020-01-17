@@ -28,7 +28,7 @@ Options::Options()
 }
 
 void Options::initialize() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr = 
 #include "shaders/options.vert"
@@ -94,7 +94,7 @@ void Options::renderIcon() {
 }
 
 void Options::render() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(!show || opacity <= 0.0f)
     return;
@@ -127,7 +127,7 @@ void Options::render() {
 }
 
 void Options::renderRectangle(Position<int> position, Size<int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   float down = static_cast<float>(position.y) / Settings::instance().viewport.height * 2.0f - 1.0f;
   float top = static_cast<float>(position.y + size.height) / Settings::instance().viewport.height * 2.0f - 1.0f;

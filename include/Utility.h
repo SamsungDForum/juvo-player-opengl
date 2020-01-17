@@ -2,21 +2,26 @@
 #define _UTILITY_H_
 
 #include <string>
-#include <EGL/egl.h>
+#include <cassert>
 
 #define logGLErrors() __logGLErrors__(__FILE__, __LINE__)
-#define assertCurrentEGLContext() __assertCurrentEGLContext__(__FILE__, __LINE__)
+
+#ifdef DEBUG
+#include <EGL/egl.h>
+#define assertCurrentEGLContext() assert(Utility::eglContext == eglGetCurrentContext())
+#else
+#define assertCurrentEGLContext()
+#endif
 
 class Utility {
 private:
   Utility() {}
-  static EGLContext eglContext;
 
 public:
+  static EGLContext eglContext;
   static void __logGLErrors__(const char *filename, int line);
   static std::string getGLErrorString(int err);
   static void setCurrentEGLContext();
-  static void __assertCurrentEGLContext__(const char *filename, int line);
 };
 
 template<typename T> struct Position {

@@ -6,7 +6,7 @@
 #include <string>
 
 GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   // compile shaders
   GLuint vertexShader = loadShader(GL_VERTEX_SHADER, vshader);
@@ -43,7 +43,7 @@ GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader
 }
 
 GLuint ProgramBuilder::loadShader(const GLenum type, const GLchar* source) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   GLuint shader = glCreateShader(type);
   glShaderSource(shader, 1, &source, NULL);

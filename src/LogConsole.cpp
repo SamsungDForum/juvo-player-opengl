@@ -16,14 +16,14 @@ LogConsole::LogConsole()
 }
 
 LogConsole::~LogConsole() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void LogConsole::initialize() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr =  
 #include "shaders/logConsole.vert"
@@ -43,7 +43,7 @@ void LogConsole::initialize() {
 }
 
 void LogConsole::render(Position<int> position, Size<int> size, int fontId, int fontSize) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   float down  = static_cast<float>(position.y) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
   float top   = (static_cast<float>(position.y) + static_cast<float>(size.height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;

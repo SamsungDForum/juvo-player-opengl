@@ -18,14 +18,14 @@ Background::Background()
 }
 
 Background::~Background() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void Background::initGL() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr = 
 #include "shaders/background.vert"
@@ -47,7 +47,7 @@ void Background::initGL() {
 }
 
 void Background::render() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   opacity = getOpacity();
   if(opacity < 0.001f)

@@ -12,7 +12,7 @@
 
 TextTextureGenerator::TextTextureGenerator()
   : textureGCTimeout(1000) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   FT_Error error = FT_Init_FreeType(&ftLibrary);
   if(error != FT_Err_Ok)
@@ -24,7 +24,7 @@ TextTextureGenerator::TextTextureGenerator()
 }
 
 TextTextureGenerator::~TextTextureGenerator() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
@@ -41,7 +41,7 @@ TextTextureGenerator::~TextTextureGenerator() {
 }
 
 void TextTextureGenerator::prepareShaders() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr =
 #include "shaders/textTextureGenerator.vert"
@@ -92,7 +92,7 @@ const TextTextureGenerator::FontFace TextTextureGenerator::getFontFace(int fontI
 }
 
 TextTextureGenerator::FontFace TextTextureGenerator::generateFontFace(FontFaceKey fontFaceKey) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(!TextTextureGenerator::instance().isFontValid(fontFaceKey.id)) {
     LogConsole::instance().log("no such fontId", LogConsole::LogLevel::Error);
@@ -175,7 +175,7 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::getTexture(TextTextureGe
 }
 
 TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextTextureGenerator::TextureKey textureKey) { // TODO: Rasterize to SDFs?
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   Size<GLuint> texSize = getTextSize(textureKey);
 
@@ -406,7 +406,7 @@ Size<GLuint> TextTextureGenerator::getBrokenTextSize(const std::string text, int
 }
 
 void TextTextureGenerator::gcTextures() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   auto it = generatedTextures.begin();
   while(it != generatedTextures.end()) {

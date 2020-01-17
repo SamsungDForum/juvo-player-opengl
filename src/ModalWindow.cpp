@@ -17,14 +17,14 @@ ModalWindow::ModalWindow()
 }
 
 ModalWindow::~ModalWindow() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void ModalWindow::initialize() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr =  
 #include "shaders/modalWindow.vert"
@@ -44,7 +44,7 @@ void ModalWindow::initialize() {
 }
 
 void ModalWindow::render() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(!visible)
     return;
@@ -110,7 +110,7 @@ void ModalWindow::calculateParams() {
 }
 
 void ModalWindow::renderRectangle(Position<int> position, Size<int> size) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   float down  = static_cast<float>(position.y) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
   float top   = (static_cast<float>(position.y) + static_cast<float>(size.height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;

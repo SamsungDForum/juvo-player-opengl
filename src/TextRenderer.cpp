@@ -10,14 +10,14 @@ TextRenderer::TextRenderer() {
 }
 
 TextRenderer::~TextRenderer() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void TextRenderer::prepareShaders() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr =
 #include "shaders/textRenderer.vert"
@@ -61,7 +61,7 @@ Size<GLuint> TextRenderer::getTextSize(const std::string text, Size<GLuint> size
 }
 
 void TextRenderer::render(std::string text, Position<int> position, Size<int> size, int fontId, std::vector<float> color) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(text.empty() || size.height == 0)
     return;

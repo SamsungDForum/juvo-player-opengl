@@ -15,8 +15,6 @@ Menu::Menu()
 }
 
 void Menu::initialize() {
-  Utility::setCurrentEGLContext();
-
   glViewport(0, 0, Settings::instance().viewport.width, Settings::instance().viewport.height);
 
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
@@ -37,7 +35,7 @@ Menu::~Menu() {
 }
 
 void Menu::render() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);

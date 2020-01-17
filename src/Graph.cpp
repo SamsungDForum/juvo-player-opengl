@@ -14,14 +14,14 @@ Graph::Graph()
 }
 
 Graph::~Graph() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void Graph::initialize() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr =  
 #include "shaders/graph.vert"
@@ -41,7 +41,7 @@ void Graph::initialize() {
 }
 
 void Graph::render(const std::vector<float> &values, const std::pair<float, float> &minMax, const Position<int> &position, const Size<int> &size) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   GLfloat vs[VALUES] = { 0.0f };
   for(int i = 0; i < VALUES; ++i) {

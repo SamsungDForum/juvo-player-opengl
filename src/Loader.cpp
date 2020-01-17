@@ -21,7 +21,7 @@ Loader::Loader()
 }
 
 Loader::~Loader() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
@@ -34,7 +34,7 @@ Loader::~Loader() {
 }
 
 void Loader::initialize() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(programObject == GL_INVALID_VALUE) {
     const GLchar* vShaderTexStr =
@@ -93,7 +93,7 @@ void Loader::setValue(int value) {
 }
 
 void Loader::render() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);

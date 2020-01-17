@@ -1,6 +1,5 @@
 #include <string>
 #include <sstream>
-#include <cassert>
 
 #include "Utility.h"
 #include "GLES.h"
@@ -10,7 +9,7 @@
 EGLContext Utility::eglContext = 0;
 
 void Utility::__logGLErrors__(const char *filename, int line) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   for(GLenum err = GL_NO_ERROR; (err = glGetError()) != GL_NO_ERROR; ) {
     std::ostringstream oss;
@@ -33,11 +32,8 @@ std::string Utility::getGLErrorString(int err) {
 }
 
 void Utility::setCurrentEGLContext() {
+#ifdef DEBUG
   eglContext = eglGetCurrentContext();
+#endif
 }
 
-void Utility::__assertCurrentEGLContext__(const char *filename, int line) {
-  std::ostringstream oss;
-  oss << "Wrong eglContext: :" << filename << ":" << line << ": ";
-  assert((oss.str(), eglContext == eglGetCurrentContext()));
-}

@@ -32,7 +32,7 @@ Playback::Playback()
 }
 
 Playback::~Playback() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(barProgramObject != GL_INVALID_VALUE)
     glDeleteProgram(barProgramObject);
@@ -46,7 +46,7 @@ Playback::~Playback() {
 }
 
 void Playback::initialize() {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   const GLchar* barVShaderTexStr = 
 #include "shaders/playbackBar.vert"
@@ -154,7 +154,7 @@ void Playback::renderIcons(float opacity) {
 }
 
 void Playback::renderIcon(Icon icon, Position<int> position, Size<int> size, std::vector<float> color, float opacity, bool bloom) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(static_cast<int>(icon) >= static_cast<int>(icons.size()) || icons[static_cast<int>(icon)] == 0)
     return;
@@ -236,7 +236,7 @@ void Playback::renderText(float opacity) {
 }
 
 void Playback::renderProgressBar(float opacity) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   float marginHeightScale = 1.5; // the dot is 1.25x
   float down = static_cast<float>(progressBarMarginBottom + progressBarSize.height / 2 - marginHeightScale * progressBarSize.height / 2) / Settings::instance().viewport.height * 2.0f - 1.0f;
@@ -268,7 +268,7 @@ void Playback::renderProgressBar(float opacity) {
 }
 
 void Playback::initTexture(int id) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(id >= static_cast<int>(icons.size()))
     return;
@@ -276,7 +276,7 @@ void Playback::initTexture(int id) {
 }
 
 void Playback::setIcon(int id, char* pixels, Size<int> size, GLuint format) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   if(id >= static_cast<int>(icons.size()))
    return; 
@@ -345,7 +345,7 @@ std::string Playback::timeToString(int time) {
 }
 
 void Playback::renderLoader(float opacity) {
-  Utility::assertCurrentEGLContext();
+  assertCurrentEGLContext();
 
   int squareWidth = 200;
   float down = static_cast<float>((Settings::instance().viewport.height - squareWidth) / 2) / Settings::instance().viewport.height * 2.0f - 1.0f;
