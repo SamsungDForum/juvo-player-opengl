@@ -9,8 +9,10 @@
 #ifdef DEBUG
 #include <EGL/egl.h>
 #define assertCurrentEGLContext() assert(Utility::eglContext == eglGetCurrentContext())
+#define setCurrentEGLContext() Utility::eglContext = eglGetCurrentContext()
 #else
 #define assertCurrentEGLContext()
+#define setCurrentEGLContext()
 #endif
 
 class Utility {
@@ -21,7 +23,6 @@ public:
   static EGLContext eglContext;
   static void __logGLErrors__(const char *filename, int line);
   static std::string getGLErrorString(int err);
-  static void setCurrentEGLContext();
 };
 
 template<typename T> struct Position {

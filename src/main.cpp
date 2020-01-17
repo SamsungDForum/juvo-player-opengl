@@ -56,7 +56,7 @@ Menu *menu = nullptr;
 
 void Create()
 {
-  Utility::setCurrentEGLContext();
+  setCurrentEGLContext();
 
   if(menu != nullptr)
     delete menu;

@@ -31,9 +31,3 @@ std::string Utility::getGLErrorString(int err) {
   return "Unknown Error";
 }
 
-void Utility::setCurrentEGLContext() {
-#ifdef DEBUG
-  eglContext = eglGetCurrentContext();
-#endif
-}
-
