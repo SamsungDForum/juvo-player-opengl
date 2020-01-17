@@ -184,8 +184,6 @@ void Loader::renderProgressBar(Size<int> size, Position<int> position, float per
 
   glDisableVertexAttribArray(positionLoc);
   glUseProgram(0);
-
-  renderText(static_cast<float>(time));
 }
 
 void Loader::setLogo(int id, char* pixels, Size<int> size, GLuint format) {
