@@ -1,12 +1,21 @@
 #include <string>
+#include <sstream>
+#include <cassert>
 
 #include "Utility.h"
 #include "GLES.h"
 #include "LogConsole.h"
+#include "log.h"
 
-void Utility::logGLErrors(const char *filename, int line) {
+EGLContext Utility::eglContext = 0;
+
+void Utility::__logGLErrors__(const char *filename, int line) {
+  Utility::assertCurrentEGLContext();
+
   for(GLenum err = GL_NO_ERROR; (err = glGetError()) != GL_NO_ERROR; ) {
-    LogConsole::instance().log(std::string("OpenGL Error: ") + std::string(filename) + std::string(":") + std::to_string(line) + std::string(": [") + std::to_string(err) + std::string("] ") + getGLErrorString(err), LogConsole::LogLevel::Error);
+    std::ostringstream oss;
+    oss << "OpenGL Error: " << filename << ":" << line << ": [" << err << "] " << getGLErrorString(err);
+    LogConsole::instance().log(oss.str(), LogConsole::LogLevel::Error);
   }
 }
 
@@ -23,3 +32,12 @@ std::string Utility::getGLErrorString(int err) {
   return "Unknown Error";
 }
 
+void Utility::setCurrentEGLContext() {
+  eglContext = eglGetCurrentContext();
+}
+
+void Utility::__assertCurrentEGLContext__(const char *filename, int line) {
+  std::ostringstream oss;
+  oss << "Wrong eglContext: :" << filename << ":" << line << ": ";
+  assert((oss.str(), eglContext == eglGetCurrentContext()));
+}

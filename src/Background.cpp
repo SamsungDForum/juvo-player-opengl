@@ -2,6 +2,7 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "TextRenderer.h"
+#include "Utility.h"
 
 #include <string>
 
@@ -17,11 +18,15 @@ Background::Background()
 }
 
 Background::~Background() {
+  Utility::assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void Background::initGL() {
+  Utility::assertCurrentEGLContext();
+
   const GLchar* vShaderTexStr = 
 #include "shaders/background.vert"
 ;
@@ -42,6 +47,8 @@ void Background::initGL() {
 }
 
 void Background::render() {
+  Utility::assertCurrentEGLContext();
+
   opacity = getOpacity();
   if(opacity < 0.001f)
     return;

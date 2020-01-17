@@ -54,6 +54,7 @@ private:
   Position<int> position;
   Size<int> size;
   Params params;
+  bool paramsNeedRecalculation;
 
   void initialize();
   void renderContent();

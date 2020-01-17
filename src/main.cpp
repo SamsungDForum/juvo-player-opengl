@@ -13,14 +13,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-EXPORT_API void Create();
-EXPORT_API void Terminate();
-EXPORT_API void Draw();
+EXPORT_API void Create(); // needs to be run from eglContext synced methods
+EXPORT_API void Terminate(); // needs to be run from eglContext synced methods
+EXPORT_API void Draw(); // needs to be run from eglContext synced methods
 
-EXPORT_API int AddTile();
-EXPORT_API void SetTileData(TileExternData tileExternData);
-EXPORT_API int AddFont(char *data, int size);
-EXPORT_API void SetIcon(ImageExternData image);
+EXPORT_API int AddTile(); // needs to be run from eglContext synced methods
+EXPORT_API void SetTileData(TileExternData tileExternData); // needs to be run from eglContext synced methods
+EXPORT_API int AddFont(char *data, int size); // needs to be run from eglContext synced methods
+EXPORT_API void SetIcon(ImageExternData image); // needs to be run from eglContext synced methods
 
 EXPORT_API void ShowMenu(int enable);
 EXPORT_API void ShowLoader(int enabled, int percent);
@@ -67,17 +67,17 @@ void Terminate()
 
 void ShowMenu(int enable)
 {
-  menu->ShowMenu(enable);
+  menu->showMenu(enable);
 }
 
 int AddTile()
 {
-  return menu->AddTile();
+  return menu->addTile();
 }
 
 void SetTileData(TileExternData tileExternData)
 {
-  menu->SetTileData(TileData {
+  menu->setTileData(TileData {
       tileExternData.tileId,
       tileExternData.pixels,
       {tileExternData.width, tileExternData.height},
@@ -89,22 +89,22 @@ void SetTileData(TileExternData tileExternData)
 
 int AddFont(char *data, int size)
 {
-  return menu->AddFont(data, size);
+  return menu->addFont(data, size);
 }
 
 void SelectTile(int tileNo, int runPreview)
 {
-  menu->SelectTile(tileNo, static_cast<bool>(runPreview));
+  menu->selectTile(tileNo, static_cast<bool>(runPreview));
 }
 
 void ShowLoader(int enabled, int percent)
 {
-  menu->ShowLoader(enabled, percent);
+  menu->showLoader(enabled, percent);
 }
 
 void SetIcon(ImageExternData image)
 {
-  menu->SetIcon(ImageData {
+  menu->setIcon(ImageData {
       image.id,
       image.pixels,
       {image.width, image.height},
@@ -113,7 +113,7 @@ void SetIcon(ImageExternData image)
 
 void UpdatePlaybackControls(PlaybackExternData playbackExternData)
 {
-  menu->UpdatePlaybackControls(PlaybackData {
+  menu->updatePlaybackControls(PlaybackData {
       playbackExternData.show,
       playbackExternData.state,
       playbackExternData.currentTime,
@@ -126,7 +126,7 @@ void UpdatePlaybackControls(PlaybackExternData playbackExternData)
 
 void SetFooter(char* footer, int footerLen)
 {
-  menu->SetFooter(std::string(footer, footerLen));
+  menu->setFooter(std::string(footer, footerLen));
 }
 
 void Draw()
@@ -136,7 +136,7 @@ void Draw()
 
 void ShowSubtitle(int duration, char* text, int textLen)
 {
-  menu->ShowSubtitle(duration, std::string(text, textLen));
+  menu->showSubtitle(duration, std::string(text, textLen));
 }
 
 int OpenGLLibVersion() {

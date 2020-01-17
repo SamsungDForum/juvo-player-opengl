@@ -2,6 +2,7 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "TextRenderer.h"
+#include "Utility.h"
 
 Loader::Loader()
   : programObject(GL_INVALID_VALUE),
@@ -10,11 +11,15 @@ Loader::Loader()
 }
 
 Loader::~Loader() {
+  Utility::assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void Loader::initialize() {
+  Utility::assertCurrentEGLContext();
+
   const GLchar* vShaderTexStr =  
 #include "shaders/loader.vert"
 ;
@@ -44,6 +49,8 @@ void Loader::setValue(int value) {
 }
 
 void Loader::render() {
+  Utility::assertCurrentEGLContext();
+
   std::chrono::duration<float, std::milli> timespan = std::chrono::steady_clock::now() - time;
 
   Size<int> size = {1440, 486};

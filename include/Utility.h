@@ -2,15 +2,21 @@
 #define _UTILITY_H_
 
 #include <string>
+#include <EGL/egl.h>
 
-#define LogGLErrors() logGLErrors(__FILE__, __LINE__)
+#define logGLErrors() __logGLErrors__(__FILE__, __LINE__)
+#define assertCurrentEGLContext() __assertCurrentEGLContext__(__FILE__, __LINE__)
 
 class Utility {
-  Utility() = delete;
+private:
+  Utility() {}
+  static EGLContext eglContext;
 
 public:
-  static void logGLErrors(const char *filename, int line);
+  static void __logGLErrors__(const char *filename, int line);
   static std::string getGLErrorString(int err);
+  static void setCurrentEGLContext();
+  static void __assertCurrentEGLContext__(const char *filename, int line);
 };
 
 template<typename T> struct Position {

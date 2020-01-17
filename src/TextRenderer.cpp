@@ -3,17 +3,22 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "LogConsole.h"
+#include "Utility.h"
 
 TextRenderer::TextRenderer() {
   prepareShaders();
 }
 
 TextRenderer::~TextRenderer() {
+  Utility::assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void TextRenderer::prepareShaders() {
+  Utility::assertCurrentEGLContext();
+
   const GLchar* vShaderTexStr =
 #include "shaders/textRenderer.vert"
 ;
@@ -56,6 +61,8 @@ Size<GLuint> TextRenderer::getTextSize(const std::string text, Size<GLuint> size
 }
 
 void TextRenderer::render(std::string text, Position<int> position, Size<int> size, int fontId, std::vector<float> color) {
+  Utility::assertCurrentEGLContext();
+
   if(text.empty() || size.height == 0)
     return;
 

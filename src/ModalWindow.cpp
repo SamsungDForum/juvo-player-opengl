@@ -2,6 +2,7 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "TextRenderer.h"
+#include "Utility.h"
 
 ModalWindow::ModalWindow()
     : programObject(GL_INVALID_VALUE),
@@ -10,16 +11,21 @@ ModalWindow::ModalWindow()
     sizLoc(GL_INVALID_VALUE),
     colLoc(GL_INVALID_VALUE),
     opaLoc(GL_INVALID_VALUE),
-    visible(false) {
+    visible(false),
+    paramsNeedRecalculation(false) {
   initialize();
 }
 
 ModalWindow::~ModalWindow() {
+  Utility::assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void ModalWindow::initialize() {
+  Utility::assertCurrentEGLContext();
+
   const GLchar* vShaderTexStr =  
 #include "shaders/modalWindow.vert"
 ;
@@ -38,8 +44,13 @@ void ModalWindow::initialize() {
 }
 
 void ModalWindow::render() {
+  Utility::assertCurrentEGLContext();
+
   if(!visible)
     return;
+
+  if(paramsNeedRecalculation)
+    calculateParams();
 
   renderRectangle(position, size);
   renderContent();
@@ -94,9 +105,13 @@ void ModalWindow::calculateParams() {
   };
 
   calculateElementsPositions();
+
+  paramsNeedRecalculation = false;
 }
 
 void ModalWindow::renderRectangle(Position<int> position, Size<int> size) {
+  Utility::assertCurrentEGLContext();
+
   float down  = static_cast<float>(position.y) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
   float top   = (static_cast<float>(position.y) + static_cast<float>(size.height)) / static_cast<float>(Settings::instance().viewport.height) * 2.0f - 1.0f;
   float left  = static_cast<float>(position.x) / static_cast<float>(Settings::instance().viewport.width) * 2.0f - 1.0f;
@@ -185,7 +200,7 @@ void ModalWindow::show(std::string title, std::string body, std::string button) 
   this->body = body;
   this->button = button;
   visible = true;
-  calculateParams();
+  paramsNeedRecalculation = true;
 }
 
 void ModalWindow::hide() {
