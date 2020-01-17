@@ -21,6 +21,7 @@ EXPORT_API int AddTile(); // needs to be run from eglContext synced methods
 EXPORT_API void SetTileData(TileExternData tileExternData); // needs to be run from eglContext synced methods
 EXPORT_API int AddFont(char *data, int size); // needs to be run from eglContext synced methods
 EXPORT_API void SetIcon(ImageExternData image); // needs to be run from eglContext synced methods
+EXPORT_API void SetLoaderLogo(ImageExternData image); // needs to be run from eglContext synced methods
 
 EXPORT_API void ShowMenu(int enable);
 EXPORT_API void ShowLoader(int enabled, int percent);
@@ -105,6 +106,15 @@ void ShowLoader(int enabled, int percent)
 void SetIcon(ImageExternData image)
 {
   menu->setIcon(ImageData {
+      image.id,
+      image.pixels,
+      {image.width, image.height},
+      ConvertFormat(image.format)});
+}
+
+void SetLoaderLogo(ImageExternData image)
+{
+  menu->setLoaderLogo(ImageData {
       image.id,
       image.pixels,
       {image.width, image.height},

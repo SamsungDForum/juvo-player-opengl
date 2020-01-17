@@ -217,6 +217,10 @@ void Menu::setIcon(ImageData imageData) {
   playback.setIcon(imageData.id, imageData.pixels, imageData.size, imageData.format);
 }
 
+void Menu::setLoaderLogo(ImageData imageData) {
+  loader.setLogo(imageData.id, imageData.pixels, imageData.size, imageData.format);
+}
+
 void Menu::updatePlaybackControls(PlaybackData playbackData) {
   playback.update(playbackData.show,
                   playbackData.state,
