@@ -92,17 +92,14 @@ void Loader::render() {
   glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
+  updatePercent();
   renderLogo(logoSize, logoPosition);
-  renderProgressBar(progressBarSize, progressBarPosition, getUpdatedPercent());
+  renderProgressBar(progressBarSize, progressBarPosition, percent);
 }
 
-float Loader::getUpdatedPercent() {
-  if(animation.isActive()) {
-    std::vector<double> updated = animation.update();
-    if(!updated.empty())
-      return static_cast<float>(updated[0]);
-  }
-  return percent;
+void Loader::updatePercent() {
+  if(animation.isActive())
+    percent = static_cast<float>(animation.update()[0]);
 }
 
 void Loader::recalculateSizesAndPositions(Size<int> bitmapSize) {

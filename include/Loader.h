@@ -50,7 +50,7 @@ public:
   void recalculateSizesAndPositions(Size<int> bitmapSize);
   void renderLogo(Size<int> size, Position<int> position);
   void renderProgressBar(Size<int> size, Position<int> position, float percent);
-  float getUpdatedPercent();
+  void updatePercent();
 };
 
 #endif // _LOADER_H_
