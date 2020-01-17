@@ -56,6 +56,7 @@ public:
   void SetTileData(TileData tileData);
   void UpdatePlaybackControls(PlaybackData playbackData);
   void SetIcon(ImageData imageData);
+  void SetLoaderLogo(ImageData imageData);
   void SetFooter(std::string footer);
   void ShowSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);

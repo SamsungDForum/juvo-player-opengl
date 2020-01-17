@@ -15,9 +15,9 @@ uniform float u_opacity;
 uniform float u_mixing;
 uniform vec2 u_viewport;
 
-float tile(vec2 uv, vec2 viewport, vec2 position, vec2 size, float radious, float smoothingRadious) {
-  vec2 distance = abs(uv * viewport - (position + size * .5)) - (size * .5 - radious);
-  return smoothstep(radious, radious - smoothingRadious, length(max(distance, vec2(0))));
+float tile(vec2 uv, vec2 viewport, vec2 position, vec2 size, float radius, float smoothingRadious) {
+  vec2 distance = abs(uv * viewport - (position + size * .5)) - (size * .5 - radius);
+  return smoothstep(radius, radius - smoothingRadious, length(max(distance, vec2(0))));
 }
 
 void main() {
