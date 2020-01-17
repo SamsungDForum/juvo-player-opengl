@@ -108,7 +108,13 @@ template<typename T> struct Size {
     return *this;
   }
 
-  bool operator==(const Size<T> &other) const {
+  template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, int> = 0>
+  bool operator==(const Size<Integer> &other) const {
+    return width == other.width && height == other.height;
+  }
+
+  template<typename Floating, std::enable_if_t<std::is_floating_point<Floating>::value, int> = 0>
+  bool operator==(const Size<Floating> &other) const {
     return abs(width - other.width) <= epsilon && abs(height - other.height) <= epsilon;
   }
 };
