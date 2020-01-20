@@ -2,7 +2,7 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "TextRenderer.h"
-#include "LogConsole.h"
+#include "Utility.h"
 
 Loader::Loader()
   : percent(0),
@@ -21,6 +21,8 @@ Loader::Loader()
 }
 
 Loader::~Loader() {
+  assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
   if(logoProgramObject != GL_INVALID_VALUE)
@@ -32,6 +34,8 @@ Loader::~Loader() {
 }
 
 void Loader::initialize() {
+  assertCurrentEGLContext();
+
   if(programObject == GL_INVALID_VALUE) {
     const GLchar* vShaderTexStr =
 #include "shaders/loader.vert"
@@ -89,6 +93,8 @@ void Loader::setValue(int value) {
 }
 
 void Loader::render() {
+  assertCurrentEGLContext();
+
   glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -183,8 +189,6 @@ void Loader::renderProgressBar(Size<int> size, Position<int> position, float per
 void Loader::setLogo(int id, char* pixels, Size<int> size, GLuint format) {
   initTexture();
 
-  LogConsole::instance().log(std::string("logoSize={") + std::to_string(size.width) + std::string(", ") + std::to_string(size.height) + std::string("}"), LogConsole::LogLevel::Info);
-
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, logoTextureId);
 
@@ -198,3 +202,4 @@ void Loader::setLogo(int id, char* pixels, Size<int> size, GLuint format) {
 
   glBindTexture(GL_TEXTURE_2D, 0);
 }
+

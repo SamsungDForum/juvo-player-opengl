@@ -2,14 +2,26 @@
 #define _UTILITY_H_
 
 #include <string>
+#include <cassert>
 
-#define LogGLErrors() logGLErrors(__FILE__, __LINE__)
+#define logGLErrors() __logGLErrors__(__FILE__, __LINE__)
+
+#ifdef DEBUG
+#include <EGL/egl.h>
+#define assertCurrentEGLContext() assert(Utility::eglContext == eglGetCurrentContext())
+#define setCurrentEGLContext() Utility::eglContext = eglGetCurrentContext()
+#else
+#define assertCurrentEGLContext()
+#define setCurrentEGLContext()
+#endif
 
 class Utility {
-  Utility() = delete;
+private:
+  Utility() {}
 
 public:
-  static void logGLErrors(const char *filename, int line);
+  static EGLContext eglContext;
+  static void __logGLErrors__(const char *filename, int line);
   static std::string getGLErrorString(int err);
 };
 
@@ -96,7 +108,13 @@ template<typename T> struct Size {
     return *this;
   }
 
-  bool operator==(const Size<T> &other) const {
+  template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, int> = 0>
+  bool operator==(const Size<Integer> &other) const {
+    return width == other.width && height == other.height;
+  }
+
+  template<typename Floating, std::enable_if_t<std::is_floating_point<Floating>::value, int> = 0>
+  bool operator==(const Size<Floating> &other) const {
     return abs(width - other.width) <= epsilon && abs(height - other.height) <= epsilon;
   }
 };

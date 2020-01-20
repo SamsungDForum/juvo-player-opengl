@@ -71,6 +71,8 @@ Tile::Tile(int tileId)
 }
 
 void Tile::initTextures() {
+  assertCurrentEGLContext();
+
   if(textureId == 0)
     glGenTextures(1, &textureId);
   if(previewTextureId == 0)
@@ -83,6 +85,8 @@ void Tile::initTextures() {
 }
 
 void Tile::initGL() {
+  assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     return;
 
@@ -150,6 +154,8 @@ Tile::Tile(Tile &&other) { // update this move constructor when adding new membe
 }
 
 Tile::~Tile() {
+  assertCurrentEGLContext();
+
   if(textureId != 0) {
     glDeleteTextures(1, &textureId);
     textureId = 0;
@@ -177,6 +183,8 @@ Tile::~Tile() {
 }
 
 void Tile::setTexture(char *pixels, Size<int> size, GLuint format) {
+  assertCurrentEGLContext();
+
   if(textureId == 0)
     initTextures();
 
@@ -195,6 +203,8 @@ void Tile::setTexture(char *pixels, Size<int> size, GLuint format) {
 }
 
 void Tile::render() {
+  assertCurrentEGLContext();
+
   if(textureId == 0)
     return;
 
@@ -345,6 +355,8 @@ GLuint Tile::getCurrentTextureId() {
 }
 
 void Tile::setPreviewTexture(SubBitmapExtern frame) {
+  assertCurrentEGLContext();
+
   if(previewTextureId == 0)
     initTextures();
 

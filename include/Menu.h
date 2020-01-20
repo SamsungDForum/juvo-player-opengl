@@ -39,7 +39,7 @@ private:
 
 private:
   void initialize();
-  int AddTile(char *pixels, Size<int> size);
+  int addTile(char *pixels, Size<int> size);
   Position<int> getTilePosition(int tileNo, bool initialMargin = true);
   Size<int> getGridSize();
 
@@ -48,17 +48,17 @@ public:
   ~Menu();
 
   void render();
-  void ShowMenu(int enable);
-  int AddTile();
-  void SelectTile(int tileNo, bool runPreview);
-  int AddFont(char *data, int size);
-  void ShowLoader(bool enabled, int percent);
-  void SetTileData(TileData tileData);
-  void UpdatePlaybackControls(PlaybackData playbackData);
-  void SetIcon(ImageData imageData);
-  void SetLoaderLogo(ImageData imageData);
-  void SetFooter(std::string footer);
-  void ShowSubtitle(int duration, std::string text);
+  void showMenu(int enable);
+  int addTile();
+  void selectTile(int tileNo, bool runPreview);
+  int addFont(char *data, int size);
+  void showLoader(bool enabled, int percent);
+  void setTileData(TileData tileData);
+  void updatePlaybackControls(PlaybackData playbackData);
+  void setIcon(ImageData imageData);
+  void setLoaderLogo(ImageData imageData);
+  void setFooter(std::string footer);
+  void showSubtitle(int duration, std::string text);
   bool addOption(int id, std::string name);
   bool addSuboption(int parentId, int id, std::string name);
   bool updateSelection(SelectionData selectionData);

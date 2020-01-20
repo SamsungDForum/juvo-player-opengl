@@ -1,6 +1,7 @@
 #include "Graph.h"
 #include "ProgramBuilder.h"
 #include "Settings.h"
+#include "Utility.h"
 
 Graph::Graph()
   : programObject(GL_INVALID_VALUE),
@@ -13,11 +14,15 @@ Graph::Graph()
 }
 
 Graph::~Graph() {
+  assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
 }
 
 void Graph::initialize() {
+  assertCurrentEGLContext();
+
   const GLchar* vShaderTexStr =  
 #include "shaders/graph.vert"
 ;
@@ -36,6 +41,7 @@ void Graph::initialize() {
 }
 
 void Graph::render(const std::vector<float> &values, const std::pair<float, float> &minMax, const Position<int> &position, const Size<int> &size) {
+  assertCurrentEGLContext();
 
   GLfloat vs[VALUES] = { 0.0f };
   for(int i = 0; i < VALUES; ++i) {

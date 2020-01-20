@@ -2,6 +2,7 @@
 #include "Menu.h"
 #include "Settings.h"
 #include "TextRenderer.h"
+#include "Utility.h"
 
 Menu::Menu()
   : loader(),
@@ -34,6 +35,8 @@ Menu::~Menu() {
 }
 
 void Menu::render() {
+  assertCurrentEGLContext();
+
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -82,7 +85,7 @@ void Menu::render() {
   }
 }
 
-void Menu::ShowMenu(int enable) {
+void Menu::showMenu(int enable) {
   for(size_t i = 0; i < tiles.size(); ++i) { // let's make sure position/size parameters aren't going to be animated
     tiles[i].setPosition(getTilePosition(i - firstTile));
     tiles[i].setZoom(static_cast<int>(i) == selectedTile ? Settings::instance().zoom : 1.0);
@@ -128,7 +131,7 @@ Position<int> Menu::getTilePosition(int tileNo, bool initialMargin) {
   return { horizontalPosition, verticalPosition + Settings::instance().tileNameFontHeight + Settings::instance().marginFromBottom };
 }
 
-int Menu::AddTile(char *pixels, Size<int> size) {
+int Menu::addTile(char *pixels, Size<int> size) {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
             getTilePosition(tileNo),
@@ -144,7 +147,7 @@ int Menu::AddTile(char *pixels, Size<int> size) {
   return tiles.size() - 1;
 }
 
-int Menu::AddTile() {
+int Menu::addTile() {
   int tileNo = tiles.size();
   Tile tile(tiles.size(),
             getTilePosition(tileNo),
@@ -157,7 +160,7 @@ int Menu::AddTile() {
   return tiles.size() - 1;
 }
 
-void Menu::SetTileData(TileData tileData) {
+void Menu::setTileData(TileData tileData) {
   if(tileData.tileId >= static_cast<int>(tiles.size()))
     return;
   tiles[tileData.tileId].setName(tileData.name);
@@ -166,7 +169,7 @@ void Menu::SetTileData(TileData tileData) {
   tiles[tileData.tileId].setStoryboardCallback(tileData.getStoryboardData);
 }
 
-void Menu::SelectTile(int tileNo, bool runPreview) {
+void Menu::selectTile(int tileNo, bool runPreview) {
 
   if(tileNo == selectedTile || tileNo < 0 || tileNo >= static_cast<int>(tiles.size()))
     return;
@@ -198,25 +201,25 @@ void Menu::SelectTile(int tileNo, bool runPreview) {
   }
 }
 
-int Menu::AddFont(char *data, int size) {
+int Menu::addFont(char *data, int size) {
   TextRenderer::instance().addFont(data, size);
   return 0;
 }
 
-void Menu::ShowLoader(bool enabled, int percent) {
+void Menu::showLoader(bool enabled, int percent) {
   loaderEnabled = enabled;
   loader.setValue(percent);
 }
 
-void Menu::SetIcon(ImageData imageData) {
+void Menu::setIcon(ImageData imageData) {
   playback.setIcon(imageData.id, imageData.pixels, imageData.size, imageData.format);
 }
 
-void Menu::SetLoaderLogo(ImageData imageData) {
+void Menu::setLoaderLogo(ImageData imageData) {
   loader.setLogo(imageData.id, imageData.pixels, imageData.size, imageData.format);
 }
 
-void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
+void Menu::updatePlaybackControls(PlaybackData playbackData) {
   playback.update(playbackData.show,
                   playbackData.state,
                   playbackData.currentTime,
@@ -229,11 +232,11 @@ void Menu::UpdatePlaybackControls(PlaybackData playbackData) {
 				  playbackData.seeking);
 }
 
-void Menu::SetFooter(std::string footer) {
+void Menu::setFooter(std::string footer) {
   this->footer = footer;
 }
 
-void Menu::ShowSubtitle(int duration, std::string text) {
+void Menu::showSubtitle(int duration, std::string text) {
   subtitles.showSubtitle(std::chrono::milliseconds(duration), text);
 }
 

@@ -1,12 +1,20 @@
 #include <string>
+#include <sstream>
 
 #include "Utility.h"
 #include "GLES.h"
 #include "LogConsole.h"
+#include "log.h"
 
-void Utility::logGLErrors(const char *filename, int line) {
+EGLContext Utility::eglContext = 0;
+
+void Utility::__logGLErrors__(const char *filename, int line) {
+  assertCurrentEGLContext();
+
   for(GLenum err = GL_NO_ERROR; (err = glGetError()) != GL_NO_ERROR; ) {
-    LogConsole::instance().log(std::string("OpenGL Error: ") + std::string(filename) + std::string(":") + std::to_string(line) + std::string(": [") + std::to_string(err) + std::string("] ") + getGLErrorString(err), LogConsole::LogLevel::Error);
+    std::ostringstream oss;
+    oss << "OpenGL Error: " << filename << ":" << line << ": [" << err << "] " << getGLErrorString(err);
+    LogConsole::instance().log(oss.str(), LogConsole::LogLevel::Error);
   }
 }
 

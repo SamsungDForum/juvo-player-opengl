@@ -1,10 +1,13 @@
 #include "ProgramBuilder.h"
 #include "LogConsole.h"
+#include "Utility.h"
 
 #include <vector>
 #include <string>
 
 GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader) {
+  assertCurrentEGLContext();
+
   // compile shaders
   GLuint vertexShader = loadShader(GL_VERTEX_SHADER, vshader);
   GLuint fragmentShader = loadShader(GL_FRAGMENT_SHADER, fshader);
@@ -40,6 +43,8 @@ GLuint ProgramBuilder::buildProgram(const GLchar* vshader, const GLchar* fshader
 }
 
 GLuint ProgramBuilder::loadShader(const GLenum type, const GLchar* source) {
+  assertCurrentEGLContext();
+
   GLuint shader = glCreateShader(type);
   glShaderSource(shader, 1, &source, NULL);
   glCompileShader(shader);

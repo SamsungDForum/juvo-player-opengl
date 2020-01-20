@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "LogConsole.h"
 #include "log.h"
+#include "Utility.h"
 
 #include <stdexcept>
 #include <algorithm>
@@ -11,6 +12,8 @@
 
 TextTextureGenerator::TextTextureGenerator()
   : textureGCTimeout(1000) {
+  assertCurrentEGLContext();
+
   FT_Error error = FT_Init_FreeType(&ftLibrary);
   if(error != FT_Err_Ok)
     throw std::runtime_error(getErrorMessage(error));
@@ -21,6 +24,8 @@ TextTextureGenerator::TextTextureGenerator()
 }
 
 TextTextureGenerator::~TextTextureGenerator() {
+  assertCurrentEGLContext();
+
   if(programObject != GL_INVALID_VALUE)
     glDeleteProgram(programObject);
   for(auto& texture : generatedTextures) {
@@ -36,6 +41,7 @@ TextTextureGenerator::~TextTextureGenerator() {
 }
 
 void TextTextureGenerator::prepareShaders() {
+  assertCurrentEGLContext();
 
   const GLchar* vShaderTexStr =
 #include "shaders/textTextureGenerator.vert"
@@ -86,6 +92,8 @@ const TextTextureGenerator::FontFace TextTextureGenerator::getFontFace(int fontI
 }
 
 TextTextureGenerator::FontFace TextTextureGenerator::generateFontFace(FontFaceKey fontFaceKey) {
+  assertCurrentEGLContext();
+
   if(!TextTextureGenerator::instance().isFontValid(fontFaceKey.id)) {
     LogConsole::instance().log("no such fontId", LogConsole::LogLevel::Error);
     throw std::out_of_range("no such fontId");
@@ -167,6 +175,8 @@ TextTextureGenerator::TextureInfo TextTextureGenerator::getTexture(TextTextureGe
 }
 
 TextTextureGenerator::TextureInfo TextTextureGenerator::generateTexture(TextTextureGenerator::TextureKey textureKey) { // TODO: Rasterize to SDFs?
+  assertCurrentEGLContext();
+
   Size<GLuint> texSize = getTextSize(textureKey);
 
   if(texSize.width < 1 ||
@@ -396,6 +406,8 @@ Size<GLuint> TextTextureGenerator::getBrokenTextSize(const std::string text, int
 }
 
 void TextTextureGenerator::gcTextures() {
+  assertCurrentEGLContext();
+
   auto it = generatedTextures.begin();
   while(it != generatedTextures.end()) {
     if(std::chrono::steady_clock::now() - it->second.getLastTimeAccessed() >= textureGCTimeout) {

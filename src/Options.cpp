@@ -2,6 +2,7 @@
 #include "ProgramBuilder.h"
 #include "Settings.h"
 #include "TextRenderer.h"
+#include "Utility.h"
 
 Options::Options()
   : optionRectangleSize({200, 40}),
@@ -27,6 +28,8 @@ Options::Options()
 }
 
 void Options::initialize() {
+  assertCurrentEGLContext();
+
   const GLchar* vShaderTexStr = 
 #include "shaders/options.vert"
 ;
@@ -91,6 +94,8 @@ void Options::renderIcon() {
 }
 
 void Options::render() {
+  assertCurrentEGLContext();
+
   if(!show || opacity <= 0.0f)
     return;
   Position<int> optionPosition { this->position.x + margin.width, this->position.y + static_cast<int>(options.empty() ? 0 : options.size() - 1) * (optionRectangleSize.height + margin.height) };
@@ -122,6 +127,8 @@ void Options::render() {
 }
 
 void Options::renderRectangle(Position<int> position, Size<int> size, std::vector<float> color, float opacity, std::string name, int frameWidth, std::vector<float> frameColor, bool submenuSelected) {
+  assertCurrentEGLContext();
+
   float down = static_cast<float>(position.y) / Settings::instance().viewport.height * 2.0f - 1.0f;
   float top = static_cast<float>(position.y + size.height) / Settings::instance().viewport.height * 2.0f - 1.0f;
   float left = static_cast<float>(position.x) / Settings::instance().viewport.width * 2.0f - 1.0f;
