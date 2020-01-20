@@ -19,9 +19,11 @@ OpenGLES Sample
 
 cp %{name}.manifest ./../../SOURCES/
 
-
 %build
-cmake -DCMAKE_INSTALL_PREFIX=%{_prefix}
+cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+%if %{!?nodebug:1}%{?nodebug:0}
+-DDEBUG=1
+%endif
 
 make %{?jobs:-j%jobs}
 

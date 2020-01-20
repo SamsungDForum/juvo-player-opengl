@@ -8,9 +8,13 @@
 
 #ifdef DEBUG
 #include <EGL/egl.h>
+#define eglContextField static EGLContext eglContext;
+#define eglContextFieldInit EGLContext Utility::eglContext = 0;
 #define assertCurrentEGLContext() assert(Utility::eglContext == eglGetCurrentContext())
 #define setCurrentEGLContext() Utility::eglContext = eglGetCurrentContext()
 #else
+#define eglContextField
+#define eglContextFieldInit
 #define assertCurrentEGLContext()
 #define setCurrentEGLContext()
 #endif
@@ -20,7 +24,7 @@ private:
   Utility() {}
 
 public:
-  static EGLContext eglContext;
+  eglContextField // preprocessor-defined
   static void __logGLErrors__(const char *filename, int line);
   static std::string getGLErrorString(int err);
 };
