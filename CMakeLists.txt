@@ -16,8 +16,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(gles C CXX)
 
-ADD_DEFINITIONS(-DDEBUG)
-
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 
 IF(NOT DEFINED MANIFESTDIR)
@@ -50,8 +48,13 @@ SET(SRCS
 )
 
 IF(DEFINED DEBUG)
+  MESSAGE("-- Compilation mode - debug")
+  ADD_DEFINITIONS(-DDEBUG) # so gcc preprocessor sees DEBUG as defined
   SET(DEBUG_PKGS egl)
+ELSE(DEFINED DEBUG)
+  MESSAGE("-- Compilation mode - release")
 ENDIF(DEFINED DEBUG)
+SET(IGNOREME "${DEBUG}") # to suppress cmake "unused variable" warning
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED

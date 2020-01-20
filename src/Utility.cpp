@@ -6,7 +6,7 @@
 #include "LogConsole.h"
 #include "log.h"
 
-EGLContext Utility::eglContext = 0;
+eglContextFieldInit // preprocessor-defined
 
 void Utility::__logGLErrors__(const char *filename, int line) {
   assertCurrentEGLContext();
