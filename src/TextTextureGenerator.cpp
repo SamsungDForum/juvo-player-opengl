@@ -60,7 +60,7 @@ void TextTextureGenerator::prepareShaders() {
 }
 
 int TextTextureGenerator::addFont(char *data, int size) {
-  FT_Byte* ftByteData = (FT_Byte*) malloc(sizeof(char) * size);
+  FT_Byte* ftByteData = (FT_Byte*) malloc(sizeof(unsigned char) * size);
   memcpy(ftByteData, data, size);
 
   FT_Face ftFace;
@@ -68,6 +68,7 @@ int TextTextureGenerator::addFont(char *data, int size) {
 
   if(error) {
     LogConsole::instance().log("Cannot create new FT_Face from data", LogConsole::LogLevel::Error);
+    free(ftByteData);
     return -1;
   }
 

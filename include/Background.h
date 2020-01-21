@@ -35,7 +35,6 @@ public:
   void render();
   void setOpacity(float opacity);
   void setSourceTile(Tile *tile);
-  void setClearColor(std::vector<float> color);
   float getOpacity();
 };
 

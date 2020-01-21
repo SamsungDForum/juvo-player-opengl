@@ -17,7 +17,7 @@ private:
   GLuint valLoc;
   GLuint opaLoc;
 
-  const int VALUES = 100;
+  static constexpr int VALUES = 100;
 
   void initialize();
   inline float clamp(const float v, const float lo, const float hi) { return v < lo ? lo : v > hi ? hi : v; }
