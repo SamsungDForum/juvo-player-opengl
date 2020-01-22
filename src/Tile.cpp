@@ -278,33 +278,33 @@ void Tile::moveTo(Position<int> position, float zoom, Size<int> size, float opac
   Animation::Easing easing = animation.isActive() ? Animation::Easing::CubicOut : Animation::Easing::CubicInOut;
 
   animation = TileAnimation(
-      TileAnimation::AnimationParameters<Position<int>> {
-        .duration = moveDuration,
-        .delay = delay,
-        .source = this->position,
-        .target = position,
-        .easing = easing
-      },
+      TileAnimation::AnimationParameters<Position<int>> (
+        moveDuration,
+        delay,
+        this->position,
+        position,
+        easing
+      ),
       TileAnimation::AnimationParameters<float> {
-        .duration = animationDuration, // TODO: setting this to value lower than move Duration causes an animation artifacts in last stage
-        .delay = delay,
-        .source = this->zoom,
-        .target = zoom,
-        .easing = easing
+        animationDuration, // TODO: setting this to value lower than move Duration causes an animation artifacts in last stage
+        delay,
+        this->zoom,
+        zoom,
+        easing
       },
       TileAnimation::AnimationParameters<Size<int>> {
-        .duration = moveDuration,
-        .delay = delay,
-        .source = this->size,
-        .target = size,
-        .easing = easing
+        moveDuration,
+        delay,
+        this->size,
+        size,
+        easing
      },
       TileAnimation::AnimationParameters<float> {
-        .duration = moveDuration,
-        .delay = delay,
-        .source = this->opacity,
-        .target = opacity,
-        .easing = easing
+        moveDuration,
+        delay,
+        this->opacity,
+        opacity,
+        easing
     }
   );
 }

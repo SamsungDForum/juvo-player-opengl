@@ -9,6 +9,7 @@
 #include <cmath>
 #include <chrono>
 #include <map>
+#include <memory>
 
 #include "GLES.h"
 #include <glm/vec2.hpp>
@@ -124,7 +125,7 @@ public:
 private:
   FT_Library ftLibrary;
   std::vector<FT_Face> faces;
-  std::vector<FT_Byte*> facesData;
+  std::vector<std::unique_ptr<FT_Byte[]>> facesData;
   std::unordered_map<FontFaceKey, FontFace, FontFaceKey> fonts;
   std::unordered_map<TextureKey, TextureInfo, TextureKey> generatedTextures;
 
