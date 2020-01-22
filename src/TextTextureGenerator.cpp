@@ -35,9 +35,6 @@ TextTextureGenerator::~TextTextureGenerator() {
   for(FT_Face& face : faces)
     FT_Done_Face(face);
   FT_Done_FreeType(ftLibrary);
-
-  for(size_t i = 0; i < facesData.size(); ++i)
-    free(facesData[i]);
 }
 
 void TextTextureGenerator::prepareShaders() {
@@ -60,19 +57,19 @@ void TextTextureGenerator::prepareShaders() {
 }
 
 int TextTextureGenerator::addFont(char *data, int size) {
-  FT_Byte* ftByteData = (FT_Byte*) malloc(sizeof(unsigned char) * size);
-  memcpy(ftByteData, data, size);
+  assert(sizeof(FT_Byte) == sizeof(char)); // FT_Byte is an alias for unsigned char
+
+  std::unique_ptr<FT_Byte[]> ftByteData(new FT_Byte[size]);
+  memcpy(ftByteData.get(), data, size);
 
   FT_Face ftFace;
-  FT_Error error = FT_New_Memory_Face(ftLibrary, ftByteData, size, 0, &ftFace); // FT_Byte* is an alias for unsigned char*
-
+  FT_Error error = FT_New_Memory_Face(ftLibrary, ftByteData.get(), static_cast<FT_Long>(size), 0, &ftFace);
   if(error) {
     LogConsole::instance().log("Cannot create new FT_Face from data", LogConsole::LogLevel::Error);
-    free(ftByteData);
     return -1;
   }
 
-  facesData.push_back(ftByteData);
+  facesData.push_back(std::move(ftByteData));
   faces.push_back(ftFace);
   return faces.size() - 1;
 }
