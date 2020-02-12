@@ -45,7 +45,8 @@ struct SubBitmapExtern
 
 struct StoryboardExternData
 {
-  int isStoryboardReaderReady;
+  int isStoryboardValid;
+  int isStoryboardReady;
   int isFrameReady;
   SubBitmapExtern frame;
   long long duration;

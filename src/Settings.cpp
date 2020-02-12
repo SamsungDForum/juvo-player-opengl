@@ -18,5 +18,6 @@ Settings::Settings()
     tilePreviewDelay (std::chrono::milliseconds(500)),
     tilePreviewTimeScale (10.0f / 3.0f),
     loaderUpdateAnimationDuration (std::chrono::milliseconds(500)),
-    loaderUpdateAnimationDelay (std::chrono::duration_values<std::chrono::milliseconds>::zero()) {
+    loaderUpdateAnimationDelay (std::chrono::duration_values<std::chrono::milliseconds>::zero()),
+    seekPreviewTileWidth(200) {
 }

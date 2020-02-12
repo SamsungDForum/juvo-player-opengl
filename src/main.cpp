@@ -23,6 +23,7 @@ EXPORT_API void SetTileData(TileExternData tileExternData); // needs to be run f
 EXPORT_API int AddFont(char *data, int size); // needs to be run from eglContext synced methods
 EXPORT_API void SetIcon(ImageExternData image); // needs to be run from eglContext synced methods
 EXPORT_API void SetLoaderLogo(ImageExternData image); // needs to be run from eglContext synced methods
+EXPORT_API void SetSeekPreviewCallback(StoryboardExternData (*getSeekPreviewStoryboardData)());
 
 EXPORT_API void ShowMenu(int enable);
 EXPORT_API void ShowLoader(int enabled, int percent);
@@ -232,3 +233,6 @@ int IsAlertVisible() {
   return static_cast<int>(menu->isAlertVisible());
 }
 
+void SetSeekPreviewCallback(StoryboardExternData (*getSeekPreviewStoryboardData)()) {
+  menu->setSeekPreviewCallback(getSeekPreviewStoryboardData);
+}

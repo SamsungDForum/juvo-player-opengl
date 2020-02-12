@@ -36,6 +36,7 @@ public:
   const float tilePreviewTimeScale;
   const std::chrono::milliseconds loaderUpdateAnimationDuration;
   const std::chrono::milliseconds loaderUpdateAnimationDelay;
+  const int seekPreviewTileWidth;
 };
 
 #endif // _SETTINGS_H_

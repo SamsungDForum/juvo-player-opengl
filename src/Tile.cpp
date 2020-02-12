@@ -78,7 +78,7 @@ void Tile::initTextures() {
   if(previewTextureId == 0)
     glGenTextures(1, &previewTextureId);
 
-  if(textureId == GL_INVALID_VALUE || previewTextureId == GL_INVALID_VALUE) {
+  if(textureId == 0 || previewTextureId == 0) {
     LogConsole::instance().log("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----", LogConsole::LogLevel::Error);
     throw("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----");
   }
@@ -236,7 +236,7 @@ void Tile::render() {
   glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.width), static_cast<GLfloat>(Settings::instance().viewport.height));
   glUniform1f(scaleLoc, static_cast<GLfloat>(zoom));
 
-  // GetTextureId() updates texture data and metadata, so it should be called before setting texture metadata for the pipeline (before setting storytileRectLoc vec4 values)
+  // getTextureId() updates texture data and metadata, so it should be called before setting texture metadata for the pipeline (before setting storytileRectLoc vec4 values)
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, getCurrentTextureId());
   glUniform1i(samplerLoc, 0);
@@ -310,7 +310,8 @@ void Tile::moveTo(Position<int> position, float zoom, Size<int> size, float opac
 }
 
 void Tile::runPreview(bool run) {
-  if(!runningPreview && run) {
+  if(run) {
+    LogConsole::instance().log(std::string("===== RUNNING PREVIEW: ") + std::to_string(run) + std::string(" ====="), LogConsole::LogLevel::Info);
     storyboardPreviewStartTimePoint = std::chrono::steady_clock::now();
     previewReady = false;
   }
@@ -321,17 +322,30 @@ GLuint Tile::getCurrentTextureId() {
 
   if(!runningPreview) // avoid callback call most of the time
     return textureId;
+  // it's running
 
   std::chrono::milliseconds delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - storyboardPreviewStartTimePoint);
   StoryboardExternData storyboardData = getStoryboardData(delta - std::chrono::milliseconds(storyboardData.duration), id);
 
-  if(!storyboardData.isStoryboardReaderReady || (runningPreview && delta > std::chrono::milliseconds(storyboardData.duration))) { // no preview or preview just finished
+  if(!storyboardData.isStoryboardValid) {
     runningPreview = false;
     return textureId;
   }
+  // it's valid
+
+  if(!storyboardData.isStoryboardReady)
+    return textureId;
+  // it's ready
+
+  if(delta > std::chrono::milliseconds(storyboardData.duration)) { // no preview or preview just finished
+    runningPreview = false;
+    return textureId;
+  }
+  // it hasn't ended yet
 
   if(delta < Settings::instance().tilePreviewDelay) // still during delay
     return textureId;
+  // delay has ended
 
   if(!storyboardData.isFrameReady) { // frame not ready
     if(previewReady) // if it's not a first frame, let's use last one

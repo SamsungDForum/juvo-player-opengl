@@ -78,7 +78,7 @@ void Loader::initialize() {
 void Loader::initTexture() {
   if(logoTextureId == 0)
     glGenTextures(1, &logoTextureId);
-  if(logoTextureId == GL_INVALID_VALUE)
+  if(logoTextureId == 0)
     throw("-----===== INVALID VALUE FOR LOADER LOGO TEXTURE! =====-----");
 }
 

@@ -42,6 +42,7 @@ int TextRenderer::addFont(char *data, int size) {
   return TextTextureGenerator::instance().addFont(data, size);
 }
 
+// TODO: unify usage of ints and GLuints in public interface
 Size<GLuint> TextRenderer::getTextSize(const std::string text, Size<GLuint> size, int fontId) {
   if(text.empty() || size.height == 0)
     return { 0, 0 };

@@ -8,6 +8,8 @@
 
 #include "GLES.h"
 #include "Animation.h"
+#include "CommonStructs.h"
+#include "ExternStructs.h"
 #include "Utility.h"
 
 class Playback {
@@ -91,20 +93,47 @@ private:
   GLuint paramLoaderLoc    = GL_INVALID_VALUE; 
   GLuint opacityLoaderLoc  = GL_INVALID_VALUE; 
   GLuint viewportLoaderLoc = GL_INVALID_VALUE; 
-  GLuint sizeLoaderLoc     = GL_INVALID_VALUE; 
+  GLuint sizeLoaderLoc     = GL_INVALID_VALUE;
+
+  GLuint seekTextureId     = 0;
+  GLuint seekProgramObject = GL_INVALID_VALUE;
+  GLuint samplerSeekLoc    = GL_INVALID_VALUE;
+  GLuint texCoordSeekLoc   = GL_INVALID_VALUE;
+  GLuint positionSeekLoc   = GL_INVALID_VALUE;
+  GLuint imagePositionSeekLoc = GL_INVALID_VALUE;
+  GLuint imageSizeSeekLoc  = GL_INVALID_VALUE;
+  GLuint viewportSeekLoc   = GL_INVALID_VALUE;
+  GLuint opacitySeekLoc    = GL_INVALID_VALUE;
+  GLuint scaleSeekLoc      = GL_INVALID_VALUE;
+  GLuint storytileRectSeekLoc = GL_INVALID_VALUE;
+
+  SubBitmapExtern storyboardBitmap;
+  int storyboardBitmapHash;
+  Rect storytileRect;
+  StoryboardExternData (*getStoryboardDataCallback)() = nullptr;
+  bool displaySeekPreview;
+  bool seekPreviewReady;
 
 private:
   void initialize();
   void initTexture(int id);
-  void renderIcons(float opacity);
+  void renderIcons();
   void renderIcon(Icon icon, Position<int> position, Size<int> size, std::vector<float> color, float opacity, bool bloom);
-  void renderText(float opacity);
-  void renderProgressBar(float opacity);
+  void renderText();
+  void renderProgressBar();
   std::string timeToString(int time);
   void updateProgress();
   void renderLoader(float opacity);
+  void renderSeekPreview();
+  void updateSeekPreviewTexture();
+  Position<int> getSeekPreviewPosition(Size<int> size);
+  void setPreviewTexture(SubBitmapExtern frame);
+  StoryboardExternData getStoryboardData();
+  void initTextures();
   template<typename T> inline T max(T a, T b) { return a > b ? a : b; }
   template<typename T> inline T clamp(T v, T lo, T hi) { return v < lo ? lo : v > hi ? hi : v; }
+  void renderSeekPreviewTime();
+  Size<int> getSeekPreviewTileSize();
 
 public:
   Playback();
@@ -115,6 +144,7 @@ public:
   void setOpacity(float opacity) { this->opacity = opacity; }
   float getOpacity() { return opacity; }
   void selectAction(int id);
+  void setStoryboardCallback(StoryboardExternData (*getSeekPreviewStoryboardDataCallback)());
 
   enum class Shadow {
     None,

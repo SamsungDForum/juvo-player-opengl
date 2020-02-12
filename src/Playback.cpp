@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "TextRenderer.h"
 #include "Utility.h"
+#include "LogConsole.h"
 
 Playback::Playback()
   : barProgramObject(GL_INVALID_VALUE),
@@ -12,7 +13,7 @@ Playback::Playback()
     state(State::Idle),
     currentTime(0),
     totalTime(0),
-    displayText("Loading..."),
+    displayText(""),
     opacity(0.0f),
     selectedAction(Action::None),
     progress(0.0f),
@@ -27,7 +28,10 @@ Playback::Playback()
         static_cast<int>(progressBarSizePx.height / 1080.0f * Settings::instance().viewport.height)}),
     progressBarMarginBottom(progressUiLineLevel / 1080.0f * Settings::instance().viewport.height - progressBarSize.height / 2.0f),
     dotScale(1.5f),
-    iconSize({64, 64}) {
+    iconSize({64, 64}),
+    getStoryboardDataCallback(nullptr),
+    displaySeekPreview(false),
+    seekPreviewReady(false) {
   initialize();
 }
 
@@ -43,6 +47,12 @@ Playback::~Playback() {
       glDeleteTextures(1, &icons[i]);
       icons[i] = 0;
     }
+  if(seekProgramObject != GL_INVALID_VALUE)
+    glDeleteProgram(seekProgramObject);
+  if(seekTextureId != 0) {
+    glDeleteTextures(1, &seekTextureId);
+    seekTextureId = 0;
+  }
 }
 
 void Playback::initialize() {
@@ -102,6 +112,26 @@ void Playback::initialize() {
   opacityLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_opacity");
   viewportLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_viewport");
   sizeLoaderLoc = glGetUniformLocation(loaderProgramObject, "u_size");
+
+  const GLchar* seekVShaderTexStr =
+#include "shaders/framedImage.vert"
+;
+
+  const GLchar* seekFShaderTexStr =
+#include "shaders/framedImage.frag"
+;
+
+  seekProgramObject = ProgramBuilder::buildProgram(seekVShaderTexStr, seekFShaderTexStr);
+
+  positionSeekLoc = glGetAttribLocation(seekProgramObject, "a_position");
+  texCoordSeekLoc = glGetAttribLocation(seekProgramObject, "a_texCoord");
+  samplerSeekLoc = glGetUniformLocation(seekProgramObject, "s_texture");
+  imagePositionSeekLoc = glGetUniformLocation(seekProgramObject, "u_position");
+  imageSizeSeekLoc = glGetUniformLocation(seekProgramObject, "u_size");
+  viewportSeekLoc = glGetUniformLocation(seekProgramObject, "u_viewport");
+  opacitySeekLoc = glGetUniformLocation(seekProgramObject, "u_opacity");
+  scaleSeekLoc = glGetUniformLocation(seekProgramObject, "u_scale");
+  storytileRectSeekLoc = glGetUniformLocation(seekProgramObject, "u_storytileRect");
 }
 
 void Playback::updateProgress() {
@@ -123,15 +153,20 @@ void Playback::render() {
     opacity = static_cast<float>(updated[0]);
   if(opacity > 0.0) {
     updateProgress();
-    renderProgressBar(opacity);
-    renderIcons(opacity);
-    renderText(opacity);
+    renderProgressBar();
+    renderIcons();
+    renderText();
+    renderSeekPreview();
+    renderSeekPreviewTime();
   }
+
+  // TODO: bug #1: loader is shown in menu if player was closed before seeking ended
+  // TODO: bug #2: newly opened content is being seeked to last seeking time if player was closed before seek cumulation ended
   if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering) || seeking)
     renderLoader(1.0);
 }
 
-void Playback::renderIcons(float opacity) {
+void Playback::renderIcons() {
   Icon icon = Icon::Play;
   std::vector<float> color = {1.0, 1.0, 1.0, 1.0};
   Position<int> position = {200, progressUiLineLevel};
@@ -213,7 +248,7 @@ void Playback::renderIcon(Icon icon, Position<int> position, Size<int> size, std
   glUseProgram(0);
 }
 
-void Playback::renderText(float opacity) {
+void Playback::renderText() {
   // render remaining time
   int fontHeight = 24;
   int textLeft = Settings::instance().viewport.width - (Settings::instance().viewport.width - progressBarSize.width) / 2 + progressBarSize.height;
@@ -235,7 +270,7 @@ void Playback::renderText(float opacity) {
               {1.0, 1.0, 1.0, opacity});
 }
 
-void Playback::renderProgressBar(float opacity) {
+void Playback::renderProgressBar() {
   assertCurrentEGLContext();
 
   float marginHeightScale = 1.5; // the dot is 1.25x
@@ -376,5 +411,152 @@ void Playback::renderLoader(float opacity) {
 
 void Playback::selectAction(int id) {
   selectedAction = static_cast<Action>(id);
+}
+
+void Playback::updateSeekPreviewTexture() {
+  assertCurrentEGLContext();
+
+  StoryboardExternData storyboardData = getStoryboardData();
+  displaySeekPreview = storyboardData.isStoryboardValid;
+
+  if(!storyboardData.isStoryboardValid || !storyboardData.isFrameReady)
+    return;
+
+  if(storyboardData.frame.bitmapHash != storyboardBitmapHash) { // new storyboard
+    storyboardBitmap = storyboardData.frame;
+    setPreviewTexture(storyboardData.frame);
+  }
+  storytileRect = Rect { // update frame rectangle metadata
+    .left = storyboardData.frame.rectLeft,
+    .right = storyboardData.frame.rectRight,
+    .top = storyboardData.frame.rectTop,
+    .bottom = storyboardData.frame.rectBottom
+  };
+  seekPreviewReady = true;
+}
+
+Position<int> Playback::getSeekPreviewPosition(Size<int> size) {
+  int dotCenterRange = progressBarSize.width - progressBarSize.height * dotScale; // substract radius of dot on both ends
+  int leftOffset = (Settings::instance().viewport.width - dotCenterRange) / 2;
+  return { static_cast<int>(leftOffset + dotCenterRange * progress - size.width / 2),
+           progressBarMarginBottom + progressBarSize.height + 10 };
+}
+
+Size<int> Playback::getSeekPreviewTileSize() {
+  int width = Settings::instance().seekPreviewTileWidth;
+  if(storytileRect.width() == 0)
+    return { width, static_cast<int>(width * 1.77777f) };
+  return { width, static_cast<int>(storytileRect.height() / storytileRect.width() * width) };
+}
+
+void Playback::renderSeekPreviewTime() {
+  if(!seeking || opacity < 0.001f)
+    return;
+
+  int height = 20;
+  Size<int> tileSize = getSeekPreviewTileSize();
+  Position<int> center = getSeekPreviewPosition(tileSize) + Size<int> { tileSize.width / 2, seekPreviewReady ? tileSize.height / 2 : height / 2 };
+
+  std::string time = timeToString(progress * totalTime);
+  Size<GLuint> size = TextRenderer::instance().getTextSize(time, { 0, (GLuint) height }, 0);
+  Position<GLuint> position = { center.x - size.width / 2, center.y - size.height / 2 };
+  TextRenderer::instance().render(time, position, { 0, height }, 0, { 1.0f, 1.0f, 1.0f, opacity } );
+}
+
+void Playback::renderSeekPreview() {
+  assertCurrentEGLContext();
+
+  if(!seeking || opacity < 0.001f) {
+    seekPreviewReady = false;
+    return;
+  }
+
+  updateSeekPreviewTexture();
+  if(!displaySeekPreview || !seekPreviewReady || seekTextureId == 0)
+    return;
+
+  Size<int> size = getSeekPreviewTileSize();
+  Position<int> position = getSeekPreviewPosition(size);
+
+  float down = static_cast<float>(position.y) / Settings::instance().viewport.height * 2.0 - 1.0;
+  float top = static_cast<float>(position.y + size.height) / Settings::instance().viewport.height * 2.0 - 1.0;
+  float left = static_cast<float>(position.x) / Settings::instance().viewport.width * 2.0 - 1.0;
+  float right = static_cast<float>(position.x + size.width) / Settings::instance().viewport.width * 2.0 - 1.0;
+
+  GLfloat vVertices[] = { left,   top,  0.0f,
+                          left,   down, 0.0f,
+                          right,  down, 0.0f,
+                          right,  top,  0.0f
+  };
+  GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+  float texCoord[] = { 0.0f, 0.0f,    0.0f, 1.0f,
+                       1.0f, 1.0f,    1.0f, 0.0f };
+
+  glUseProgram(seekProgramObject);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, seekTextureId);
+  glUniform1i(samplerSeekLoc, 0);
+
+  glEnableVertexAttribArray(positionSeekLoc);
+  glVertexAttribPointer(positionSeekLoc, 3, GL_FLOAT, GL_FALSE, 0, vVertices);
+  glEnableVertexAttribArray(texCoordSeekLoc);
+  glVertexAttribPointer(texCoordSeekLoc, 2, GL_FLOAT, GL_FALSE, 0, texCoord);
+
+  glUniform2f(imagePositionSeekLoc, static_cast<float>(position.x), static_cast<float>(position.y));
+  glUniform2f(imageSizeSeekLoc, static_cast<float>(size.width), static_cast<float>(size.height));
+  glUniform2f(viewportSeekLoc, static_cast<GLfloat>(Settings::instance().viewport.width), static_cast<GLfloat>(Settings::instance().viewport.height));
+  glUniform1f(opacitySeekLoc, static_cast<GLfloat>(opacity));
+  glUniform1f(scaleSeekLoc, 1.0f);
+
+  if(storytileRect.width() != 0 && storytileRect.height() != 0)
+    glUniform4f(storytileRectSeekLoc, storytileRect.left / storyboardBitmap.bitmapWidth, storytileRect.top / storyboardBitmap.bitmapHeight, storytileRect.width() / storyboardBitmap.bitmapWidth, storytileRect.height() / storyboardBitmap.bitmapHeight);
+  else
+    glUniform4f(storytileRectSeekLoc, 0.0f, 0.0f, 1.0f, 1.0f);
+
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+  glDisableVertexAttribArray(positionSeekLoc);
+  glDisableVertexAttribArray(texCoordSeekLoc);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glUseProgram(0);
+}
+
+void Playback::setPreviewTexture(SubBitmapExtern frame) {
+  assertCurrentEGLContext();
+
+  if(seekTextureId == 0)
+    initTextures();
+
+  GLuint textureFormat = ConvertFormat(frame.bitmapInfoColorType);
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, seekTextureId);
+  glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, frame.bitmapWidth, frame.bitmapHeight, 0, textureFormat, GL_UNSIGNED_BYTE, frame.bitmapBytes);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+StoryboardExternData Playback::getStoryboardData() {
+  if(getStoryboardDataCallback)
+    return getStoryboardDataCallback();
+  return StoryboardExternData{}; // isStoryboardValid = false
+}
+
+void Playback::setStoryboardCallback(StoryboardExternData (*getSeekPreviewStoryboardDataCallback)()) {
+  this->getStoryboardDataCallback = getSeekPreviewStoryboardDataCallback;
+}
+
+void Playback::initTextures() {
+  if(seekTextureId == 0)
+    glGenTextures(1, &seekTextureId);
+  if(seekTextureId == 0)
+    throw("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----");
 }
 

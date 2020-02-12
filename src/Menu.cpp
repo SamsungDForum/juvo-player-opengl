@@ -307,3 +307,8 @@ void Menu::hideAlert() {
 bool Menu::isAlertVisible() {
   return modalWindow.isVisible();
 }
+
+
+void Menu::setSeekPreviewCallback(StoryboardExternData (*getSeekPreviewStoryboardData)()) {
+  playback.setStoryboardCallback(getSeekPreviewStoryboardData);
+}

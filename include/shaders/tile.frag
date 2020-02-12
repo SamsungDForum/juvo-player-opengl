@@ -36,11 +36,10 @@ vec4 tileWithShadow(vec2 uv, vec2 viewport, vec2 position, vec2 size, float radi
 void main() {
     vec2 uv = gl_FragCoord.xy / u_viewport;
 
-    vec2 size = u_tileSize;
     float shadowOffset = u_tileSize.x * .025 * u_scale * u_scale;
-	vec2 shadowOffset2d = shadowOffset * vec2(1, -1);
+    vec2 shadowOffset2d = shadowOffset * vec2(1, -1);
     vec2 position = u_tilePosition + max(-shadowOffset2d, 0.);
-    vec2 tileSize = size - abs(shadowOffset2d);
+    vec2 tileSize = u_tileSize - abs(shadowOffset2d);
     float radius = u_tileSize.x * .05;
     vec4 shadowColor = vec4(.0, .0, .0, 1.);
     vec3 contentColor = TEXTURE2D(s_texture, v_texCoord * u_storytileRect.zw + u_storytileRect.xy).rgb;
