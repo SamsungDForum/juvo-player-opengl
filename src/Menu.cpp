@@ -59,7 +59,7 @@ void Menu::render() {
                   0,
                   {1.0, 1.0, 1.0, bgOpacity});
     }
-    { // controls/playback
+    else { // controls/playback
       playback.render();
       subtitles.render();
       options.setOpacity(playback.getOpacity());

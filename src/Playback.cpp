@@ -160,9 +160,9 @@ void Playback::render() {
     renderSeekPreviewTime();
   }
 
-  // TODO: bug #1: loader is shown in menu if player was closed before seeking ended
-  // TODO: bug #2: newly opened content is being seeked to last seeking time if player was closed before seek cumulation ended
-  if((state == State::Idle && opacity > 0.0) || (state == State::Paused && buffering) || seeking)
+  if(state == State::Idle && opacity > 0.0)
+    renderLoader(opacity);
+  else if((state == State::Paused && buffering) || seeking)
     renderLoader(1.0);
 }
 
