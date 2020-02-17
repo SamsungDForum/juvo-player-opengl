@@ -322,6 +322,10 @@ GLuint Tile::getCurrentTextureId() {
     return textureId;
 
   std::chrono::milliseconds delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - storyboardPreviewStartTimePoint);
+
+  if(delta < Settings::instance().tilePreviewDelay) // still during delay period; moved up here so tile resources are loaded as late as possible
+    return textureId;
+
   StoryboardExternData storyboardData = getStoryboardData(delta - std::chrono::milliseconds(storyboardData.duration), id);
 
   if(!storyboardData.isStoryboardValid) { // storyboard isn't valid
@@ -336,9 +340,6 @@ GLuint Tile::getCurrentTextureId() {
     runningPreview = false;
     return textureId;
   }
-
-  if(delta < Settings::instance().tilePreviewDelay) // still during delay period
-    return textureId;
 
   if(!storyboardData.isFrameReady) { // frame is not ready
     if(previewReady) // if it's not a first frame, let's use last one
