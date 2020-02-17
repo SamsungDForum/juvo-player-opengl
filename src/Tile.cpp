@@ -311,7 +311,6 @@ void Tile::moveTo(Position<int> position, float zoom, Size<int> size, float opac
 
 void Tile::runPreview(bool run) {
   if(run) {
-    LogConsole::instance().log(std::string("===== RUNNING PREVIEW: ") + std::to_string(run) + std::string(" ====="), LogConsole::LogLevel::Info);
     storyboardPreviewStartTimePoint = std::chrono::steady_clock::now();
     previewReady = false;
   }
@@ -319,38 +318,32 @@ void Tile::runPreview(bool run) {
 }
 
 GLuint Tile::getCurrentTextureId() {
-
-  if(!runningPreview) // avoid callback call most of the time
+  if(!runningPreview) // preview isn't running
     return textureId;
-  // it's running
 
   std::chrono::milliseconds delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - storyboardPreviewStartTimePoint);
   StoryboardExternData storyboardData = getStoryboardData(delta - std::chrono::milliseconds(storyboardData.duration), id);
 
-  if(!storyboardData.isStoryboardValid) {
+  if(!storyboardData.isStoryboardValid) { // storyboard isn't valid
     runningPreview = false;
     return textureId;
   }
-  // it's valid
 
-  if(!storyboardData.isStoryboardReady)
+  if(!storyboardData.isStoryboardReady) // storyboard isn't ready yet
     return textureId;
-  // it's ready
 
-  if(delta > std::chrono::milliseconds(storyboardData.duration)) { // no preview or preview just finished
+  if(delta > std::chrono::milliseconds(storyboardData.duration)) { // there's no preview or preview has just finished
     runningPreview = false;
     return textureId;
   }
-  // it hasn't ended yet
 
-  if(delta < Settings::instance().tilePreviewDelay) // still during delay
+  if(delta < Settings::instance().tilePreviewDelay) // still during delay period
     return textureId;
-  // delay has ended
 
-  if(!storyboardData.isFrameReady) { // frame not ready
+  if(!storyboardData.isFrameReady) { // frame is not ready
     if(previewReady) // if it's not a first frame, let's use last one
       return previewTextureId;
-    return textureId;
+    return textureId; // we haven't got any preview's frame yet, so let's stick to default tile texture
   }
 
   if(storyboardData.frame.bitmapHash != bitmapHash) { // new storyboard
@@ -364,7 +357,7 @@ GLuint Tile::getCurrentTextureId() {
     .bottom = storyboardData.frame.rectBottom
   };
 
-  previewReady = true; // we're here, so frame must be ready and preview must be running
+  previewReady = true; // frame is ready and preview is running
   return previewTextureId;
 }
 
