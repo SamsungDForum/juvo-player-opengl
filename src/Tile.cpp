@@ -32,7 +32,8 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
-            textureId(0) {
+            textureId(0),
+            bitmapHash(0) {
   initGL();
   initTextures();
   setTexture(texturePixels, textureSize, textureFormat);
@@ -52,7 +53,8 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
-            textureId(0) {
+            textureId(0),
+            bitmapHash(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;
@@ -64,7 +66,8 @@ Tile::Tile(int tileId)
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
-            textureId(0) {
+            textureId(0),
+            bitmapHash(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;
@@ -78,7 +81,7 @@ void Tile::initTextures() {
   if(previewTextureId == 0)
     glGenTextures(1, &previewTextureId);
 
-  if(textureId == GL_INVALID_VALUE || previewTextureId == GL_INVALID_VALUE) {
+  if(textureId == 0 || previewTextureId == 0) {
     LogConsole::instance().log("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----", LogConsole::LogLevel::Error);
     throw("-----===== INVALID VALUES FOR TILE TEXTURES! =====-----");
   }
@@ -236,7 +239,7 @@ void Tile::render() {
   glUniform2f(viewportLoc, static_cast<GLfloat>(Settings::instance().viewport.width), static_cast<GLfloat>(Settings::instance().viewport.height));
   glUniform1f(scaleLoc, static_cast<GLfloat>(zoom));
 
-  // GetTextureId() updates texture data and metadata, so it should be called before setting texture metadata for the pipeline (before setting storytileRectLoc vec4 values)
+  // getTextureId() updates texture data and metadata, so it should be called before setting texture metadata for the pipeline (before setting storytileRectLoc vec4 values)
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, getCurrentTextureId());
   glUniform1i(samplerLoc, 0);
@@ -310,7 +313,7 @@ void Tile::moveTo(Position<int> position, float zoom, Size<int> size, float opac
 }
 
 void Tile::runPreview(bool run) {
-  if(!runningPreview && run) {
+  if(run) {
     storyboardPreviewStartTimePoint = std::chrono::steady_clock::now();
     previewReady = false;
   }
@@ -318,30 +321,39 @@ void Tile::runPreview(bool run) {
 }
 
 GLuint Tile::getCurrentTextureId() {
-
-  if(!runningPreview) // avoid callback call most of the time
+  if(!runningPreview) // preview isn't running
     return textureId;
 
   std::chrono::milliseconds delta = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - storyboardPreviewStartTimePoint);
+
+  if(delta < Settings::instance().tilePreviewDelay) // still during delay period; moved up here so tile resources are loaded as late as possible
+    return textureId;
+
   StoryboardExternData storyboardData = getStoryboardData(delta - std::chrono::milliseconds(storyboardData.duration), id);
 
-  if(!storyboardData.isStoryboardReaderReady || (runningPreview && delta > std::chrono::milliseconds(storyboardData.duration))) { // no preview or preview just finished
+  if(!storyboardData.isStoryboardValid) { // storyboard isn't valid
     runningPreview = false;
     return textureId;
   }
 
-  if(delta < Settings::instance().tilePreviewDelay) // still during delay
+  if(!storyboardData.isStoryboardReady) // storyboard isn't ready yet
     return textureId;
 
-  if(!storyboardData.isFrameReady) { // frame not ready
+  if(delta > std::chrono::milliseconds(storyboardData.duration)) { // there's no preview or preview has just finished
+    runningPreview = false;
+    return textureId;
+  }
+
+  if(!storyboardData.isFrameReady) { // frame is not ready
     if(previewReady) // if it's not a first frame, let's use last one
       return previewTextureId;
-    return textureId;
+    return textureId; // we haven't got any preview's frame yet, so let's stick to default tile texture
   }
 
   if(storyboardData.frame.bitmapHash != bitmapHash) { // new storyboard
     storyboardBitmap = storyboardData.frame;
     setPreviewTexture(storyboardData.frame);
+    bitmapHash = storyboardData.frame.bitmapHash;
   }
   storytileRect = Rect { // update frame rectangle metadata
     .left = storyboardData.frame.rectLeft,
@@ -350,7 +362,7 @@ GLuint Tile::getCurrentTextureId() {
     .bottom = storyboardData.frame.rectBottom
   };
 
-  previewReady = true; // we're here, so frame must be ready and preview must be running
+  previewReady = true; // frame is ready and preview is running
   return previewTextureId;
 }
 

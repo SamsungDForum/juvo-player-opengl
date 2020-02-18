@@ -29,6 +29,9 @@ public:
   static std::string getGLErrorString(int err);
 };
 
+template<typename T> struct Size;
+template<typename T> struct Position;
+
 template<typename T> struct Position {
   T x, y;
   T epsilon = static_cast<T>(1e-9);
@@ -71,6 +74,32 @@ template<typename T> struct Position {
   bool operator==(const Position<T> &other) const {
     return abs(x - other.x) <= epsilon && abs(y - other.y) <= epsilon;
   }
+
+  Position<T> operator+(Position<T> const& rhs) const { return { x + rhs.x, y + rhs.y }; }
+  Position<T>& operator+=(Position<T> const& rhs) { x += rhs.x; y += rhs.y; return *this; }
+  Position<T> operator+(T const& rhs) const { return { x + rhs, y + rhs }; }
+  Position<T>& operator+=(T const& rhs) { x += rhs; y += rhs; return *this; }
+  Position<T> operator-(Position<T> const& rhs) const { return { x - rhs.x, y - rhs.y }; }
+  Position<T>& operator-=(Position<T> const& rhs) { x -= rhs.x; y -= rhs.y; return *this; }
+  Position<T> operator-(T const& rhs) const { return { x - rhs, y - rhs }; }
+  Position<T>& operator-=(T const& rhs) { x -= rhs; y -= rhs; return *this; }
+  Position<T> operator*(Position<T> const& rhs) const { return { x * rhs.x, y * rhs.y }; }
+  Position<T>& operator*=(Position<T> const& rhs) { x *= rhs.x; y *= rhs.y; return *this; }
+  Position<T> operator*(T const& rhs) const { return { x * rhs, y * rhs }; }
+  Position<T>& operator*=(T const& rhs) { x *= rhs; y *= rhs; return *this; }
+  Position<T> operator/(Position<T> const& rhs) const { return { x / rhs.x, y / rhs.y }; }
+  Position<T>& operator/=(Position<T> const& rhs) { x /= rhs.x; y /= rhs.y; return *this; }
+  Position<T> operator/(T const& rhs) const { return { x / rhs, y / rhs }; }
+  Position<T>& operator/=(T const& rhs) { x /= rhs; y /= rhs; return *this; }
+
+  Position<T> operator+(Size<T> const& rhs) const { return { x + rhs.width, y + rhs.height }; }
+  Position<T>& operator+=(Size<T> const& rhs) { x += rhs.width; y += rhs.height; return *this; }
+  Position<T> operator-(Size<T> const& rhs) const { return { x - rhs.width, y - rhs.height }; }
+  Position<T>& operator-=(Size<T> const& rhs) { x -= rhs.width; y -= rhs.height; return *this; }
+  Position<T> operator*(Size<T> const& rhs) const { return { x * rhs.width, y * rhs.height }; }
+  Position<T>& operator*=(Size<T> const& rhs) { x *= rhs.width; y *= rhs.height; return *this; }
+  Position<T> operator/(Size<T> const& rhs) const { return { x / rhs.width, y / rhs.height }; }
+  Position<T>& operator/=(Size<T> const& rhs) { x /= rhs.width; y /= rhs.height; return *this; }
 };
 
 template<typename T> struct Size {
@@ -121,6 +150,32 @@ template<typename T> struct Size {
   bool operator==(const Size<Floating> &other) const {
     return abs(width - other.width) <= epsilon && abs(height - other.height) <= epsilon;
   }
+
+  Size<T> operator+(Size<T> const& rhs) const { return { width + rhs.width, height + rhs.height }; }
+  Size<T>& operator+=(Size<T> const& rhs) { width += rhs.width; height += rhs.height; return *this; }
+  Size<T> operator+(T const& rhs) const { return { width + rhs, height + rhs }; }
+  Size<T>& operator+=(T const& rhs) { width += rhs; height += rhs; return *this; }
+  Size<T> operator-(Size<T> const& rhs) const { return { width - rhs.width, height - rhs.height }; }
+  Size<T>& operator-=(Size<T> const& rhs) { width -= rhs.width; height -= rhs.height; return *this; }
+  Size<T> operator-(T const& rhs) const { return { width - rhs, height - rhs }; }
+  Size<T>& operator-=(T const& rhs) { width -= rhs; height -= rhs; return *this; }
+  Size<T> operator*(Size<T> const& rhs) const { return { width * rhs.width, height * rhs.height }; }
+  Size<T>& operator*=(Size<T> const& rhs) { width *= rhs.width; height *= rhs.height; return *this; }
+  Size<T> operator*(T const& rhs) const { return { width * rhs, height * rhs }; }
+  Size<T>& operator*=(T const& rhs) { width *= rhs; height *= rhs; return *this; }
+  Size<T> operator/(Size<T> const& rhs) const { return { width / rhs.width, height / rhs.height }; }
+  Size<T>& operator/=(Size<T> const& rhs) { width /= rhs.width; height /= rhs.height; return *this; }
+  Size<T> operator/(T const& rhs) const { return { width / rhs, height / rhs }; }
+  Size<T>& operator/=(T const& rhs) { width /= rhs; height /= rhs; return *this; }
+
+  Size<T> operator+(Position<T> const& rhs) const { return { width + rhs.x, height + rhs.y }; }
+  Size<T>& operator+=(Position<T> const& rhs) { width += rhs.x; height += rhs.y; return *this; }
+  Size<T> operator-(Position<T> const& rhs) const { return { width - rhs.x, height - rhs.y }; }
+  Size<T>& operator-=(Position<T> const& rhs) { width -= rhs.x; height -= rhs.y; return *this; }
+  Size<T> operator*(Position<T> const& rhs) const { return { width * rhs.x, height * rhs.y }; }
+  Size<T>& operator*=(Position<T> const& rhs) { width *= rhs.x; height *= rhs.y; return *this; }
+  Size<T> operator/(Position<T> const& rhs) const { return { width / rhs.x, height / rhs.y }; }
+  Size<T>& operator/=(Position<T> const& rhs) { width /= rhs.x; height /= rhs.y; return *this; }
 };
 
 #endif // _UTILITY_H_

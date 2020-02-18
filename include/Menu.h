@@ -74,6 +74,7 @@ public:
   void showAlert(AlertData alertData);
   void hideAlert();
   bool isAlertVisible();
+  void setSeekPreviewCallback(StoryboardExternData (*getSeekPreviewStoryboardData)());
 };
 
 #endif // _MENU_H_
