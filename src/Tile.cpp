@@ -32,7 +32,8 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
-            textureId(0) {
+            textureId(0),
+            bitmapHash(0) {
   initGL();
   initTextures();
   setTexture(texturePixels, textureSize, textureFormat);
@@ -52,7 +53,8 @@ Tile::Tile(int tileId, Position<int> position, Size<int> size, float zoom, float
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
-            textureId(0) {
+            textureId(0),
+            bitmapHash(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;
@@ -64,7 +66,8 @@ Tile::Tile(int tileId)
             runningPreview(false),
             previewReady(false),
             previewTextureId(0),
-            textureId(0) {
+            textureId(0),
+            bitmapHash(0) {
   initGL();
   initTextures();
   ++staticTileObjectCount;
@@ -350,6 +353,7 @@ GLuint Tile::getCurrentTextureId() {
   if(storyboardData.frame.bitmapHash != bitmapHash) { // new storyboard
     storyboardBitmap = storyboardData.frame;
     setPreviewTexture(storyboardData.frame);
+    bitmapHash = storyboardData.frame.bitmapHash;
   }
   storytileRect = Rect { // update frame rectangle metadata
     .left = storyboardData.frame.rectLeft,

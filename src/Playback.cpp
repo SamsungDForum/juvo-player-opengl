@@ -29,6 +29,7 @@ Playback::Playback()
     progressBarMarginBottom(progressUiLineLevel / 1080.0f * Settings::instance().viewport.height - progressBarSize.height / 2.0f),
     dotScale(1.5f),
     iconSize({64, 64}),
+    storyboardBitmapHash(0),
     getStoryboardDataCallback(nullptr),
     displaySeekPreview(false),
     seekPreviewReady(false) {
@@ -425,6 +426,7 @@ void Playback::updateSeekPreviewTexture() {
   if(storyboardData.frame.bitmapHash != storyboardBitmapHash) { // new storyboard
     storyboardBitmap = storyboardData.frame;
     setPreviewTexture(storyboardData.frame);
+    storyboardBitmapHash = storyboardData.frame.bitmapHash;
   }
   storytileRect = Rect { // update frame rectangle metadata
     .left = storyboardData.frame.rectLeft,
