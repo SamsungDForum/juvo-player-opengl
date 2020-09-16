@@ -44,6 +44,8 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 %make_install
+cp %{buildroot}%{_libdir}/libgles.so %{buildroot}%{_libdir}/libgles-release.so
+strip -v --strip-all %{buildroot}%{_libdir}/libgles-release.so
 
 mkdir -p %{buildroot}%{_includedir}
 
@@ -51,3 +53,4 @@ mkdir -p %{buildroot}%{_includedir}
 %manifest %{name}.manifest
 %defattr(-, root, root, -)
 %{_libdir}/libgles.so
+%{_libdir}/libgles-release.so
