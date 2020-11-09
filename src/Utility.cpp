@@ -26,7 +26,7 @@ void* getCurrentEGLContext() {
 void initEGLFunctions() {
   eglHandle = dlopen("libEGL.so", RTLD_LAZY);
   if (eglHandle == nullptr)
-      return;
+    return;
   *(void **) (&eglGetCurrentContextFunc) = dlsym(eglHandle, "eglGetCurrentContext");
 }
 
