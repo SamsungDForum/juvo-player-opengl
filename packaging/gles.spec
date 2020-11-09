@@ -30,7 +30,7 @@ cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} \
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
 %endif
 %if %{!?nodebug:1}%{?nodebug:0}
--DDEBUG=1
+-D_DEBUG=1
 %endif
 
 %if %{?static_check:1}%{!?static_check:0}

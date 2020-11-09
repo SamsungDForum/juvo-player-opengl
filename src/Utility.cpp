@@ -6,7 +6,45 @@
 #include "LogConsole.h"
 #include "log.h"
 
-eglContextFieldInit // preprocessor-defined
+#ifdef _DEBUG
+#include <dlfcn.h>
+
+namespace {
+
+void* eglHandle = nullptr;
+void* (*eglGetCurrentContextFunc)() = nullptr;
+void* eglContext = nullptr;
+
+void* getCurrentEGLContext() {
+  if (eglGetCurrentContextFunc != nullptr)
+    return eglGetCurrentContextFunc();
+  return nullptr;
+}
+
+} // namespace
+
+void initEGLFunctions() {
+  eglHandle = dlopen("libEGL.so", RTLD_LAZY);
+  if (eglHandle == nullptr)
+      return;
+  *(void **) (&eglGetCurrentContextFunc) = dlsym(eglHandle, "eglGetCurrentContext");
+}
+
+void setCurrentEGLContext() {
+  eglContext = getCurrentEGLContext();
+}
+
+void assertCurrentEGLContext() {
+  assert(eglContext == getCurrentEGLContext());
+}
+
+#else
+
+void initEGLFunctions() { }
+void setCurrentEGLContext() { }
+void assertCurrentEGLContext() { }
+
+#endif
 
 void Utility::__logGLErrors__(const char *filename, int line) {
   assertCurrentEGLContext();

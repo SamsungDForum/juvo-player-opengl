@@ -1,0 +1,32 @@
+type = sharedLib
+profile = mobile-4.0
+
+APPNAME = gles
+
+USER_LIBS = freetype \
+			GLESv2 \
+			dlog
+
+USER_SRCS = src/LogConsole.cpp \
+			src/main.cpp \
+			src/Menu.cpp \
+			src/Animation.cpp \
+			src/Background.cpp \
+			src/Loader.cpp \
+			src/Playback.cpp \
+			src/TextRenderer.cpp \
+			src/TextTextureGenerator.cpp \
+			src/Tile.cpp \
+			src/TileAnimation.cpp \
+			src/Subtitles.cpp \
+			src/Graph.cpp \
+			src/Metrics.cpp \
+			src/Options.cpp \
+			src/ModalWindow.cpp \
+			src/ProgramBuilder.cpp \
+			src/Settings.cpp \
+			src/Utility.cpp
+
+USER_C_OPTS = -fpermissive
+
+USER_CPP_OPTS = $(USER_C_OPTS) -std=c++14 -Iinclude -Wall
