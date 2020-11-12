@@ -47,21 +47,19 @@ SET(SRCS
   src/Utility.cpp
 )
 
-IF(DEFINED DEBUG)
+IF(DEFINED _DEBUG)
   MESSAGE("-- Compilation mode - debug")
-  ADD_DEFINITIONS(-DDEBUG) # so gcc preprocessor sees DEBUG as defined
-  SET(DEBUG_PKGS egl)
-ELSE(DEFINED DEBUG)
+  ADD_DEFINITIONS(-D_DEBUG) # so gcc preprocessor sees DEBUG as defined
+ELSE(DEFINED _DEBUG)
   MESSAGE("-- Compilation mode - release")
-ENDIF(DEFINED DEBUG)
-SET(IGNOREME "${DEBUG}") # to suppress cmake "unused variable" warning
+ENDIF(DEFINED _DEBUG)
+SET(IGNOREME "${_DEBUG}") # to suppress cmake "unused variable" warning
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(PKGS REQUIRED
   freetype2
   gles20
   dlog
-  ${DEBUG_PKGS}
 )
 
 FOREACH(flag ${PKGS_CFLAGS})

@@ -57,6 +57,7 @@ Menu *menu = nullptr;
 
 void Create()
 {
+  initEGLFunctions();
   setCurrentEGLContext();
 
   if(menu != nullptr)
